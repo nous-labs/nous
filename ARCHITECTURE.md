@@ -18,28 +18,28 @@ The Qubic TypeScript SDK (QTS) is a comprehensive library for integrating with t
 
 ```
 qts/
-├── src/
-│   ├── clients/          # API client implementations
-│   │   ├── base-client.ts          # Base HTTP client with error handling
-│   │   ├── qubic-live-client.ts    # Real-time network data
-│   │   ├── archive-client.ts       # Historical data (legacy)
-│   │   ├── query-client.ts         # Advanced querying (recommended)
-│   │   └── index.ts                # Client exports
-│   ├── types/            # Type definitions
-│   │   ├── common.ts               # Shared types across all APIs
-│   │   ├── responses.ts            # API response types
-│   │   └── index.ts                # Type exports
-│   ├── utils/            # Utility functions
-│   │   ├── encoding.ts             # Hex/Base64/Binary conversions
-│   │   ├── smart-contract.ts       # Contract query/response helpers
-│   │   └── index.ts                # Utility exports
-│   └── index.ts          # Main entry point
-├── examples/             # Usage examples
-├── test/                 # Test suite
-├── index.ts              # Root entry point
-├── package.json          # Package configuration
-├── tsconfig.json         # TypeScript configuration
-└── README.md             # User documentation
+ src/
+    clients/          # API client implementations
+       base-client.ts          # Base HTTP client with error handling
+       qubic-live-client.ts    # Real-time network data
+       archive-client.ts       # Historical data (legacy)
+       query-client.ts         # Advanced querying (recommended)
+       index.ts                # Client exports
+    types/            # Type definitions
+       common.ts               # Shared types across all APIs
+       responses.ts            # API response types
+       index.ts                # Type exports
+    utils/            # Utility functions
+       encoding.ts             # Hex/Base64/Binary conversions
+       smart-contract.ts       # Contract query/response helpers
+       index.ts                # Utility exports
+    index.ts          # Main entry point
+ examples/             # Usage examples
+ test/                 # Test suite
+ index.ts              # Root entry point
+ package.json          # Package configuration
+ tsconfig.json         # TypeScript configuration
+ README.md             # User documentation
 ```
 
 ## Architecture Layers
@@ -131,7 +131,7 @@ Three specialized clients correspond to Qubic's API endpoints:
 **Purpose**: Binary data manipulation for smart contract I/O
 
 **Capabilities**:
-- Format conversions (hex ↔ base64 ↔ bytes ↔ UTF-8)
+- Format conversions (hex  base64  bytes  UTF-8)
 - Integer encoding/decoding (little-endian)
 - Hex string manipulation
 - Validation functions
@@ -212,19 +212,19 @@ const result = parser.readInt64();
 
 ```
 User Code
-    ↓
+    
 Client Method (e.g., getBalance)
-    ↓
+    
 BaseClient.get()
-    ↓
+    
 HTTP Request (fetch)
-    ↓
+    
 Response Validation
-    ↓
+    
 JSON Parsing
-    ↓
+    
 Typed Response
-    ↓
+    
 User Code
 ```
 
@@ -232,21 +232,21 @@ User Code
 
 ```
 User Code
-    ↓
+    
 SmartContractQuery.build()
-    ↓
+    
 Data Encoding (hex/base64)
-    ↓
+    
 QubicLiveClient.querySmartContract()
-    ↓
+    
 HTTP POST to /v1/querySmartContract
-    ↓
+    
 Response (base64 data)
-    ↓
+    
 SmartContractResponse.parse()
-    ↓
+    
 Decoded Values
-    ↓
+    
 User Code
 ```
 
@@ -315,10 +315,10 @@ try {
 ### 4. Tree Shaking
 **Import Strategy**:
 ```typescript
-// ✓ Good - imports only what's needed
+//  Good - imports only what's needed
 import { QubicLiveClient } from '@qubic/qts';
 
-// ✗ Less optimal - imports everything
+//  Less optimal - imports everything
 import * as qts from '@qubic/qts';
 ```
 

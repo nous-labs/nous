@@ -48,7 +48,7 @@ const { transactions } = await qubic.query.getTransactionsForIdentity(
 );
 
 transactions.forEach(tx => {
-  console.log(`${tx.source} → ${tx.destination}: ${tx.amount}`);
+  console.log(`${tx.source}  ${tx.destination}: ${tx.amount}`);
 });
 ```
 
@@ -247,11 +247,11 @@ const result = await qubic.query.getTransactionsForIdentity(identity, {
 
 ## Need Help?
 
-- 📖 [Full Documentation](README.md)
-- 🐛 [Report Issues](https://github.com/qubic/qts/issues)
-- 💬 [Discussions](https://github.com/qubic/qts/discussions)
-- 💭 [Discord Community](https://discord.gg/qubic)
+-  [Full Documentation](README.md)
+-  [Report Issues](https://github.com/qubic/qts/issues)
+-  [Discussions](https://github.com/qubic/qts/discussions)
+-  [Discord Community](https://discord.gg/qubic)
 
 ---
 
-**Ready to build on Qubic? Start coding!** 🚀
+**Ready to build on Qubic? Start coding!** 

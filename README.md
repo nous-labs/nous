@@ -1,38 +1,36 @@
 # Qubic TypeScript SDK (QTS)
 
-[![npm version](https://img.shields.io/npm/v/@navia-labs/qts.svg)](https://www.npmjs.com/package/@navia-labs/qts)
-[![CI](https://github.com/navia-labs/qts/workflows/CI/badge.svg)](https://github.com/navia-labs/qts/actions)
+[![npm version](https://img.shields.io/npm/v/@nvlabs/qts.svg)](https://www.npmjs.com/package/@nvlabs/qts)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 A comprehensive TypeScript/JavaScript library for integrating with the Qubic blockchain. Designed for both frontend and backend applications with full type safety and modern async/await patterns.
 
 ## Features
 
-- 🔥 **Full TypeScript Support** - Complete type definitions for all API endpoints
-- 🚀 **Modern Async/Await** - Clean promise-based API
-- 🌐 **Universal** - Works in browsers, Node.js, Bun, and Deno
-- 📦 **Tree-shakeable** - Import only what you need
-- 🎯 **Smart Contract Support** - Simplified smart contract querying with encoding/decoding utilities
-- 🔌 **Three API Clients** - Live data, Archive data, and Query services
-- 🛡️ **Error Handling** - Comprehensive error types and handling
-- 📝 **Well Documented** - Extensive JSDoc comments and examples
+-  **Full TypeScript Support** - Complete type definitions for all API endpoints
+-  **Modern Async/Await** - Clean promise-based API
+-  **Universal** - Works in browsers, Node.js, Bun, and Deno
+-  **Tree-shakeable** - Import only what you need
+-  **Smart Contract Support** - Simplified smart contract querying with encoding/decoding utilities
+-  **Three API Clients** - Live data, Archive data, and Query services
+-  **Error Handling** - Comprehensive error types and handling
+-  **Well Documented** - Extensive JSDoc comments and examples
 
 ## Installation
 
 ```bash
 # Using npm
-npm install @navia-labs/qts
+npm install @nvlabs/qts
 
 # Using yarn
-yarn add @navia-labs/qts
+yarn add @nvlabs/qts
 
 # Using bun
-bun add @navia-labs/qts
+bun add @nvlabs/qts
 
 # Using pnpm
-pnpm add @navia-labs/qts
+pnpm add @nvlabs/qts
 ```
 
 ## Quick Start
@@ -40,7 +38,7 @@ pnpm add @navia-labs/qts
 ### Basic Usage
 
 ```typescript
-import { createQubicClient } from '@navia-labs/qts';
+import { createQubicClient } from '@nvlabs/qts';
 
 // Create a client instance with all services
 const qubic = createQubicClient();
@@ -57,7 +55,7 @@ console.log('Balance:', balance.balance.balance);
 ### Query Smart Contracts
 
 ```typescript
-import { QubicLiveClient, createQuery, parseResponse } from '@navia-labs/qts';
+import { QubicLiveClient, createQuery, parseResponse } from '@nvlabs/qts';
 
 const client = new QubicLiveClient();
 
@@ -78,7 +76,7 @@ console.log('Contract response:', value);
 ### Get Transaction History
 
 ```typescript
-import { QueryClient } from '@navia-labs/qts';
+import { QueryClient } from '@nvlabs/qts';
 
 const query = new QueryClient();
 
@@ -106,7 +104,7 @@ console.log('Transactions:', result.transactions);
 Real-time access to Qubic network state.
 
 ```typescript
-import { QubicLiveClient } from '@navia-labs/qts';
+import { QubicLiveClient } from '@nvlabs/qts';
 
 const client = new QubicLiveClient({
   baseUrl: 'https://rpc.qubic.org', // optional, this is default
@@ -153,7 +151,7 @@ const result = await client.broadcastTransaction({
 Access to historical network data (note: many methods are deprecated in favor of QueryClient).
 
 ```typescript
-import { ArchiveClient } from '@navia-labs/qts';
+import { ArchiveClient } from '@nvlabs/qts';
 
 const archive = new ArchiveClient();
 
@@ -184,7 +182,7 @@ const computors = await archive.getComputors(100);
 Advanced querying capabilities with modern API (recommended for historical data).
 
 ```typescript
-import { QueryClient } from '@navia-labs/qts';
+import { QueryClient } from '@nvlabs/qts';
 
 const query = new QueryClient({
   baseUrl: 'https://api.qubic.org', // optional, this is default
@@ -246,7 +244,7 @@ const ranged = await query.getTransactionsForIdentityInRange(
 ### Building Contract Queries
 
 ```typescript
-import { SmartContractQuery, QubicLiveClient } from '@navia-labs/qts';
+import { SmartContractQuery, QubicLiveClient } from '@nvlabs/qts';
 
 const client = new QubicLiveClient();
 
@@ -270,7 +268,7 @@ const response = await query.execute(client);
 ### Parsing Contract Responses
 
 ```typescript
-import { SmartContractResponse, parseResponse } from '@navia-labs/qts';
+import { SmartContractResponse, parseResponse } from '@nvlabs/qts';
 
 // Parse a response
 const parser = parseResponse(response.responseData);
@@ -297,7 +295,7 @@ parser.skip(8);
 ### Known Contract Indices
 
 ```typescript
-import { QUBIC_CONTRACTS, queryQX, queryQutil } from '@navia-labs/qts';
+import { QUBIC_CONTRACTS, queryQX, queryQutil } from '@nvlabs/qts';
 
 // All available contracts (based on https://github.com/qubic/core)
 console.log(QUBIC_CONTRACTS.QX);              // 1  - Decentralized exchange
@@ -343,7 +341,7 @@ import {
   padHex,
   concatHex,
   sliceHex,
-} from '@navia-labs/qts';
+} from '@nvlabs/qts';
 
 // Hex/Base64 conversions
 const base64 = hexToBase64('deadbeef');
@@ -369,7 +367,7 @@ const sliced = sliceHex('deadbeef', 1, 3); // 'adbe' (bytes 1-3)
 ## Error Handling
 
 ```typescript
-import { QubicLiveClient, type QubicApiError } from '@navia-labs/qts';
+import { QubicLiveClient, type QubicApiError } from '@nvlabs/qts';
 
 const client = new QubicLiveClient();
 
@@ -397,7 +395,7 @@ try {
 ### Custom Base URLs
 
 ```typescript
-import { createQubicClient } from '@navia-labs/qts';
+import { createQubicClient } from '@nvlabs/qts';
 
 const qubic = createQubicClient({
   liveUrl: 'https://custom-rpc.qubic.org',
@@ -413,7 +411,7 @@ const qubic = createQubicClient({
 ### Individual Clients
 
 ```typescript
-import { QubicLiveClient, QueryClient } from '@navia-labs/qts';
+import { QubicLiveClient, QueryClient } from '@nvlabs/qts';
 
 const live = new QubicLiveClient({
   baseUrl: 'https://rpc.qubic.org',
@@ -458,7 +456,7 @@ import type {
   QuerySmartContractResponse,
   GetBalanceResponse,
   GetTickInfoResponse,
-} from '@navia-labs/qts';
+} from '@nvlabs/qts';
 
 // All types are fully typed
 const processTransaction = (tx: Transaction): void => {
@@ -480,7 +478,7 @@ const handleBalance = (response: GetBalanceResponse): void => {
 ### Monitor New Ticks
 
 ```typescript
-import { QubicLiveClient } from '@navia-labs/qts';
+import { QubicLiveClient } from '@nvlabs/qts';
 
 const client = new QubicLiveClient();
 
@@ -509,7 +507,7 @@ monitorTicks();
 ### Get All Transactions for Identity
 
 ```typescript
-import { QueryClient } from '@navia-labs/qts';
+import { QueryClient } from '@nvlabs/qts';
 
 async function getAllTransactions(identity: string) {
   const query = new QueryClient();
@@ -543,7 +541,7 @@ console.log(`Total transactions: ${txs.length}`);
 ### Query QX Exchange Orders
 
 ```typescript
-import { QubicLiveClient, createQuery, parseResponse, QUBIC_CONTRACTS } from '@navia-labs/qts';
+import { QubicLiveClient, createQuery, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
 
 const client = new QubicLiveClient();
 
@@ -568,7 +566,7 @@ for (let i = 0; i < orderCount; i++) {
 ### Query Qearn Staking Contract
 
 ```typescript
-import { queryQearn, parseResponse, QUBIC_CONTRACTS } from '@navia-labs/qts';
+import { queryQearn, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
 
 const client = new QubicLiveClient();
 
@@ -584,7 +582,7 @@ console.log(`Staked: ${stakedAmount}`);
 ### Query Quottery Betting Platform
 
 ```typescript
-import { queryQuottery, QUBIC_CONTRACTS } from '@navia-labs/qts';
+import { queryQuottery, QUBIC_CONTRACTS } from '@nvlabs/qts';
 
 const client = new QubicLiveClient();
 
@@ -605,7 +603,7 @@ The library works seamlessly in browsers:
 </head>
 <body>
   <script type="module">
-    import { createQubicClient } from 'https://esm.sh/@navia-labs/qts';
+    import { createQubicClient } from 'https://esm.sh/@nvlabs/qts';
     
     const qubic = createQubicClient();
     
@@ -650,4 +648,4 @@ For issues and questions:
 
 ---
 
-Built with ❤️ for the Qubic community
+Built with for the Qubic community

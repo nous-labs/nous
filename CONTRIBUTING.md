@@ -488,8 +488,8 @@ If you have questions about contributing:
 
 ## Thank You!
 
-Your contributions make this project better. We appreciate your time and effort! 🙏
+Your contributions make this project better. We appreciate your time and effort! 
 
 ---
 
-**Happy Coding!** 🚀
+**Happy Coding!** 

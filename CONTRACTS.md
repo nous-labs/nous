@@ -405,11 +405,11 @@ Always use the provided encoding utilities:
 ```typescript
 import { encodeInt64LE, hexToBase64, createQuery } from '@qubic/qts';
 
-// ✓ Good - Use query builder
+//  Good - Use query builder
 const query = createQuery(contractIndex, inputType)
   .addInt64(value);
 
-// ✓ Good - Use encoding utilities
+//  Good - Use encoding utilities
 const hex = encodeInt64LE(value);
 const base64 = hexToBase64(hex);
 ```
