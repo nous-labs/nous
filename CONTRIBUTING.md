@@ -1,0 +1,495 @@
+# Contributing to Qubic TypeScript SDK
+
+Thank you for your interest in contributing to the Qubic TypeScript SDK! This document provides guidelines and instructions for contributing to the project.
+
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [Getting Started](#getting-started)
+- [Development Setup](#development-setup)
+- [How to Contribute](#how-to-contribute)
+- [Pull Request Process](#pull-request-process)
+- [Coding Standards](#coding-standards)
+- [Testing Guidelines](#testing-guidelines)
+- [Documentation](#documentation)
+- [Community](#community)
+
+## Code of Conduct
+
+### Our Pledge
+
+We are committed to providing a welcoming and inclusive environment for all contributors, regardless of experience level, gender, gender identity and expression, sexual orientation, disability, personal appearance, body size, race, ethnicity, age, religion, or nationality.
+
+### Expected Behavior
+
+- Be respectful and considerate
+- Welcome newcomers and help them get started
+- Focus on what is best for the community
+- Show empathy towards other community members
+- Accept constructive criticism gracefully
+
+### Unacceptable Behavior
+
+- Harassment, discrimination, or offensive comments
+- Personal attacks or trolling
+- Publishing others' private information
+- Other conduct that could reasonably be considered inappropriate
+
+## Getting Started
+
+### Prerequisites
+
+- **Bun** v1.0+ (or Node.js 18+)
+- **TypeScript** 5.0+
+- **Git** for version control
+- A **GitHub account**
+
+### Development Dependencies
+
+All development dependencies are listed in `package.json`. Install them with:
+
+```bash
+bun install
+```
+
+## Development Setup
+
+1. **Fork the Repository**
+
+   Visit [https://github.com/qubic/qts](https://github.com/qubic/qts) and click "Fork"
+
+2. **Clone Your Fork**
+
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/qts.git
+   cd qts
+   ```
+
+3. **Add Upstream Remote**
+
+   ```bash
+   git remote add upstream https://github.com/qubic/qts.git
+   ```
+
+4. **Install Dependencies**
+
+   ```bash
+   bun install
+   ```
+
+5. **Verify Setup**
+
+   ```bash
+   # Type check
+   bun run typecheck
+   
+   # Run tests
+   bun test
+   ```
+
+## How to Contribute
+
+### Reporting Bugs
+
+Before creating a bug report:
+- Check the existing issues to avoid duplicates
+- Verify you're using the latest version
+- Test with minimal reproduction steps
+
+When creating a bug report, include:
+- Clear, descriptive title
+- Steps to reproduce
+- Expected vs actual behavior
+- Code samples (if applicable)
+- Environment details (OS, runtime version)
+- SDK version
+
+**Example Bug Report**:
+
+```markdown
+**Title**: QubicLiveClient.getBalance fails with timeout on valid identity
+
+**Description**: When calling getBalance() with a valid identity, the request times out after 30 seconds.
+
+**Steps to Reproduce**:
+1. Create new QubicLiveClient()
+2. Call client.getBalance('VALID_IDENTITY_HERE')
+3. Wait 30+ seconds
+
+**Expected**: Balance response within reasonable time
+**Actual**: Request times out
+
+**Environment**:
+- OS: Windows 11
+- Runtime: Bun 1.3.0
+- SDK Version: 1.0.0
+
+**Code Sample**:
+\`\`\`typescript
+const client = new QubicLiveClient();
+const balance = await client.getBalance('ABC...'); // Times out
+\`\`\`
+```
+
+### Suggesting Features
+
+When suggesting features:
+- Check if it's already been proposed
+- Explain the use case clearly
+- Describe the proposed solution
+- Consider backward compatibility
+- Discuss alternatives you've considered
+
+### Code Contributions
+
+We welcome:
+- Bug fixes
+- New features
+- Performance improvements
+- Documentation improvements
+- Test coverage improvements
+- Examples and tutorials
+
+## Pull Request Process
+
+### 1. Create a Branch
+
+```bash
+git checkout -b feature/your-feature-name
+# or
+git checkout -b fix/your-bug-fix
+```
+
+**Branch Naming**:
+- `feature/` - New features
+- `fix/` - Bug fixes
+- `docs/` - Documentation only
+- `refactor/` - Code refactoring
+- `test/` - Test improvements
+- `chore/` - Maintenance tasks
+
+### 2. Make Your Changes
+
+- Write clean, readable code
+- Follow existing code style
+- Add tests for new functionality
+- Update documentation as needed
+- Keep commits focused and atomic
+
+### 3. Commit Your Changes
+
+Use clear, descriptive commit messages:
+
+```bash
+git commit -m "feat: add support for custom timeout per request"
+git commit -m "fix: handle undefined response in parseResponse()"
+git commit -m "docs: update smart contract examples"
+```
+
+**Commit Message Format**:
+```
+<type>: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+**Types**:
+- `feat` - New feature
+- `fix` - Bug fix
+- `docs` - Documentation changes
+- `style` - Code style (formatting, etc.)
+- `refactor` - Code refactoring
+- `test` - Adding or updating tests
+- `chore` - Maintenance tasks
+
+### 4. Keep Your Branch Updated
+
+```bash
+git fetch upstream
+git rebase upstream/main
+```
+
+### 5. Run Tests and Checks
+
+```bash
+# Type check
+bun run typecheck
+
+# Run tests
+bun test
+
+# Run examples (optional)
+bun run examples/basic-usage.ts
+```
+
+### 6. Push Your Changes
+
+```bash
+git push origin feature/your-feature-name
+```
+
+### 7. Create Pull Request
+
+- Go to your fork on GitHub
+- Click "New Pull Request"
+- Fill out the PR template
+- Link related issues
+- Request review
+
+### Pull Request Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Related Issues
+Fixes #123
+
+## Testing
+- [ ] Added unit tests
+- [ ] Added integration tests
+- [ ] Manually tested
+- [ ] Updated examples
+
+## Checklist
+- [ ] Code follows project style
+- [ ] Self-reviewed code
+- [ ] Commented complex code
+- [ ] Updated documentation
+- [ ] No new warnings
+- [ ] Added tests
+- [ ] All tests passing
+```
+
+## Coding Standards
+
+### TypeScript
+
+- Use **strict mode** (enabled in tsconfig.json)
+- Prefer **interfaces** over types for object shapes
+- Use **explicit return types** for public APIs
+- Avoid **any** - use **unknown** if type is truly unknown
+- Use **optional chaining** (?.) and **nullish coalescing** (??)
+
+### Naming Conventions
+
+- **Classes**: PascalCase (`QubicLiveClient`)
+- **Interfaces/Types**: PascalCase (`QuerySmartContractRequest`)
+- **Functions**: camelCase (`getBalance`)
+- **Constants**: UPPER_SNAKE_CASE (`QUBIC_CONTRACTS`)
+- **Private members**: prefix with `_` or use `#` syntax
+
+### File Structure
+
+```typescript
+// 1. Imports (grouped and sorted)
+import type { ... } from './types.ts';
+import { ... } from './utils.ts';
+
+// 2. Types/Interfaces
+export interface MyConfig { ... }
+
+// 3. Constants
+const DEFAULT_TIMEOUT = 30000;
+
+// 4. Main implementation
+export class MyClass { ... }
+
+// 5. Helper functions
+function helperFunction() { ... }
+```
+
+### Comments and Documentation
+
+- Add **JSDoc** for all public APIs
+- Include **@param**, **@returns**, **@throws** tags
+- Provide **usage examples** for complex APIs
+- Comment **why**, not **what** (code should be self-explanatory)
+
+**Example**:
+
+```typescript
+/**
+ * Query a smart contract with the specified parameters
+ * 
+ * @param contractIndex - The index of the contract to query (e.g., 4 for QX)
+ * @param inputType - The input type identifier for the contract function
+ * @param requestData - The encoded request data (hex or base64)
+ * @returns Promise resolving to the contract's response
+ * @throws {QubicApiError} If the contract query fails or times out
+ * 
+ * @example
+ * ```typescript
+ * const response = await client.queryContract(4, 1, 'deadbeef');
+ * console.log(response.responseData);
+ * ```
+ */
+async queryContract(
+  contractIndex: number,
+  inputType: number,
+  requestData: string
+): Promise<QuerySmartContractResponse> {
+  // Implementation
+}
+```
+
+### Error Handling
+
+- Always handle errors gracefully
+- Use **try-catch** for async operations
+- Throw **typed errors** (QubicApiError)
+- Include **meaningful error messages**
+- Don't swallow errors silently
+
+### Async/Await
+
+- Prefer **async/await** over callbacks or raw promises
+- Handle **Promise rejections**
+- Avoid **unhandled promise rejections**
+- Use **Promise.all()** for parallel operations
+
+## Testing Guidelines
+
+### Test Structure
+
+```typescript
+import { describe, test, expect } from "bun:test";
+
+describe("Feature Name", () => {
+  test("should do something specific", () => {
+    // Arrange
+    const input = "test";
+    
+    // Act
+    const result = doSomething(input);
+    
+    // Assert
+    expect(result).toBe("expected");
+  });
+});
+```
+
+### Test Coverage
+
+Aim for:
+- **Unit tests**: All utilities and helpers (100%)
+- **Integration tests**: API clients (critical paths)
+- **Edge cases**: Error conditions, boundary values
+- **Type tests**: Complex type transformations
+
+### Writing Tests
+
+- **One assertion per test** (when possible)
+- **Clear test names** describing behavior
+- **Isolated tests** (no dependencies between tests)
+- **Mock external dependencies** (API calls, etc.)
+- **Test both success and failure cases**
+
+### Running Tests
+
+```bash
+# All tests
+bun test
+
+# Specific file
+bun test test/encoding.test.ts
+
+# Watch mode
+bun test --watch
+
+# With coverage
+bun test --coverage
+```
+
+## Documentation
+
+### README Updates
+
+Update README.md when:
+- Adding new features
+- Changing public APIs
+- Adding examples
+- Updating installation instructions
+
+### Code Examples
+
+- Keep examples **simple and focused**
+- Include **error handling**
+- Show **common use cases**
+- Test examples to ensure they work
+
+### API Documentation
+
+- Document all **public classes and methods**
+- Include **parameter descriptions**
+- Specify **return types**
+- List **possible errors**
+- Add **usage examples**
+
+## Community
+
+### Getting Help
+
+- **GitHub Discussions**: Ask questions, share ideas
+- **GitHub Issues**: Report bugs, request features
+- **Discord**: Join the Qubic community for real-time chat
+
+### Communication
+
+- Be respectful and professional
+- Stay on topic
+- Help others when you can
+- Share your knowledge
+
+### Recognition
+
+Contributors will be:
+- Listed in CONTRIBUTORS.md
+- Mentioned in release notes
+- Credited in related documentation
+
+## Release Process
+
+### Versioning
+
+We follow [Semantic Versioning](https://semver.org/):
+
+- **MAJOR**: Breaking changes
+- **MINOR**: New features (backward compatible)
+- **PATCH**: Bug fixes
+
+### Release Checklist
+
+1. Update version in package.json
+2. Update CHANGELOG.md
+3. Run full test suite
+4. Create GitHub release
+5. Publish to npm (if applicable)
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.
+
+## Questions?
+
+If you have questions about contributing:
+- Check existing documentation
+- Search closed issues/PRs
+- Ask in GitHub Discussions
+- Join the Discord community
+
+## Thank You!
+
+Your contributions make this project better. We appreciate your time and effort! 🙏
+
+---
+
+**Happy Coding!** 🚀
