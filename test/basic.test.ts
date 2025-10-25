@@ -122,17 +122,17 @@ describe("Smart Contract Utilities", () => {
     expect(QUBIC_CONTRACTS.QUTIL).toBe(4);
     expect(QUBIC_CONTRACTS.MYLASTMATCH).toBe(5);
     expect(QUBIC_CONTRACTS.GQMP).toBe(6);
-    expect(QUBIC_CONTRACTS.QBAY).toBe(7);
-    expect(QUBIC_CONTRACTS.QDRAW).toBe(8);
+    expect(QUBIC_CONTRACTS.SUPPLYWATCHER).toBe(7);
+    expect(QUBIC_CONTRACTS.CCF).toBe(8);
     expect(QUBIC_CONTRACTS.QEARN).toBe(9);
-    expect(QUBIC_CONTRACTS.QSWAP).toBe(10);
-    expect(QUBIC_CONTRACTS.QVAULT).toBe(11);
-    expect(QUBIC_CONTRACTS.QBOND).toBe(12);
-    expect(QUBIC_CONTRACTS.MSVAULT).toBe(13);
+    expect(QUBIC_CONTRACTS.QVAULT).toBe(10);
+    expect(QUBIC_CONTRACTS.MSVAULT).toBe(11);
+    expect(QUBIC_CONTRACTS.QBAY).toBe(12);
+    expect(QUBIC_CONTRACTS.QSWAP).toBe(13);
     expect(QUBIC_CONTRACTS.NOSTROMO).toBe(14);
-    expect(QUBIC_CONTRACTS.RANDOMLOTTERY).toBe(15);
-    expect(QUBIC_CONTRACTS.SUPPLYWATCHER).toBe(16);
-    expect(QUBIC_CONTRACTS.CCF).toBe(17);
+    expect(QUBIC_CONTRACTS.QDRAW).toBe(15);
+    expect(QUBIC_CONTRACTS.RANDOMLOTTERY).toBe(16);
+    expect(QUBIC_CONTRACTS.QBOND).toBe(17);
   });
 });
 

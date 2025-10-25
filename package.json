@@ -1,6 +1,6 @@
 {
   "name": "@nvlabs/qts",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "TypeScript SDK for Qubic blockchain - Complete integration library for frontend and backend applications",
   "main": "./index.ts",
   "module": "./index.ts",
@@ -64,12 +64,16 @@
   },
   "homepage": "https://github.com/nvlabs/qts#readme",
   "dependencies": {
+    "@noble/hashes": "^1.4.0",
+    "@walletconnect/sign-client": "^2.15.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/react": "^18.3.0"
   },
   "peerDependencies": {
+    "react": ">=18.0.0",
     "typescript": "^5"
   },
   "engines": {

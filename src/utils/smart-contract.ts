@@ -18,14 +18,15 @@ import {
   getHexByteLength,
   padHex,
 } from "./encoding.ts";
+import { identityBytesToString, identityToBytes } from "./identity.ts";
 
 /**
  * Smart contract query builder for simplified contract interactions
  */
 export class SmartContractQuery {
-  private contractIndex: number;
-  private inputType: number;
-  private dataHex: string = "";
+  protected contractIndex: number;
+  protected inputType: number;
+  protected dataHex: string = "";
 
   constructor(contractIndex: number, inputType: number) {
     this.contractIndex = contractIndex;
@@ -91,13 +92,11 @@ export class SmartContractQuery {
   }
 
   /**
-   * Add an identity address (60 bytes)
+   * Add an identity address (encoded to 32-byte public key form)
    */
   addIdentity(identity: string): this {
-    // Identity is typically 60 characters (uppercase A-Z)
-    // For simplicity, we encode as string, but proper implementation
-    // would need base32 decoding from Qubic format
-    return this.addString(identity, 60);
+    const bytes = identityToBytes(identity);
+    return this.addHex(bytesToHex(bytes));
   }
 
   /**
@@ -105,6 +104,13 @@ export class SmartContractQuery {
    */
   toBase64(): string {
     return hexToBase64(this.dataHex);
+  }
+
+  /**
+   * Get the raw hex payload
+   */
+  toHex(): string {
+    return this.dataHex;
   }
 
   /**
@@ -231,10 +237,11 @@ export class SmartContractResponse {
   }
 
   /**
-   * Read an identity (60 bytes)
+   * Read an identity (32-byte public key converted to the 60-char form)
    */
   readIdentity(): string {
-    return this.readString(60).trim();
+    const bytes = hexToBytes(this.readHex(32));
+    return identityBytesToString(bytes);
   }
 
   /**
@@ -317,23 +324,55 @@ export async function queryContract(
  * Based on https://github.com/qubic/core/tree/main/src/contracts
  */
 export const QUBIC_CONTRACTS = {
-  QX: 1, // Decentralized exchange
-  QUOTTERY: 2, // Betting platform
-  RANDOM: 3, // Random number generator
-  QUTIL: 4, // Utility functions
-  MYLASTMATCH: 5, // My Last Match
-  GQMP: 6, // General Quorum Proposal
-  QBAY: 7, // Qubic Bay (marketplace)
-  QDRAW: 8, // Drawing/lottery
-  QEARN: 9, // Earning platform
-  QSWAP: 10, // Token swap
-  QVAULT: 11, // Vault contract
-  QBOND: 12, // Bond contract
-  MSVAULT: 13, // Multi-signature vault
-  NOSTROMO: 14, // Nostromo
-  RANDOMLOTTERY: 15, // Random lottery
-  SUPPLYWATCHER: 16, // Supply monitoring
-  CCF: 17, // Computor Controlled Fund
+  QX: 1,
+  QUOTTERY: 2,
+  QTRY: 2,
+  RANDOM: 3,
+  QUTIL: 4,
+  MYLASTMATCH: 5,
+  MLM: 5,
+  GQMP: 6,
+  GQMPROP: 6,
+  SUPPLYWATCHER: 7,
+  SWATCH: 7,
+  CCF: 8,
+  QEARN: 9,
+  QVAULT: 10,
+  MSVAULT: 11,
+  QBAY: 12,
+  QSWAP: 13,
+  NOSTROMO: 14,
+  NOST: 14,
+  QDRAW: 15,
+  RANDOMLOTTERY: 16,
+  RL: 16,
+  QBOND: 17,
+} as const;
+
+export const QUBIC_CONTRACT_ADDRESSES = {
+  QX: "BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARMID",
+  QUOTTERY: "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACNKL",
+  QTRY: "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACNKL",
+  RANDOM: "DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANMIG",
+  QUTIL: "EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVWRF",
+  MYLASTMATCH: "FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYWJB",
+  MLM: "FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYWJB",
+  GQMP: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGNM",
+  GQMPROP: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGNM",
+  SUPPLYWATCHER: "HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHYCM",
+  SWATCH: "HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHYCM",
+  CCF: "IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABXSH",
+  QEARN: "JAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKHO",
+  QVAULT: "KAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXIUO",
+  MSVAULT: "LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKPTJ",
+  QBAY: "MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWLWD",
+  QSWAP: "NAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAML",
+  NOSTROMO: "OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZTPD",
+  NOST: "OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZTPD",
+  QDRAW: "PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYVRC",
+  RANDOMLOTTERY: "QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPIYE",
+  RL: "QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPIYE",
+  QBOND: "RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADKAH",
 } as const;
 
 /**

@@ -74,6 +74,13 @@ export {
   queryCCF,
 } from "./utils/smart-contract.ts";
 
+// ===== Wallet helpers =====
+export * from "./wallet/index.ts";
+export * from "./wallet/walletconnect.ts";
+
+// ===== React helpers =====
+export * from "./react/index.ts";
+
 // ===== Default Export =====
 /**
  * Create a new Qubic client with all services
@@ -108,3 +115,4 @@ export function createQubicClient(config?: {
 export const qubic = createQubicClient();
 // Export validation utilities
 export * from "./utils/validation.ts";
+export * from "./utils/procedures.ts";

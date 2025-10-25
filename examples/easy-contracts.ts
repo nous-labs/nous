@@ -1,8 +1,8 @@
-// Easy smart contract querying examples
+﻿// Easy smart contract querying examples
 // This shows the simplified API for querying Qubic smart contracts
 
 import { QubicLiveClient } from "../src/clients/qubic-live-client.ts";
-import { qx, qutil, quottery, random, qearn, qswap, qvault, ccf, query, simpleQuery } from "../src/utils/contracts-easy.ts";
+import { qx, qutil, quottery, qearn, qswap, qvault, ccf, query, simpleQuery } from "../src/utils/contracts-easy.ts";
 
 const client = new QubicLiveClient();
 
@@ -11,17 +11,24 @@ const client = new QubicLiveClient();
 async function qxExamples() {
   console.log("\n=== QX Exchange ===");
 
-  // Get entity info - super simple!
-  const entity = await qx.getEntity(client, 1);
-  console.log("Entity:", entity);
+  const issuer = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+  const trader = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+  const assetName = 1n;
 
-  // Get order book
-  const orderBook = await qx.getOrderBook(client, 0, 0, 10);
-  console.log("Order book:", orderBook.raw);
-
-  // Get fees
   const fees = await qx.getFees(client);
   console.log("Fees:", fees);
+
+  const askOrders = await qx.getAssetAskOrders(client, issuer, assetName);
+  console.log("Top ask orders:", askOrders.orders.slice(0, 3));
+
+  const bidOrders = await qx.getAssetBidOrders(client, issuer, assetName);
+  console.log("Top bid orders:", bidOrders.orders.slice(0, 3));
+
+  const entityAsks = await qx.getEntityAskOrders(client, trader);
+  console.log("Entity ask orders:", entityAsks.orders.slice(0, 3));
+
+  const entityBids = await qx.getEntityBidOrders(client, trader);
+  console.log("Entity bid orders:", entityBids.orders.slice(0, 3));
 }
 
 // ===== QUTIL Examples =====
@@ -29,16 +36,23 @@ async function qxExamples() {
 async function qutilExamples() {
   console.log("\n=== QUTIL ===");
 
-  // Send to multiple addresses
-  const result = await qutil.sendToMany(client, [
-    { address: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", amount: 1000n },
-    { address: "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB", amount: 2000n },
-  ]);
-  console.log("Send to many result:", result);
+  const sendFee = await qutil.getSendToManyV1Fee(client);
+  console.log("SendToMany fee:", sendFee.fee);
 
-  // Get contract info
-  const info = await qutil.getContractInfo(client);
-  console.log("Contract info:", info);
+  const totalShares = await qutil.getTotalNumberOfAssetShares(client, {
+    issuer: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    assetName: 1n,
+  });
+  console.log("Total shares for asset:", totalShares.totalShares);
+
+  const polls = await qutil.getPollsByCreator(client, "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+  console.log("Poll IDs by creator:", polls);
+
+  const currentPolls = await qutil.getCurrentPollId(client);
+  console.log("Current poll index:", currentPolls.currentPollId);
+
+  const firstPollInfo = await qutil.getPollInfo(client, 0n);
+  console.log("Poll #0 info (might be empty):", firstPollInfo);
 }
 
 // ===== QUOTTERY Betting Examples =====
@@ -46,35 +60,20 @@ async function qutilExamples() {
 async function quotteryExamples() {
   console.log("\n=== QUOTTERY ===");
 
-  // Get active bet
-  const bet = await quottery.getActiveBet(client, 1);
-  console.log("Active bet:", bet);
+  const stats = await quottery.basicInfo(client);
+  console.log("Contract stats:", stats);
 
-  // Get bet list
-  const bets = await quottery.getBetList(client, 0, 10);
-  console.log("Bet list:", bets.raw);
+  const betInfo = await quottery.getBetInfo(client, 1);
+  console.log("Bet #1 info:", betInfo);
 
-  // Get user bets
-  const userBets = await quottery.getUserBets(client, "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
-  console.log("User bets:", userBets.raw);
-}
+  const optionDetail = await quottery.getBetOptionDetail(client, 1, 0);
+  console.log("Bet #1 option 0 bettors (first 5):", optionDetail.bettors.slice(0, 5));
 
-// ===== RANDOM Examples =====
+  const active = await quottery.getActiveBet(client);
+  console.log("Active bets count:", active.count);
 
-async function randomExamples() {
-  console.log("\n=== RANDOM ===");
-
-  // Get random number
-  const randomNum = await random.getRandomNumber(client);
-  console.log("Random number:", randomNum);
-
-  // Get random number with seed
-  const randomWithSeed = await random.getRandomNumber(client, 12345);
-  console.log("Random with seed:", randomWithSeed);
-
-  // Get random bytes
-  const randomBytes = await random.getRandomBytes(client, 32);
-  console.log("Random bytes:", randomBytes.bytes);
+  const byCreator = await quottery.getBetByCreator(client, "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
+  console.log("Creator bet IDs (first 5):", byCreator.betId.slice(0, 5));
 }
 
 // ===== QEARN Staking Examples =====
@@ -82,17 +81,30 @@ async function randomExamples() {
 async function qearnExamples() {
   console.log("\n=== QEARN ===");
 
-  // Get staking info
-  const stakingInfo = await qearn.getStakingInfo(client, "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-  console.log("Staking info:", stakingInfo);
+  const epochStats = await qearn.getLockInfoPerEpoch(client, 170);
+  console.log("Epoch 170 lock info:", epochStats);
 
-  // Get total staked
-  const totalStaked = await qearn.getTotalStaked(client);
-  console.log("Total staked:", totalStaked);
+  const user = "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE";
+  const userLocked = await qearn.getUserLockedInfo(client, user, 170);
+  console.log("User locked amount at epoch 170:", userLocked.lockedAmount);
 
-  // Get rewards for tick range
-  const rewards = await qearn.getRewards(client, 15000000, 15100000);
-  console.log("Rewards:", rewards.raw);
+  const roundState = await qearn.getStateOfRound(client, 170);
+  console.log("Round state:", roundState.state);
+
+  const userStatus = await qearn.getUserLockStatus(client, user);
+  console.log("User lock bitmap:", userStatus.status.toString());
+
+  const endedStatus = await qearn.getEndedStatus(client, user);
+  console.log("Ended status:", endedStatus);
+
+  const statsPerEpoch = await qearn.getStatsPerEpoch(client, 170);
+  console.log("Stats per epoch:", statsPerEpoch);
+
+  const burnedBoosted = await qearn.getBurnedAndBoostedStats(client);
+  console.log("Burned/boosted stats:", burnedBoosted);
+
+  const burnedBoostedEpoch = await qearn.getBurnedAndBoostedStatsPerEpoch(client, 170);
+  console.log("Burned/boosted stats for epoch 170:", burnedBoostedEpoch);
 }
 
 // ===== QSWAP Examples =====
@@ -100,13 +112,42 @@ async function qearnExamples() {
 async function qswapExamples() {
   console.log("\n=== QSWAP ===");
 
-  // Get pair info
-  const pairInfo = await qswap.getPairInfo(client, 1);
-  console.log("Pair info:", pairInfo);
+  const fees = await qswap.getFees(client);
+  console.log("Fees:", fees);
 
-  // Get swap quote
-  const quote = await qswap.getQuote(client, 1000n, "QUBIC", "QX");
-  console.log("Swap quote:", quote);
+  const poolState = await qswap.getPoolBasicState(
+    client,
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    1n,
+  );
+  console.log("Pool state:", poolState);
+
+  const liquidity = await qswap.getLiquidityOf(
+    client,
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    1n,
+    "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+  );
+  console.log("Liquidity:", liquidity);
+
+  const quToAsset = await qswap.quoteExactQuInput(
+    client,
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    1n,
+    1000n,
+  );
+  console.log("Exact qu -> asset:", quToAsset);
+
+  const assetToQu = await qswap.quoteExactAssetInput(
+    client,
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    1n,
+    1000n,
+  );
+  console.log("Exact asset -> qu:", assetToQu);
+
+  const teamInfo = await qswap.getTeamInfo(client);
+  console.log("Team info:", teamInfo);
 }
 
 // ===== QVAULT Examples =====
@@ -114,13 +155,8 @@ async function qswapExamples() {
 async function qvaultExamples() {
   console.log("\n=== QVAULT ===");
 
-  // Get vault balance
-  const vaultBalance = await qvault.getVaultBalance(client, 1);
-  console.log("Vault balance:", vaultBalance);
-
-  // Get user vaults
-  const userVaults = await qvault.getUserVaults(client, "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-  console.log("User vaults:", userVaults.raw);
+  const vaultData = await qvault.getData(client);
+  console.log("Vault data:", vaultData);
 }
 
 // ===== CCF Examples =====
@@ -128,13 +164,29 @@ async function qvaultExamples() {
 async function ccfExamples() {
   console.log("\n=== CCF ===");
 
-  // Get fund info
-  const fundInfo = await ccf.getFundInfo(client);
-  console.log("Fund info:", fundInfo);
+  const indices = await ccf.getProposalIndices(client, {
+    activeProposals: true,
+    prevProposalIndex: -1,
+  });
+  console.log("Active proposal indices:", indices);
 
-  // Get proposal
-  const proposal = await ccf.getProposal(client, 1);
-  console.log("Proposal:", proposal);
+  if (indices.indices.length > 0) {
+    const index = indices.indices[0]!;
+    const proposal = await ccf.getProposal(client, index);
+    console.log(`Proposal #${index} (raw):`, proposal.raw);
+
+    const vote = await ccf.getVote(client, index);
+    console.log(`Vote data for #${index}:`, vote.raw);
+
+    const results = await ccf.getVotingResults(client, index);
+    console.log(`Results for #${index}:`, results.raw);
+  }
+
+  const latestTransfers = await ccf.getLatestTransfers(client);
+  console.log("Latest transfers payload:", latestTransfers.raw);
+
+  const proposalFee = await ccf.getProposalFee(client);
+  console.log("Proposal fee:", proposalFee.proposalFee);
 }
 
 // ===== Generic Query Examples =====
@@ -171,23 +223,23 @@ async function comparisonExample() {
   console.log("\nOLD WAY:");
   const { createQuery, parseResponse, QUBIC_CONTRACTS } = await import("../src/utils/smart-contract.ts");
 
-  const oldQuery = createQuery(QUBIC_CONTRACTS.QX, 1)
-    .addInt32(1);
+  const oldQuery = createQuery(QUBIC_CONTRACTS.QX, 1);
 
   const oldResponse = await oldQuery.execute(client);
   const oldParser = parseResponse(oldResponse.responseData);
   const oldResult = {
-    entityId: oldParser.readInt32(),
-    orderCount: oldParser.readInt32(),
+    assetIssuanceFee: oldParser.readInt32(),
+    transferFee: oldParser.readInt32(),
+    tradeFee: oldParser.readInt32(),
   };
   console.log("Result:", oldResult);
 
   // NEW WAY - clean and simple!
   console.log("\nNEW WAY:");
-  const newResult = await qx.getEntity(client, 1);
+  const newResult = await qx.getFees(client);
   console.log("Result:", newResult);
 
-  console.log("\nMuch easier! 🎉");
+  console.log("\nMuch easier! ðŸŽ‰");
 }
 
 // ===== Run all examples =====
@@ -201,7 +253,6 @@ async function main() {
     // await qxExamples();
     // await qutilExamples();
     // await quotteryExamples();
-    // await randomExamples();
     // await qearnExamples();
     // await qswapExamples();
     // await qvaultExamples();
@@ -209,7 +260,7 @@ async function main() {
     // await genericExamples();
     await comparisonExample();
 
-    console.log("\n✅ All examples completed!");
+    console.log("\nAll examples completed!");
   } catch (error) {
     console.error("Error:", error);
   }
@@ -219,3 +270,4 @@ async function main() {
 if (import.meta.main) {
   main();
 }
+

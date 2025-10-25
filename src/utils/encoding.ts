@@ -24,6 +24,24 @@ export function base64ToHex(base64: string): string {
 }
 
 /**
+ * Encode an ASCII string (max 8 chars) into a uint64 number
+ * @param text - ASCII string (max 8 characters)
+ * @returns uint64 bigint
+ */
+export function stringToUint64(text: string): bigint {
+  if (text.length > 8) {
+    throw new Error("Text too long to encode into uint64 (max 8 ASCII chars)");
+  }
+
+  // Convert to hex, pad to 8 bytes (16 hex chars)
+  const hex = stringToHex(text);
+  const paddedHex = padHex(hex, 8, false); // pad at end
+
+  // Decode as big-endian integer
+  return BigInt("0x" + paddedHex);
+}
+
+/**
  * Convert bytes to base64
  * @param bytes - Uint8Array of bytes
  * @returns Base64 encoded string
