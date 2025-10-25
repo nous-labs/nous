@@ -1,4 +1,5 @@
 {
-  "title": "Framework Integrations",
-  "description": "Recipes for wiring the Qubic TypeScript SDK into popular front-end and back-end frameworks."
+  "title": "React Integrations",
+  "description": "React hooks and providers for Qubic blockchain integration",
+  "pages": ["index", "react-simple", "react-query", "react-query-contracts"]
 }

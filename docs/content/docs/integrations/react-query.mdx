@@ -1,0 +1,673 @@
+---
+title: React Query Integration
+description: Type-safe hooks for Qubic blockchain data fetching with @tanstack/react-query
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# React Query Integration
+
+Seamlessly integrate Qubic blockchain data into your React applications with ready-made hooks, automatic caching, and optimized refetching strategies.
+
+<Callout type="info">
+  The React Query integration is a **separate submodule** that wraps the core SDK with TanStack Query (React Query) hooks. It provides automatic background refetching, request deduplication, and optimistic updates out of the box.
+</Callout>
+
+## Installation
+
+Install both the SDK and React Query:
+
+<Tabs items={['npm', 'yarn', 'bun', 'pnpm']}>
+  <Tab value="npm">
+    ```bash
+    npm install @nvlabs/qts @tanstack/react-query react
+    ```
+  </Tab>
+  <Tab value="yarn">
+    ```bash
+    yarn add @nvlabs/qts @tanstack/react-query react
+    ```
+  </Tab>
+  <Tab value="bun">
+    ```bash
+    bun add @nvlabs/qts @tanstack/react-query react
+    ```
+  </Tab>
+  <Tab value="pnpm">
+    ```bash
+    pnpm add @nvlabs/qts @tanstack/react-query react
+    ```
+  </Tab>
+</Tabs>
+
+## Quick Start
+
+### Provider Setup
+
+Wrap your application with `QubicQueryProvider` to enable all hooks:
+
+```tsx
+'use client';
+
+import { QubicQueryProvider } from '@nvlabs/qts/react/query';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <QubicQueryProvider>
+          {children}
+        </QubicQueryProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+### Basic Hook Usage
+
+Import and use any hook in your components:
+
+```tsx
+import { useCurrentTick, useBalance } from '@nvlabs/qts/react/query';
+
+export function Dashboard({ address }: { address: string }) {
+  const { data: tick, isLoading } = useCurrentTick();
+  const { data: balance } = useBalance(address);
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h1>Current Tick: {tick?.tickInfo.tick}</h1>
+      <p>Balance: {balance?.balance.balance} QUBIC</p>
+    </div>
+  );
+}
+```
+
+## Available Hooks
+
+### Live Client Hooks
+
+Query real-time network data:
+
+```tsx
+import {
+  useCurrentTick,      // Current tick information
+  useTick,             // Specific tick by number
+  useBalance,          // Account balance
+  useTransaction,      // Transaction details
+  useComputorList,     // Active computors
+  useHealthCheck,      // Network health status
+} from '@nvlabs/qts/react/query';
+```
+
+#### Example: Real-time Tick Monitor
+
+```tsx
+function TickMonitor() {
+  const { data, isLoading } = useCurrentTick({
+    refetchInterval: 1000, // Poll every second
+  });
+
+  return (
+    <div>
+      <p>Tick: {data?.tickInfo.tick}</p>
+      <p>Epoch: {data?.tickInfo.epoch}</p>
+      <p>Duration: {data?.tickInfo.durationInSeconds}s</p>
+    </div>
+  );
+}
+```
+
+#### Example: Balance with Auto-Refresh
+
+```tsx
+function BalanceCard({ identity }: { identity: string }) {
+  const { data, refetch, isFetching } = useBalance(identity, {
+    refetchInterval: 5000, // Refresh every 5 seconds
+    enabled: !!identity,   // Only fetch when identity is provided
+  });
+
+  return (
+    <div>
+      <h3>Your Balance</h3>
+      <p>{data?.balance.balance ?? '0'} QUBIC</p>
+      <button onClick={() => refetch()} disabled={isFetching}>
+        {isFetching ? 'Refreshing...' : 'Refresh'}
+      </button>
+    </div>
+  );
+}
+```
+
+### Query Client Hooks
+
+Access historical and aggregated data:
+
+```tsx
+import {
+  useEntity,                      // Entity information and stats
+  useTransactionsForIdentity,     // Transaction history
+} from '@nvlabs/qts/react/query';
+```
+
+#### Example: Transaction History
+
+```tsx
+function TransactionHistory({ identity }: { identity: string }) {
+  const { data, isLoading } = useEntity(identity);
+
+  if (isLoading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <p>Incoming: {data?.entity.incomingAmount}</p>
+      <p>Outgoing: {data?.entity.outgoingAmount}</p>
+      <p>Transfers: {data?.entity.numberOfIncomingTransfers}</p>
+    </div>
+  );
+}
+```
+
+### Archive Client Hooks
+
+Query archived blockchain data:
+
+```tsx
+import {
+  useArchivedTick,         // Historical tick data
+  useArchivedTransaction,  // Historical transaction
+} from '@nvlabs/qts/react/query';
+```
+
+### Mutation Hooks
+
+Broadcast transactions to the network:
+
+```tsx
+import { useBroadcastTransaction } from '@nvlabs/qts/react/query';
+
+function SendTransaction({ signedTx }: { signedTx: string }) {
+  const { mutate, isLoading, isSuccess, error } = useBroadcastTransaction({
+    onSuccess: (data) => {
+      console.log('Broadcast to', data.peersBroadcasted, 'peers');
+    },
+    onError: (error) => {
+      console.error('Failed:', error.message);
+    },
+  });
+
+  return (
+    <button
+      onClick={() => mutate({ signedTransaction: signedTx })}
+      disabled={isLoading}
+    >
+      {isSuccess ? 'Sent!' : isLoading ? 'Sending...' : 'Send Transaction'}
+    </button>
+  );
+}
+```
+
+## Polling Utilities
+
+Convenient hooks for real-time updates:
+
+```tsx
+import { useTickPoller, useBalancePoller } from '@nvlabs/qts/react/query';
+
+function LiveDashboard({ userAddress }: { userAddress: string }) {
+  // Poll tick every 1 second
+  const { data: tick } = useTickPoller(1000);
+
+  // Poll balance every 5 seconds
+  const { data: balance } = useBalancePoller(userAddress, 5000);
+
+  return (
+    <div>
+      <p>Live Tick: {tick?.tickInfo.tick}</p>
+      <p>Your Balance: {balance?.balance.balance}</p>
+    </div>
+  );
+}
+```
+
+<Callout type="warn">
+  Use polling sparingly. Excessive polling can strain the network and your app's performance. For most use cases, manual refetch or refetchInterval of 5-10 seconds is sufficient.
+</Callout>
+
+## Advanced Provider Configuration
+
+### Custom QueryClient Configuration
+
+Fine-tune React Query behavior:
+
+```tsx
+import { QubicQueryProvider } from '@nvlabs/qts/react/query';
+
+export default function App({ children }: { children: React.ReactNode }) {
+  return (
+    <QubicQueryProvider
+      queryClientConfig={{
+        defaultOptions: {
+          queries: {
+            staleTime: 10000,           // 10 seconds before data is stale
+            gcTime: 1000 * 60 * 5,      // 5 minutes in cache
+            retry: 3,                    // Retry failed requests 3 times
+            refetchOnWindowFocus: true,  // Refetch when tab regains focus
+          },
+        },
+      }}
+      qubicConfig={{
+        config: {
+          timeout: 60000,  // 60 second timeout
+          liveUrl: 'https://custom-rpc.qubic.org',
+        },
+      }}
+    >
+      {children}
+    </QubicQueryProvider>
+  );
+}
+```
+
+### Separate Providers
+
+Use `QubicReactQueryProvider` when you already have `QubicProvider` in your tree:
+
+```tsx
+import { QubicProvider } from '@nvlabs/qts/react';
+import { QubicReactQueryProvider } from '@nvlabs/qts/react/query';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QubicProvider>
+      <QubicReactQueryProvider>
+        {children}
+      </QubicReactQueryProvider>
+    </QubicProvider>
+  );
+}
+```
+
+## Query Keys
+
+Standardized query keys for manual cache management:
+
+```tsx
+import { qubicQueryKeys } from '@nvlabs/qts/react/query';
+import { useQueryClient } from '@tanstack/react-query';
+
+function CacheControls() {
+  const queryClient = useQueryClient();
+
+  // Invalidate all live queries
+  const refreshLive = () => {
+    queryClient.invalidateQueries({ queryKey: qubicQueryKeys.live() });
+  };
+
+  // Invalidate specific balance
+  const refreshBalance = (address: string) => {
+    queryClient.invalidateQueries({ queryKey: qubicQueryKeys.balance(address) });
+  };
+
+  // Prefetch a tick
+  const prefetchTick = (tickNumber: number) => {
+    queryClient.prefetchQuery({
+      queryKey: qubicQueryKeys.tick(tickNumber),
+      queryFn: () => qubic.live.getTickInfo(tickNumber),
+    });
+  };
+
+  return (
+    <div>
+      <button onClick={refreshLive}>Refresh All Live Data</button>
+      <button onClick={() => refreshBalance('ADDR...')}>Refresh Balance</button>
+    </div>
+  );
+}
+```
+
+### Available Query Keys
+
+```typescript
+qubicQueryKeys.all                      // ['qubic']
+qubicQueryKeys.live()                   // ['qubic', 'live']
+qubicQueryKeys.currentTick()            // ['qubic', 'live', 'tick', 'current']
+qubicQueryKeys.tick(12345)              // ['qubic', 'live', 'tick', 12345]
+qubicQueryKeys.balance('ADDR')          // ['qubic', 'live', 'balance', 'ADDR']
+qubicQueryKeys.transaction('TX_ID')     // ['qubic', 'live', 'transaction', 'TX_ID']
+qubicQueryKeys.entity('ADDR')           // ['qubic', 'query', 'entity', 'ADDR']
+qubicQueryKeys.archivedTick(12345)      // ['qubic', 'archive', 'tick', 12345]
+```
+
+## Optimistic Updates
+
+Update the cache immediately before the server confirms:
+
+```tsx
+import { useBroadcastTransaction, qubicQueryKeys } from '@nvlabs/qts/react/query';
+import { useQueryClient } from '@tanstack/react-query';
+
+function SendWithOptimisticUpdate({ userAddress }: { userAddress: string }) {
+  const queryClient = useQueryClient();
+
+  const { mutate } = useBroadcastTransaction({
+    // Update cache before mutation
+    onMutate: async ({ signedTransaction }) => {
+      await queryClient.cancelQueries({
+        queryKey: qubicQueryKeys.balance(userAddress),
+      });
+
+      const previous = queryClient.getQueryData(
+        qubicQueryKeys.balance(userAddress)
+      );
+
+      // Optimistically update balance
+      queryClient.setQueryData(
+        qubicQueryKeys.balance(userAddress),
+        (old: any) => ({
+          ...old,
+          balance: {
+            ...old.balance,
+            balance: String(Number(old.balance.balance) - 1000000),
+          },
+        })
+      );
+
+      return { previous };
+    },
+
+    // Rollback on error
+    onError: (err, variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(
+          qubicQueryKeys.balance(userAddress),
+          context.previous
+        );
+      }
+    },
+
+    // Refetch after mutation settles
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: qubicQueryKeys.balance(userAddress),
+      });
+    },
+  });
+
+  return <button onClick={() => mutate({ signedTransaction: 'signed_tx' })}>Send</button>;
+}
+```
+
+## Conditional Fetching
+
+Only fetch when conditions are met:
+
+```tsx
+function ConditionalTransaction({ txId, shouldFetch }: { txId: string; shouldFetch: boolean }) {
+  const { data, isLoading } = useTransaction(txId, {
+    enabled: shouldFetch && !!txId && txId.length === 60, // Only fetch valid txIds
+  });
+
+  if (!shouldFetch) return <div>Paused</div>;
+  if (isLoading) return <div>Loading...</div>;
+
+  return <div>Transaction: {data?.transaction.sourcePublicId}</div>;
+}
+```
+
+## Error Handling
+
+Handle errors gracefully with React Query's built-in error state:
+
+```tsx
+function BalanceWithError({ address }: { address: string }) {
+  const { data, error, isError, isLoading } = useBalance(address);
+
+  if (isLoading) return <div>Loading...</div>;
+
+  if (isError) {
+    return (
+      <div className="error">
+        <p>Failed to load balance</p>
+        <p>{error.message}</p>
+        {error.status === 404 && <p>Identity not found</p>}
+        {error.status === 408 && <p>Request timeout - try again</p>}
+      </div>
+    );
+  }
+
+  return <div>Balance: {data?.balance.balance}</div>;
+}
+```
+
+## React Query DevTools
+
+Enable DevTools for debugging in development:
+
+```tsx
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { QubicQueryProvider } from '@nvlabs/qts/react/query';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QubicQueryProvider>
+      {children}
+      {process.env.NODE_ENV === 'development' && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+    </QubicQueryProvider>
+  );
+}
+```
+
+## Best Practices
+
+### 1. Use Appropriate Stale Times
+
+Different data types have different freshness requirements:
+
+```tsx
+// Current tick - refresh frequently (1 second)
+useCurrentTick({ staleTime: 1000 });
+
+// Balance - moderate refresh (5 seconds)
+useBalance(address, { staleTime: 5000 });
+
+// Historical tick - never stale
+useTick(tickNumber, { staleTime: Infinity });
+```
+
+### 2. Enable Queries Conditionally
+
+```tsx
+// ✅ Good: Only fetch when address is valid
+const { data } = useBalance(address, {
+  enabled: !!address && address.length === 60,
+});
+
+// ❌ Bad: Fetch with invalid data
+const { data } = useBalance('');
+```
+
+### 3. Coordinate Dependent Queries
+
+```tsx
+function TickWithDetails({ tickNumber }: { tickNumber: number }) {
+  const { data: tick } = useTick(tickNumber);
+
+  // Only fetch computors after we have the epoch
+  const { data: computors } = useComputorList(tick?.tickInfo.epoch, {
+    enabled: !!tick?.tickInfo.epoch,
+  });
+
+  return (
+    <div>
+      <p>Tick: {tickNumber}</p>
+      <p>Epoch: {tick?.tickInfo.epoch}</p>
+      <p>Computors: {computors?.computors.length ?? 'Loading...'}</p>
+    </div>
+  );
+}
+```
+
+### 4. Cache Management
+
+```tsx
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { qubicQueryKeys } from '@nvlabs/qts/react/query';
+
+function TickSubscription() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Invalidate tick every minute
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: qubicQueryKeys.live() });
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [queryClient]);
+
+  return null;
+}
+```
+
+## Migration from Direct API Calls
+
+### Before (Direct API)
+
+```tsx
+import { useEffect, useState } from 'react';
+import { createQubicClient } from '@nvlabs/qts';
+
+function Balance({ address }: { address: string }) {
+  const [balance, setBalance] = useState<string>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error>();
+
+  useEffect(() => {
+    const client = createQubicClient();
+    setLoading(true);
+    client.live.getBalance(address)
+      .then((res) => setBalance(res.balance.balance))
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [address]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  return <div>Balance: {balance}</div>;
+}
+```
+
+### After (React Query)
+
+```tsx
+import { useBalance } from '@nvlabs/qts/react/query';
+
+function Balance({ address }: { address: string }) {
+  const { data, isLoading, error } = useBalance(address);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  return <div>Balance: {data?.balance.balance}</div>;
+}
+```
+
+Benefits:
+- ✅ Automatic caching and deduplication
+- ✅ Background refetching on focus/reconnect
+- ✅ Built-in loading and error states
+- ✅ No manual state management
+- ✅ TypeScript type safety
+
+## Common Patterns
+
+### Multi-Asset Dashboard
+
+```tsx
+function AssetDashboard({ identity }: { identity: string }) {
+  const { data: balance } = useBalance(identity);
+  const { data: entity } = useEntity(identity);
+  const { data: tick } = useCurrentTick();
+
+  return (
+    <div>
+      <h2>Account Overview</h2>
+      <p>Balance: {balance?.balance.balance} QUBIC</p>
+      <p>Incoming: {entity?.entity.numberOfIncomingTransfers} transfers</p>
+      <p>Outgoing: {entity?.entity.numberOfOutgoingTransfers} transfers</p>
+      <p>Network Tick: {tick?.tickInfo.tick}</p>
+    </div>
+  );
+}
+```
+
+### Transaction Monitor with Polling
+
+```tsx
+function TransactionMonitor({ txId }: { txId: string }) {
+  const { data, isLoading } = useTransaction(txId, {
+    refetchInterval: (data) => {
+      // Stop polling once we have the transaction
+      return data ? false : 2000;
+    },
+  });
+
+  return (
+    <div>
+      {isLoading && <p>Searching for transaction...</p>}
+      {data && (
+        <div>
+          <p>✓ Transaction found!</p>
+          <p>From: {data.transaction.sourcePublicId}</p>
+          <p>To: {data.transaction.destPublicId}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+<Callout type="info">
+  The React Query integration automatically handles the fetch context binding issue mentioned in the error. All API calls are properly bound to ensure browser compatibility.
+</Callout>
+
+## TypeScript Support
+
+All hooks include full TypeScript definitions:
+
+```tsx
+import type {
+  GetTickInfoResponse,
+  GetBalanceResponse,
+  GetTransactionResponse,
+} from '@nvlabs/qts';
+
+function TypedComponent() {
+  // data is typed as GetTickInfoResponse | undefined
+  const { data: tick } = useCurrentTick();
+
+  // balance is typed as GetBalanceResponse | undefined
+  const { data: balance } = useBalance('ADDRESS');
+
+  // Transform with type safety
+  const { data: amount } = useBalance('ADDRESS', {
+    select: (data: GetBalanceResponse) => Number(data.balance.balance),
+  });
+
+  return <div>Amount: {amount}</div>;
+}
+```
+
+## Next Steps
+
+- **[Frontend Integrations](/docs/integrations/frontend)**: Learn about React providers and WalletConnect
+- **[Operations](/docs/integrations/operations)**: Production deployment patterns
+- **[API Reference](/docs/api-clients)**: Explore all available API methods
+- **[Examples](/docs/examples)**: More practical code examples

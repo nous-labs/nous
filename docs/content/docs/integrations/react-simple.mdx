@@ -1,0 +1,628 @@
+---
+title: React Providers (Simple)
+description: Basic React context providers for Qubic blockchain integration
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# React Providers (Simple)
+
+Use React context providers for direct access to Qubic clients. Perfect for simple applications, prototypes, and when you want full control over state management.
+
+<Callout type="info">
+  Looking for automatic caching and background refetching? Check out the [React Query Integration](/docs/integrations/react-query) instead.
+</Callout>
+
+## Installation
+
+```bash
+npm install @nvlabs/qts react
+```
+
+## QubicProvider
+
+Wrap your app with `QubicProvider` to access Qubic clients anywhere in your component tree.
+
+### Basic Setup
+
+```tsx
+import { QubicProvider } from '@nvlabs/qts/react';
+
+export default function App() {
+  return (
+    <QubicProvider>
+      <YourApp />
+    </QubicProvider>
+  );
+}
+```
+
+### With Custom Configuration
+
+```tsx
+import { QubicProvider } from '@nvlabs/qts/react';
+
+export default function App() {
+  return (
+    <QubicProvider
+      config={{
+        baseUrl: 'https://custom-rpc.qubic.org',
+        timeout: 60000,
+        headers: {
+          'X-API-Key': 'your-api-key',
+        },
+      }}
+    >
+      <YourApp />
+    </QubicProvider>
+  );
+}
+```
+
+### With Custom Clients
+
+```tsx
+import { QubicProvider } from '@nvlabs/qts/react';
+import { createQubicClient } from '@nvlabs/qts';
+
+const clients = createQubicClient({
+  timeout: 30000,
+  // custom config
+});
+
+export default function App() {
+  return (
+    <QubicProvider clients={clients}>
+      <YourApp />
+    </QubicProvider>
+  );
+}
+```
+
+## useQubic Hook
+
+Access Qubic clients from any component:
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+
+function Component() {
+  const { live, query, archive } = useQubic();
+  
+  // live - Real-time network data (QubicLiveClient)
+  // query - Historical data and analytics (QueryClient)
+  // archive - Legacy archive data (ArchiveClient)
+  
+  return <div>...</div>;
+}
+```
+
+### Example: Get Current Tick
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { useEffect, useState } from 'react';
+
+function CurrentTick() {
+  const { live } = useQubic();
+  const [tick, setTick] = useState<number>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    live.getTickInfo()
+      .then(response => setTick(response.tickInfo.tick))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [live]);
+
+  if (loading) return <div>Loading...</div>;
+  return <div>Current Tick: {tick}</div>;
+}
+```
+
+### Example: Get Balance
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { useEffect, useState } from 'react';
+
+function Balance({ address }: { address: string }) {
+  const { live } = useQubic();
+  const [balance, setBalance] = useState<string>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error>();
+
+  useEffect(() => {
+    if (!address) return;
+    
+    setLoading(true);
+    setError(undefined);
+    
+    live.getBalance(address)
+      .then(response => setBalance(response.balance.balance))
+      .catch(setError)
+      .finally(() => setLoading(false));
+  }, [address, live]);
+
+  if (loading) return <div>Loading balance...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  return <div>Balance: {balance} QUBIC</div>;
+}
+```
+
+### Example: Transaction History
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { useEffect, useState } from 'react';
+
+function TransactionHistory({ identity }: { identity: string }) {
+  const { query } = useQubic();
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    query.getTransactionsForIdentity(identity, {
+      pagination: { offset: 0, size: 10 }
+    })
+      .then(response => setTransactions(response.transactions))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [identity, query]);
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h2>Recent Transactions</h2>
+      {transactions.map((tx, i) => (
+        <div key={i}>
+          {tx.sourceId} → {tx.destId}: {tx.amount}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## WalletConnect Integration
+
+### Setup
+
+```tsx
+import { QubicProvider } from '@nvlabs/qts/react';
+import { WalletConnectProvider } from '@nvlabs/qts/react';
+
+export default function App() {
+  return (
+    <QubicProvider>
+      <WalletConnectProvider
+        options={{
+          projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
+          metadata: {
+            name: 'My Qubic App',
+            description: 'My awesome Qubic application',
+            url: 'https://myapp.com',
+            icons: ['https://myapp.com/icon.png'],
+          },
+        }}
+      >
+        <YourApp />
+      </WalletConnectProvider>
+    </QubicProvider>
+  );
+}
+```
+
+### useWalletConnect Hook
+
+```tsx
+import { useWalletConnect } from '@nvlabs/qts/react';
+
+function WalletButton() {
+  const {
+    connect,
+    disconnect,
+    accounts,
+    pairingUri,
+    isConnecting,
+    ready,
+  } = useWalletConnect();
+
+  if (!ready) return <div>Initializing...</div>;
+
+  if (accounts.length === 0) {
+    return (
+      <div>
+        <button onClick={connect} disabled={isConnecting}>
+          {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+        </button>
+        {pairingUri && (
+          <div>
+            <p>Scan QR code in your wallet:</p>
+            <pre>{pairingUri}</pre>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p>Connected: {accounts[0].identity.slice(0, 10)}...</p>
+      <button onClick={disconnect}>Disconnect</button>
+    </div>
+  );
+}
+```
+
+### Sign and Broadcast Transaction
+
+```tsx
+import { useWalletConnect, useQubic } from '@nvlabs/qts/react';
+import { useState } from 'react';
+
+function SendTransaction({ to, amount }: { to: string; amount: string }) {
+  const { signAndBroadcast } = useWalletConnect();
+  const { live } = useQubic();
+  const [status, setStatus] = useState<string>('');
+
+  const handleSend = async () => {
+    try {
+      setStatus('Signing...');
+      
+      const result = await signAndBroadcast({
+        client: live,
+        transaction: {
+          destId: to,
+          amount: amount,
+        },
+      });
+      
+      setStatus('Transaction sent!');
+      console.log('Result:', result);
+    } catch (error) {
+      setStatus('Error: ' + (error as Error).message);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handleSend}>Send {amount} QUBIC</button>
+      {status && <p>{status}</p>}
+    </div>
+  );
+}
+```
+
+## Common Patterns
+
+### Polling for Updates
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { useEffect, useState } from 'react';
+
+function LiveTicker() {
+  const { live } = useQubic();
+  const [tick, setTick] = useState<number>();
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await live.getTickInfo();
+        setTick(response.tickInfo.tick);
+      } catch (error) {
+        console.error('Failed to fetch tick:', error);
+      }
+    }, 1000); // Poll every second
+
+    return () => clearInterval(interval);
+  }, [live]);
+
+  return <div>Live Tick: {tick ?? 'Loading...'}</div>;
+}
+```
+
+<Callout type="warn">
+  Be careful with polling intervals. Too frequent polling can strain both your app and the network. Consider using React Query for better polling management.
+</Callout>
+
+### Fetching on User Action
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { useState } from 'react';
+
+function BalanceChecker() {
+  const { live } = useQubic();
+  const [address, setAddress] = useState('');
+  const [balance, setBalance] = useState<string>();
+  const [loading, setLoading] = useState(false);
+
+  const checkBalance = async () => {
+    if (!address) return;
+    
+    setLoading(true);
+    try {
+      const response = await live.getBalance(address);
+      setBalance(response.balance.balance);
+    } catch (error) {
+      console.error(error);
+      setBalance('Error fetching balance');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <input
+        value={address}
+        onChange={(e) => setAddress(e.target.value)}
+        placeholder="Enter Qubic address"
+      />
+      <button onClick={checkBalance} disabled={loading}>
+        {loading ? 'Checking...' : 'Check Balance'}
+      </button>
+      {balance && <p>Balance: {balance}</p>}
+    </div>
+  );
+}
+```
+
+### Smart Contract Query
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
+import { useEffect, useState } from 'react';
+
+function ContractQuery() {
+  const { live } = useQubic();
+  const [result, setResult] = useState<any>();
+
+  useEffect(() => {
+    const query = createQuery(QUBIC_CONTRACTS.QX, 1); // QX fees query
+    
+    query.execute(live)
+      .then(response => {
+        const parser = parseResponse(response.responseData);
+        setResult({
+          assetIssuanceFee: parser.readInt32(),
+          transferFee: parser.readInt32(),
+          tradeFee: parser.readInt32(),
+        });
+      })
+      .catch(console.error);
+  }, [live]);
+
+  return (
+    <div>
+      {result && (
+        <>
+          <p>Asset Issuance Fee: {result.assetIssuanceFee}</p>
+          <p>Transfer Fee: {result.transferFee}</p>
+          <p>Trade Fee: {result.tradeFee}</p>
+        </>
+      )}
+    </div>
+  );
+}
+```
+
+## Error Handling
+
+### Basic Error Handling
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { useEffect, useState } from 'react';
+
+function SafeComponent({ address }: { address: string }) {
+  const { live } = useQubic();
+  const [data, setData] = useState<any>();
+  const [error, setError] = useState<string>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(undefined);
+
+    live.getBalance(address)
+      .then(response => setData(response))
+      .catch(err => {
+        if (err.status === 404) {
+          setError('Address not found');
+        } else if (err.status === 408) {
+          setError('Request timeout - try again');
+        } else {
+          setError('An error occurred: ' + err.message);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [address, live]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="error">{error}</div>;
+  if (!data) return <div>No data</div>;
+
+  return <div>Balance: {data.balance.balance}</div>;
+}
+```
+
+### Error Boundary
+
+```tsx
+import { Component, ReactNode } from 'react';
+
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  state = { hasError: false, error: undefined };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div>
+          <h2>Something went wrong</h2>
+          <p>{this.state.error?.message}</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Usage
+function App() {
+  return (
+    <ErrorBoundary>
+      <QubicProvider>
+        <YourApp />
+      </QubicProvider>
+    </ErrorBoundary>
+  );
+}
+```
+
+## Best Practices
+
+### 1. Use useEffect for Data Fetching
+
+```tsx
+// ✅ Good: Use useEffect with cleanup
+useEffect(() => {
+  let cancelled = false;
+
+  live.getBalance(address)
+    .then(response => {
+      if (!cancelled) setBalance(response.balance.balance);
+    });
+
+  return () => { cancelled = true; };
+}, [address, live]);
+
+// ❌ Bad: Fetch on render without cleanup
+live.getBalance(address).then(setBalance);
+```
+
+### 2. Handle Loading States
+
+```tsx
+// ✅ Good: Proper loading states
+if (loading) return <Skeleton />;
+if (error) return <ErrorMessage error={error} />;
+if (!data) return <NoData />;
+return <DataDisplay data={data} />;
+
+// ❌ Bad: No loading feedback
+return <div>{data?.value}</div>;
+```
+
+### 3. Memoize Derived Values
+
+```tsx
+import { useMemo } from 'react';
+
+// ✅ Good: Memoize expensive computations
+const totalAmount = useMemo(() => {
+  return transactions.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
+}, [transactions]);
+
+// ❌ Bad: Compute on every render
+const totalAmount = transactions.reduce((sum, tx) => sum + BigInt(tx.amount), 0n);
+```
+
+### 4. Avoid Memory Leaks
+
+```tsx
+// ✅ Good: Cancel on unmount
+useEffect(() => {
+  const controller = new AbortController();
+  
+  fetchData(controller.signal);
+  
+  return () => controller.abort();
+}, []);
+
+// ❌ Bad: No cleanup
+useEffect(() => {
+  fetchData();
+}, []);
+```
+
+## Limitations
+
+When using basic React providers, you'll need to manually handle:
+
+- **Caching** - Data is refetched on every mount
+- **Deduplication** - Multiple components fetch the same data
+- **Background refetching** - No automatic updates
+- **Stale data** - No automatic refresh strategies
+- **Loading states** - Manage manually in each component
+- **Error retries** - Implement retry logic yourself
+
+<Callout type="info">
+  For automatic handling of these concerns, consider using the [React Query Integration](/docs/integrations/react-query) which provides built-in solutions for all of these challenges.
+</Callout>
+
+## Migration to React Query
+
+If you need better data management, you can easily migrate to React Query:
+
+### Before (Basic Provider)
+
+```tsx
+import { useQubic } from '@nvlabs/qts/react';
+import { useEffect, useState } from 'react';
+
+function Balance({ address }: { address: string }) {
+  const { live } = useQubic();
+  const [balance, setBalance] = useState<string>();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    live.getBalance(address)
+      .then(res => setBalance(res.balance.balance))
+      .finally(() => setLoading(false));
+  }, [address, live]);
+
+  if (loading) return <div>Loading...</div>;
+  return <div>Balance: {balance}</div>;
+}
+```
+
+### After (React Query)
+
+```tsx
+import { useBalance } from '@nvlabs/qts/react/query';
+
+function Balance({ address }: { address: string }) {
+  const { data, isLoading } = useBalance(address);
+
+  if (isLoading) return <div>Loading...</div>;
+  return <div>Balance: {data?.balance.balance}</div>;
+}
+```
+
+Benefits of migration:
+- Less boilerplate code
+- Automatic caching
+- Background refetching
+- Request deduplication
+- Better TypeScript inference
+
+## Next Steps
+
+- **[React Query Integration](/docs/integrations/react-query)** - Upgrade to automatic caching and refetching
+- **[Contract Hooks](/docs/integrations/react-query-contracts)** - Use pre-built hooks for smart contracts
+- **[API Reference](/docs/api-clients)** - Explore all available client methods
+- **[Examples](/docs/examples)** - More code examples and patterns

@@ -22,6 +22,10 @@
     "./utils": {
       "import": "./src/utils/index.ts",
       "types": "./src/utils/index.ts"
+    },
+    "./react/query": {
+      "import": "./src/react/query/index.ts",
+      "types": "./src/react/query/index.ts"
     }
   },
   "files": [
@@ -65,15 +69,21 @@
   "homepage": "https://github.com/nvlabs/qts#readme",
   "dependencies": {
     "@noble/hashes": "^1.4.0",
-    "@walletconnect/sign-client": "^2.15.0",
+    "@tanstack/react-query": "^5.90.5",
+    "@walletconnect/sign-client": "^2.22.4",
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/react-hooks": "^8.0.1",
     "@types/bun": "latest",
-    "@types/react": "^18.3.0"
+    "@types/react": "^18.3.0",
+    "happy-dom": "^20.0.8",
+    "node-fetch": "^3.3.2"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
+    "@tanstack/react-query": ">=5.0.0",
     "typescript": "^5"
   },
   "engines": {

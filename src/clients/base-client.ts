@@ -32,7 +32,7 @@ export class BaseClient {
       ...config.headers,
     };
     this.timeout = config.timeout ?? 30000; // Default 30 seconds
-    this.fetchFn = config.fetchFn ?? fetch;
+    this.fetchFn = config.fetchFn ?? fetch.bind(globalThis);
   }
 
   /**
@@ -41,7 +41,7 @@ export class BaseClient {
   protected createError(
     message: string,
     status?: number,
-    details?: any
+    details?: any,
   ): QubicApiError {
     const error = new Error(message) as QubicApiError;
     error.name = "QubicApiError";
@@ -66,8 +66,7 @@ export class BaseClient {
     }
 
     const message =
-      errorData?.message ||
-      `HTTP ${response.status}: ${response.statusText}`;
+      errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
 
     throw this.createError(message, response.status, errorData?.details);
   }
@@ -77,7 +76,7 @@ export class BaseClient {
    */
   protected async get<T>(
     path: string,
-    params?: Record<string, string | number | boolean | undefined>
+    params?: Record<string, string | number | boolean | undefined>,
   ): Promise<T> {
     const url = new URL(path, this.baseUrl);
 
@@ -114,7 +113,7 @@ export class BaseClient {
         if (error.name === "AbortError") {
           throw this.createError(
             `Request timeout after ${this.timeout}ms`,
-            408
+            408,
           );
         }
         if ((error as QubicApiError).status) {
@@ -124,7 +123,7 @@ export class BaseClient {
 
       throw this.createError(
         `Network error: ${error instanceof Error ? error.message : String(error)}`,
-        0
+        0,
       );
     }
   }
@@ -160,7 +159,7 @@ export class BaseClient {
         if (error.name === "AbortError") {
           throw this.createError(
             `Request timeout after ${this.timeout}ms`,
-            408
+            408,
           );
         }
         if ((error as QubicApiError).status) {
@@ -170,7 +169,7 @@ export class BaseClient {
 
       throw this.createError(
         `Network error: ${error instanceof Error ? error.message : String(error)}`,
-        0
+        0,
       );
     }
   }

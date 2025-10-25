@@ -1,0 +1,692 @@
+---
+title: Easy Contracts with React Query
+description: Ready-made React Query hooks for all Qubic smart contracts
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Easy Contracts with React Query
+
+Use pre-built React Query hooks to interact with Qubic smart contracts without manual serialization or query building. All contracts have type-safe hooks with automatic caching and refetching.
+
+<Callout type="info">
+  These hooks wrap the `contracts-easy.ts` utility functions with React Query, providing automatic caching, background refetching, and optimized stale times for each contract type.
+</Callout>
+
+## Overview
+
+All hooks follow consistent patterns:
+- **Automatic caching** with smart stale times
+- **Conditional fetching** based on input validity
+- **TypeScript type safety** end-to-end
+- **Optimized refetch strategies** per contract type
+
+## QX (Decentralized Exchange)
+
+### Get Exchange Fees
+
+```tsx
+import { useQXFees } from '@nvlabs/qts/react/query';
+
+function ExchangeFees() {
+  const { data, isLoading } = useQXFees();
+
+  if (isLoading) return <div>Loading fees...</div>;
+
+  return (
+    <div>
+      <p>Asset Issuance Fee: {data?.assetIssuanceFee}</p>
+      <p>Transfer Fee: {data?.transferFee}</p>
+      <p>Trade Fee: {data?.tradeFee}</p>
+    </div>
+  );
+}
+```
+
+### Get Asset Orders
+
+```tsx
+import { useQXAssetAskOrders, useQXAssetBidOrders } from '@nvlabs/qts/react/query';
+import { stringToUint64 } from '@nvlabs/qts';
+
+function AssetOrderBook({ issuer }: { issuer: string }) {
+  const assetName = stringToUint64('CFB');
+  
+  const { data: askOrders } = useQXAssetAskOrders(issuer, assetName, 0);
+  const { data: bidOrders } = useQXAssetBidOrders(issuer, assetName, 0);
+
+  return (
+    <div>
+      <h2>Ask Orders</h2>
+      {askOrders?.orders.map((order, i) => (
+        <div key={i}>
+          {order.entity}: {String(order.numberOfShares)} @ {String(order.price)}
+        </div>
+      ))}
+
+      <h2>Bid Orders</h2>
+      {bidOrders?.orders.map((order, i) => (
+        <div key={i}>
+          {order.entity}: {String(order.numberOfShares)} @ {String(order.price)}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Get Entity Orders
+
+```tsx
+import { useQXEntityAskOrders, useQXEntityBidOrders } from '@nvlabs/qts/react/query';
+
+function MyOrders({ userAddress }: { userAddress: string }) {
+  const { data: myAsks } = useQXEntityAskOrders(userAddress);
+  const { data: myBids } = useQXEntityBidOrders(userAddress);
+
+  return (
+    <div>
+      <h3>My Ask Orders: {myAsks?.orders.length ?? 0}</h3>
+      <h3>My Bid Orders: {myBids?.orders.length ?? 0}</h3>
+    </div>
+  );
+}
+```
+
+## Qutil (Utility Functions)
+
+### Get Asset Information
+
+```tsx
+import { useQutilTotalAssetShares } from '@nvlabs/qts/react/query';
+import { stringToUint64 } from '@nvlabs/qts';
+
+function AssetStats({ issuer }: { issuer: string }) {
+  const assetName = stringToUint64('CFB');
+  const { data } = useQutilTotalAssetShares(issuer, assetName);
+
+  return <div>Total Shares: {String(data?.totalShares ?? 0)}</div>;
+}
+```
+
+### Poll System
+
+```tsx
+import {
+  useQutilCurrentPollId,
+  useQutilPollInfo,
+  useQutilPollsByCreator,
+} from '@nvlabs/qts/react/query';
+
+function PollViewer() {
+  const { data: currentPoll } = useQutilCurrentPollId();
+
+  return (
+    <div>
+      <h2>Current Poll ID: {String(currentPoll?.currentPollId ?? 0)}</h2>
+      <p>Active Polls: {String(currentPoll?.activeCount ?? 0)}</p>
+    </div>
+  );
+}
+
+function PollDetails({ pollId }: { pollId: number }) {
+  const { data, isLoading } = useQutilPollInfo(pollId, {
+    enabled: pollId > 0,
+  });
+
+  if (isLoading) return <div>Loading poll...</div>;
+  if (!data?.found) return <div>Poll not found</div>;
+
+  return (
+    <div>
+      <h3>Poll: {data.poll.pollName}</h3>
+      <p>Creator: {data.poll.creator}</p>
+      <p>Min Amount: {String(data.poll.minAmount)}</p>
+      <p>Active: {data.poll.isActive ? 'Yes' : 'No'}</p>
+      <p>Link: {data.pollLink}</p>
+    </div>
+  );
+}
+
+function CreatorPolls({ creator }: { creator: string }) {
+  const { data } = useQutilPollsByCreator(creator);
+
+  return (
+    <div>
+      <h3>Polls by {creator}</h3>
+      <p>Total: {data?.count ?? 0}</p>
+      <ul>
+        {data?.pollIds.slice(0, data.count).map((id, i) => (
+          <li key={i}>Poll ID: {String(id)}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+```
+
+## Quottery (Betting Platform)
+
+### Get Basic Info
+
+```tsx
+import { useQuotteryBasicInfo } from '@nvlabs/qts/react/query';
+
+function QuotteryStats() {
+  const { data } = useQuotteryBasicInfo();
+
+  return (
+    <div>
+      <h2>Quottery Platform</h2>
+      {/* Parse and display basic info */}
+    </div>
+  );
+}
+```
+
+### Get Bet Information
+
+```tsx
+import {
+  useQuotteryBetInfo,
+  useQuotteryBetOptionDetail,
+  useQuotteryActiveBet,
+} from '@nvlabs/qts/react/query';
+
+function ActiveBet() {
+  const { data } = useQuotteryActiveBet();
+
+  return <div>Active Bet: {/* Parse response */}</div>;
+}
+
+function BetDetails({ betId }: { betId: number }) {
+  const { data, isLoading } = useQuotteryBetInfo(betId);
+
+  if (isLoading) return <div>Loading bet...</div>;
+
+  return (
+    <div>
+      <h3>Bet #{betId}</h3>
+      {/* Display bet information */}
+    </div>
+  );
+}
+
+function BetOption({ betId, optionId }: { betId: number; optionId: number }) {
+  const { data } = useQuotteryBetOptionDetail(betId, optionId);
+
+  return <div>Option {optionId}: {/* Parse and display */}</div>;
+}
+```
+
+## Qearn (Staking Platform)
+
+### User Locked Info
+
+```tsx
+import {
+  useQearnUserLockedInfo,
+  useQearnUserLockStatus,
+} from '@nvlabs/qts/react/query';
+
+function UserStaking({ user }: { user: string }) {
+  const { data: lockedInfo } = useQearnUserLockedInfo(user);
+  const { data: lockStatus } = useQearnUserLockStatus(user, 125);
+
+  return (
+    <div>
+      <h3>Staking Information</h3>
+      {/* Parse and display locked amounts */}
+    </div>
+  );
+}
+```
+
+### Epoch Statistics
+
+```tsx
+import {
+  useQearnLockInfoPerEpoch,
+  useQearnStateOfRound,
+  useQearnStatsPerEpoch,
+  useQearnEndedStatus,
+} from '@nvlabs/qts/react/query';
+
+function EpochStats({ epoch }: { epoch: number }) {
+  const { data: lockInfo } = useQearnLockInfoPerEpoch(epoch);
+  const { data: state } = useQearnStateOfRound(epoch);
+  const { data: stats } = useQearnStatsPerEpoch(epoch);
+  const { data: ended } = useQearnEndedStatus(epoch);
+
+  return (
+    <div>
+      <h2>Epoch {epoch} Statistics</h2>
+      {/* Display epoch information */}
+    </div>
+  );
+}
+```
+
+### Burned and Boosted Stats
+
+```tsx
+import {
+  useQearnBurnedAndBoostedStats,
+  useQearnBurnedAndBoostedStatsPerEpoch,
+} from '@nvlabs/qts/react/query';
+
+function BurnStats() {
+  const { data: overall } = useQearnBurnedAndBoostedStats();
+  const { data: epoch125 } = useQearnBurnedAndBoostedStatsPerEpoch(125);
+
+  return (
+    <div>
+      <h3>Overall Burn Stats</h3>
+      {/* Display overall stats */}
+      
+      <h3>Epoch 125 Burn Stats</h3>
+      {/* Display epoch-specific stats */}
+    </div>
+  );
+}
+```
+
+## Qswap (AMM DEX)
+
+### Get Pool Information
+
+```tsx
+import {
+  useQswapPoolBasicState,
+  useQswapLiquidityOf,
+  useQswapFees,
+} from '@nvlabs/qts/react/query';
+import { stringToUint64 } from '@nvlabs/qts';
+
+function PoolInfo({ issuer }: { issuer: string }) {
+  const assetName = stringToUint64('QX');
+  const { data: pool } = useQswapPoolBasicState(issuer, assetName);
+  const { data: fees } = useQswapFees();
+
+  return (
+    <div>
+      <h2>Pool Information</h2>
+      {/* Display pool state */}
+      <p>Swap Fee: {fees?.swapFee}</p>
+    </div>
+  );
+}
+
+function MyLiquidity({ issuer, provider }: { issuer: string; provider: string }) {
+  const assetName = stringToUint64('QX');
+  const { data } = useQswapLiquidityOf(issuer, assetName, provider);
+
+  return <div>Your Liquidity: {/* Display liquidity position */}</div>;
+}
+```
+
+### Get Swap Quotes
+
+```tsx
+import {
+  useQswapQuoteExactQuInput,
+  useQswapQuoteExactQuOutput,
+  useQswapQuoteExactAssetInput,
+  useQswapQuoteExactAssetOutput,
+} from '@nvlabs/qts/react/query';
+import { stringToUint64 } from '@nvlabs/qts';
+import { useState } from 'react';
+
+function SwapQuote({ issuer }: { issuer: string }) {
+  const [quAmount, setQuAmount] = useState(1000000n);
+  const assetName = stringToUint64('QX');
+
+  // Quote for swapping QUBIC to asset
+  const { data: assetOut } = useQswapQuoteExactQuInput(
+    issuer,
+    assetName,
+    quAmount
+  );
+
+  // Quote for swapping asset to QUBIC
+  const { data: quOut } = useQswapQuoteExactAssetInput(
+    issuer,
+    assetName,
+    1000n
+  );
+
+  return (
+    <div>
+      <h3>Swap Quotes</h3>
+      <p>{String(quAmount)} QUBIC → {/* assetOut */} QX</p>
+      <p>1000 QX → {/* quOut */} QUBIC</p>
+    </div>
+  );
+}
+```
+
+## Qvault (Vault Contract)
+
+### Get Vault Data
+
+```tsx
+import { useQvaultData } from '@nvlabs/qts/react/query';
+
+function VaultInfo({ identity }: { identity: string }) {
+  const { data, isLoading } = useQvaultData(identity);
+
+  if (isLoading) return <div>Loading vault...</div>;
+
+  return (
+    <div>
+      <h2>Vault Data</h2>
+      {/* Parse and display vault information */}
+    </div>
+  );
+}
+```
+
+## CCF (Community Controlled Fund)
+
+### Proposals
+
+```tsx
+import {
+  useCCFProposalIndices,
+  useCCFProposal,
+  useCCFVotingResults,
+  useCCFProposalFee,
+} from '@nvlabs/qts/react/query';
+
+function ProposalList() {
+  const { data: indices } = useCCFProposalIndices();
+  const { data: fee } = useCCFProposalFee();
+
+  return (
+    <div>
+      <h2>Active Proposals</h2>
+      <p>Proposal Fee: {fee?.proposalFee}</p>
+      <p>Total Proposals: {indices?.numOfIndices}</p>
+      <ul>
+        {indices?.indices.map((idx) => (
+          <li key={idx}>
+            <ProposalItem proposalIndex={idx} />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ProposalItem({ proposalIndex }: { proposalIndex: number }) {
+  const { data: proposal } = useCCFProposal(proposalIndex);
+  const { data: results } = useCCFVotingResults(proposalIndex);
+
+  return (
+    <div>
+      <h3>Proposal #{proposalIndex}</h3>
+      {/* Parse and display proposal details */}
+    </div>
+  );
+}
+```
+
+### Voting
+
+```tsx
+import { useCCFVote, useCCFLatestTransfers } from '@nvlabs/qts/react/query';
+
+function VoteDetails({ proposalIndex }: { proposalIndex: number }) {
+  const { data } = useCCFVote(proposalIndex);
+
+  return (
+    <div>
+      <h4>Vote on Proposal {proposalIndex}</h4>
+      {/* Parse vote data using data.parser */}
+    </div>
+  );
+}
+
+function LatestTransfers() {
+  const { data } = useCCFLatestTransfers();
+
+  return (
+    <div>
+      <h3>Latest CCF Transfers</h3>
+      {/* Parse and display transfers */}
+    </div>
+  );
+}
+```
+
+## Advanced Patterns
+
+### Combining Multiple Contracts
+
+```tsx
+import { useQXFees, useQswapFees, useCurrentTick } from '@nvlabs/qts/react/query';
+
+function PlatformFees() {
+  const { data: qxFees } = useQXFees();
+  const { data: qswapFees } = useQswapFees();
+  const { data: tick } = useCurrentTick();
+
+  return (
+    <div>
+      <h2>Platform Fees (Tick {tick?.tickInfo.tick})</h2>
+      <div>
+        <h3>QX Exchange</h3>
+        <p>Trade Fee: {qxFees?.tradeFee}</p>
+        <p>Transfer Fee: {qxFees?.transferFee}</p>
+      </div>
+      <div>
+        <h3>Qswap DEX</h3>
+        <p>Swap Fee: {qswapFees?.swapFee}</p>
+      </div>
+    </div>
+  );
+}
+```
+
+### Real-time Price Monitor
+
+```tsx
+import { useQswapQuoteExactQuInput } from '@nvlabs/qts/react/query';
+import { stringToUint64 } from '@nvlabs/qts';
+
+function PriceMonitor({ issuer }: { issuer: string }) {
+  const assetName = stringToUint64('QX');
+  
+  const { data, refetch } = useQswapQuoteExactQuInput(
+    issuer,
+    assetName,
+    1000000n,
+    {
+      refetchInterval: 5000, // Refresh every 5 seconds
+    }
+  );
+
+  return (
+    <div>
+      <h3>Live Price</h3>
+      <p>1 QUBIC = {/* parse data */} QX</p>
+      <button onClick={() => refetch()}>Refresh Now</button>
+    </div>
+  );
+}
+```
+
+### Conditional Data Loading
+
+```tsx
+import { useQearnUserLockedInfo, useCurrentTick } from '@nvlabs/qts/react/query';
+
+function ConditionalStakingInfo({ user }: { user: string }) {
+  const { data: tick } = useCurrentTick();
+  
+  // Only fetch staking info if we're in epoch 125 or later
+  const { data: locked } = useQearnUserLockedInfo(user, {
+    enabled: !!tick && tick.tickInfo.epoch >= 125,
+  });
+
+  if (!tick) return <div>Loading network info...</div>;
+  if (tick.tickInfo.epoch < 125) {
+    return <div>Qearn not available in epoch {tick.tickInfo.epoch}</div>;
+  }
+
+  return <div>Locked: {/* display locked info */}</div>;
+}
+```
+
+## Query Key Management
+
+All easy contract hooks export their query keys for manual cache operations:
+
+```tsx
+import { easyContractQueryKeys } from '@nvlabs/qts/react/query';
+import { useQueryClient } from '@tanstack/react-query';
+
+function CacheControls() {
+  const queryClient = useQueryClient();
+
+  const refreshQX = () => {
+    queryClient.invalidateQueries({ 
+      queryKey: easyContractQueryKeys.qx() 
+    });
+  };
+
+  const refreshQswapPool = (issuer: string, assetName: bigint) => {
+    queryClient.invalidateQueries({
+      queryKey: easyContractQueryKeys.qswapPoolBasicState(
+        issuer,
+        String(assetName)
+      ),
+    });
+  };
+
+  return (
+    <div>
+      <button onClick={refreshQX}>Refresh QX Data</button>
+      <button onClick={() => refreshQswapPool('...', 1n)}>
+        Refresh Pool
+      </button>
+    </div>
+  );
+}
+```
+
+## Stale Time Configuration
+
+Each contract type has optimized stale times:
+
+| Contract | Data Type | Default Stale Time |
+|----------|-----------|-------------------|
+| QX Fees | Static | 60 seconds |
+| QX Orders | Dynamic | 5 seconds |
+| Qswap Quotes | Price Data | 2 seconds |
+| Qearn Epoch Stats | Historical | Infinity |
+| Quottery Bets | Active | 5 seconds |
+| CCF Proposals | Historical | Infinity |
+
+Override stale times for specific use cases:
+
+```tsx
+const { data } = useQXAssetAskOrders(issuer, assetName, 0, {
+  staleTime: 1000, // Refresh every second for high-frequency trading
+  refetchInterval: 1000, // Poll continuously
+});
+```
+
+## Best Practices
+
+### 1. Use String Conversions for BigInts
+
+```tsx
+// ✅ Good: Convert bigint to string for display
+<p>Amount: {String(data?.amount ?? 0)}</p>
+
+// ❌ Bad: React can't render bigints directly
+<p>Amount: {data?.amount}</p>
+```
+
+### 2. Enable Queries Conditionally
+
+```tsx
+// ✅ Good: Only fetch when data is valid
+const { data } = useQXAssetAskOrders(issuer, assetName, 0, {
+  enabled: !!issuer && assetName > 0,
+});
+
+// ❌ Bad: Fetch with invalid data
+const { data } = useQXAssetAskOrders('', 0, 0);
+```
+
+### 3. Handle Loading and Error States
+
+```tsx
+const { data, isLoading, error } = useQswapPoolBasicState(issuer, assetName);
+
+if (isLoading) return <Skeleton />;
+if (error) return <ErrorMessage error={error} />;
+if (!data) return <NoData />;
+
+return <PoolDisplay pool={data} />;
+```
+
+### 4. Use Asset Name Conversion
+
+```tsx
+import { stringToUint64 } from '@nvlabs/qts';
+
+// ✅ Good: Convert once and reuse
+const assetName = useMemo(() => stringToUint64('CFB'), []);
+const { data } = useQXAssetAskOrders(issuer, assetName, 0);
+
+// ❌ Bad: Convert on every render
+const { data } = useQXAssetAskOrders(issuer, stringToUint64('CFB'), 0);
+```
+
+## Response Parsing
+
+Most CCF hooks return raw data with a parser:
+
+```tsx
+const { data } = useCCFProposal(proposalIndex);
+
+if (data) {
+  const parser = data.parser;
+  const field1 = parser.readInt32();
+  const field2 = parser.readInt64();
+  const identity = parser.readIdentity();
+  // ... parse remaining fields
+}
+```
+
+<Callout type="warn">
+  Parser state is mutable. Read fields in the correct order as defined by the contract's response structure.
+</Callout>
+
+## TypeScript Types
+
+All hooks return properly typed responses:
+
+```tsx
+import type { Awaited } from '@tanstack/react-query';
+import { qx } from '@nvlabs/qts/utils/contracts-easy';
+
+type QXFeesResponse = Awaited<ReturnType<typeof qx.getFees>>;
+type AssetOrdersResponse = Awaited<ReturnType<typeof qx.getAssetAskOrders>>;
+
+function TypedComponent() {
+  const { data } = useQXFees();
+  // data is properly typed as QXFeesResponse | undefined
+}
+```
+
+## Next Steps
+
+- **[React Query Integration](/docs/integrations/react-query)**: Core hooks for blockchain data
+- **[Smart Contracts](/docs/smart-contracts)**: Understanding Qubic contracts
+- **[Easy Contracts Guide](/docs/easy-contracts)**: Manual usage without React Query
+- **[Frontend Integration](/docs/integrations/frontend)**: React providers and patterns

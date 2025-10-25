@@ -1,5 +1,6 @@
 import type { SignClientTypes, SessionTypes } from "@walletconnect/types";
-import SignClient from "@walletconnect/sign-client";
+import type SignClient from "@walletconnect/sign-client";
+const SignClientImpl = require("@walletconnect/sign-client").default;
 
 import type { QubicLiveClient } from "../clients/qubic-live-client.ts";
 import { hexToBase64 } from "../utils/encoding.ts";
@@ -108,7 +109,7 @@ export interface SignAndBroadcastProcedureOptions extends SignProcedureOptions {
   broadcastParams?: Record<string, unknown>;
 }
 
-type WalletConnectClient = InstanceType<typeof SignClient>;
+type WalletConnectClient = SignClient;
 
 export class WalletConnectAdapter {
   private client: WalletConnectClient;
@@ -135,7 +136,7 @@ export class WalletConnectAdapter {
   static async init(
     options: WalletConnectAdapterOptions,
   ): Promise<WalletConnectAdapter> {
-    const client = await SignClient.init({
+    const client = await SignClientImpl.init({
       projectId: options.projectId,
       relayUrl: options.relayUrl,
       metadata:
