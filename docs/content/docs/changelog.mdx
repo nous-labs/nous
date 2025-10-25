@@ -22,6 +22,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.3] - 2025-10-25
+
+### Changed
+- **Removed Aggressive Polling**: Replaced continuous 2-second polling with one-time delayed check
+  - Previous approach polled WalletConnect session every 2 seconds (unsafe and resource-intensive)
+  - New approach does a single delayed check 1.5 seconds after connection approval
+  - Better performance, reduced network requests, and improved battery life
+  - No rate limiting issues with RPC providers
+
+### Improved
+- **Resource Usage**: Dramatically reduced unnecessary network requests
+  - Only checks accounts once after initial connection
+  - No continuous polling in background
+  - More efficient and respectful of user resources
+- **Manual Refresh Option**: Added `refreshAccounts()` for edge cases
+  - Users can manually sync if account state gets out of sync (rare)
+  - Documentation includes refresh example and best practices
+
+### Documentation
+- Updated to explain one-time sync check instead of polling
+- Added manual account refresh example
+- Clarified when manual refresh might be needed (very rare)
+
+---
+
 ## [1.3.2] - 2025-10-25
 
 ### Added

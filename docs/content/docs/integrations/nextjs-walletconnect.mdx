@@ -154,7 +154,7 @@ export function ConnectButton() {
 ```
 
 <Callout type="success">
-  **Automatic Updates**: The provider automatically updates `accounts` and `isConnected` when users approve the connection. No manual state management needed!
+  **Automatic Updates**: The provider automatically updates `accounts` and `isConnected` when users approve the connection. A one-time sync check happens 1.5 seconds after approval to ensure reliable state. No manual polling or state management needed!
 </Callout>
 
 </Steps>
@@ -211,6 +211,43 @@ const { accounts, isConnected } = useWalletConnect();
 
 // accounts will be populated if session exists
 ```
+
+### Manual Account Refresh
+
+In rare cases where you need to manually sync accounts (e.g., user switches accounts in wallet):
+
+```tsx
+import { useWalletConnect } from '@nvlabs/qts/react';
+
+export function AccountRefresher() {
+  const { refreshAccounts, isConnected } = useWalletConnect();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (!isConnected) return;
+    
+    setIsRefreshing(true);
+    try {
+      const accounts = await refreshAccounts();
+      console.log('Accounts refreshed:', accounts);
+    } catch (error) {
+      console.error('Failed to refresh:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  return (
+    <button onClick={handleRefresh} disabled={!isConnected || isRefreshing}>
+      {isRefreshing ? 'Refreshing...' : 'Refresh Accounts'}
+    </button>
+  );
+}
+```
+
+<Callout type="info">
+  **When to Refresh**: The provider automatically syncs accounts after connection. Only use `refreshAccounts()` if you suspect the state is out of sync (very rare).
+</Callout>
 
 ## Signing Transactions
 

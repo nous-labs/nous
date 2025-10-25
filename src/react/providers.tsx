@@ -145,29 +145,6 @@ export function WalletConnectProvider({
     };
   }, [options.projectId, autoRestoreSession]);
 
-  // Poll for account changes when connected
-  useEffect(() => {
-    if (!adapter || !adapter.isConnected || isConnecting) return;
-
-    const intervalId = setInterval(() => {
-      adapter
-        .requestAccounts()
-        .then((accts) => {
-          if (
-            accts.length > 0 &&
-            accts[0]?.identity !== accounts[0]?.identity
-          ) {
-            setAccounts(accts);
-          }
-        })
-        .catch(() => {
-          // Silently fail - connection might have been lost
-        });
-    }, 2000); // Check every 2 seconds
-
-    return () => clearInterval(intervalId);
-  }, [adapter, accounts, isConnecting]);
-
   const connect = useCallback(async () => {
     if (!adapter) {
       throw new WalletIntegrationError("WalletConnect adapter not ready");
@@ -186,6 +163,24 @@ export function WalletConnectProvider({
             const approvedAccounts = await connection.approve();
             setAccounts(approvedAccounts);
             setIsConnecting(false);
+
+            // One-time delayed check to ensure accounts are synced
+            // This handles cases where approval is slow to propagate
+            setTimeout(() => {
+              if (adapter.isConnected) {
+                adapter
+                  .requestAccounts()
+                  .then((accts) => {
+                    if (accts.length > 0) {
+                      setAccounts(accts);
+                    }
+                  })
+                  .catch(() => {
+                    // Silently fail - accounts already set from approval
+                  });
+              }
+            }, 1500);
+
             return approvedAccounts;
           } catch (err) {
             setIsConnecting(false);
