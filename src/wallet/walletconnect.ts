@@ -22,7 +22,11 @@ const DEFAULT_METHODS = [
 const DEFAULT_EVENTS = ["accountsChanged", "amountChanged"];
 const DEFAULT_STORAGE_KEY = "qts.walletconnect.topic";
 
-type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+interface StorageLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
 
 interface SessionStore {
   get(): string | null;
