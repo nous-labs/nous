@@ -22,6 +22,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.2] - 2025-10-25
+
+### Added
+- **WalletConnect Helper Methods**: Provider now includes `connect()`, `disconnect()`, and `refreshAccounts()` helpers
+  - Simplified connection flow - no need to manually manage adapter state
+  - `connect()` returns `{ uri, waitForApproval }` for easy QR code display
+  - Accounts automatically update after successful connection
+- **Automatic Account Polling**: Provider polls for account changes every 2 seconds when connected
+  - Ensures accounts state is always in sync with wallet
+  - Fixes issue where accounts wouldn't show up after connection approval
+- **Better Error Handling**: Connection errors properly update error state in provider
+
+### Fixed
+- **Connection State Sync**: Fixed issue where accounts wouldn't appear after successful connection
+  - Provider now automatically updates accounts state after approval
+  - No more delayed or missing account information
+- **Session Restoration**: Improved session restoration on mount with better error handling
+
+### Changed
+- **Simplified API**: Updated all documentation examples to use new helper methods
+  - `connect()` instead of manual `adapter.connect()` + state management
+  - `disconnect()` instead of `adapter.disconnect()` + manual state clearing
+  - More intuitive and less error-prone integration
+- **Documentation**: Updated all WalletConnect examples to show simplified approach
+  - Complete example apps updated with new API
+  - Clearer TypeScript types and better code examples
+
+### Documentation
+- Updated Next.js + WalletConnect guide with simplified connect flow
+- Updated integrations index with new helper method examples
+- Added automatic account updates information
+- Improved code examples throughout
+
+---
+
 ## [1.3.1] - 2025-10-25
 
 ### Fixed

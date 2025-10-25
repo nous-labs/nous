@@ -91,24 +91,22 @@ import { useState } from 'react';
 import { useWalletConnect } from '@nvlabs/qts/react';
 
 export function ConnectButton() {
-  const { adapter, isReady, accounts, isConnected } = useWalletConnect();
+  const { connect, disconnect, isReady, isConnected, accounts } = useWalletConnect();
   const [uri, setUri] = useState<string>('');
   const [showQR, setShowQR] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
-    if (!adapter) return;
-
     setIsConnecting(true);
     try {
-      // adapter.connect() returns WalletConnectConnection - fully typed!
-      const connection = await adapter.connect();
+      // Simplified connect - accounts update automatically!
+      const { uri, waitForApproval } = await connect();
       
-      setUri(connection.uri);
+      setUri(uri);
       setShowQR(true);
 
-      // connection.approve() returns Promise<WalletAccount[]>
-      await connection.approve();
+      // Wait for approval - accounts state updates automatically
+      await waitForApproval();
       setShowQR(false);
     } catch (error) {
       console.error('Connection failed:', error);
@@ -118,8 +116,7 @@ export function ConnectButton() {
   };
 
   const handleDisconnect = async () => {
-    if (!adapter) return;
-    await adapter.disconnect();
+    await disconnect();
   };
 
   if (!isReady) {
@@ -156,8 +153,8 @@ export function ConnectButton() {
 }
 ```
 
-<Callout type="info">
-  **State Management**: The provider tracks `accounts` and `isConnected` automatically. The `accounts` state updates when users approve the connection!
+<Callout type="success">
+  **Automatic Updates**: The provider automatically updates `accounts` and `isConnected` when users approve the connection. No manual state management needed!
 </Callout>
 
 </Steps>
@@ -169,10 +166,13 @@ The built-in `WalletConnectProvider` exports:
 ```tsx
 interface WalletConnectContextValue {
   adapter: WalletConnectAdapter | null;  // Direct access to adapter
-  accounts: WalletAccount[];             // Connected accounts
+  accounts: WalletAccount[];             // Connected accounts (auto-updates!)
   isConnected: boolean;                  // True if accounts exist
   isReady: boolean;                      // True when adapter initialized
   error: Error | null;                   // Initialization error if any
+  connect: () => Promise<{ uri: string; waitForApproval: () => Promise<WalletAccount[]> }>;
+  disconnect: () => Promise<void>;       // Disconnect wallet
+  refreshAccounts: () => Promise<WalletAccount[]>; // Manually refresh accounts
 }
 ```
 
@@ -224,12 +224,13 @@ import { createQubicClient } from '@nvlabs/qts';
 const qubic = createQubicClient();
 
 export function SendTransaction() {
-  const { adapter, accounts } = useWalletConnect();
+  const { adapter, accounts, isConnected } = useWalletConnect();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [isSending, setIsSending] = useState(false);
 
   const handleSend = async () => {
+    if (!isConnected || !adapter || !accounts[0]) return;
     if (!adapter || accounts.length === 0) return;
 
     setIsSending(true);
@@ -850,7 +851,7 @@ import {
 } from '@nvlabs/qts/react/query';
 
 export default function HomePage() {
-  const { adapter, accounts, isConnected, isReady } = useWalletConnect();
+  const { connect, disconnect, accounts, isConnected, isReady } = useWalletConnect();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [uri, setUri] = useState('');
@@ -869,14 +870,12 @@ export default function HomePage() {
   const signAndBroadcast = useWCSignAndBroadcast();
   
   const handleConnect = async () => {
-    if (!adapter) return;
-    
     try {
-      const connection = await adapter.connect();
-      setUri(connection.uri);
+      const { uri, waitForApproval } = await connect();
+      setUri(uri);
       setShowQR(true);
       
-      await connection.approve();
+      await waitForApproval();
       setShowQR(false);
     } catch (error) {
       console.error(error);
@@ -935,7 +934,7 @@ export default function HomePage() {
               <h2>Wallet Info</h2>
               <p><strong>Address:</strong> {accounts[0].identity.slice(0, 12)}...</p>
               <p><strong>Balance:</strong> {balance?.balance.balance || 0} QUBIC</p>
-              <button onClick={() => adapter.disconnect()}>Disconnect</button>
+              <button onClick={disconnect}>Disconnect</button>
             </div>
             
             <div>

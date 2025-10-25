@@ -108,18 +108,45 @@ Simple integration for wallet connections:
 import { WalletConnectProvider, useWalletConnect } from '@nvlabs/qts/react';
 
 function WalletButton() {
-  const { adapter, accounts, isConnected } = useWalletConnect();
+  const { connect, disconnect, isConnected, accounts } = useWalletConnect();
+  const [showQR, setShowQR] = useState(false);
+  const [uri, setUri] = useState('');
   
   const handleConnect = async () => {
-    if (!adapter) return;
-    const connection = await adapter.connect();
-    await connection.approve();
+    try {
+      const { uri, waitForApproval } = await connect();
+      setUri(uri);
+      setShowQR(true);
+      
+      // Accounts update automatically after approval!
+      await waitForApproval();
+      setShowQR(false);
+    } catch (error) {
+      console.error('Connection failed:', error);
+      setShowQR(false);
+    }
   };
   
-  return isConnected ? (
-    <button onClick={() => adapter.disconnect()}>Disconnect</button>
-  ) : (
-    <button onClick={handleConnect}>Connect Wallet</button>
+  if (isConnected) {
+    return (
+      <div>
+        <p>{accounts[0].identity.slice(0, 8)}...</p>
+        <button onClick={disconnect}>Disconnect</button>
+      </div>
+    );
+  }
+  
+  return (
+    <>
+      <button onClick={handleConnect}>Connect Wallet</button>
+      
+      {showQR && uri && (
+        <div className="qr-modal">
+          <img src={`https://api.qrserver.com/v1/create-qr-code/?data=${uri}`} />
+          <button onClick={() => setShowQR(false)}>Cancel</button>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -138,7 +165,7 @@ function App() {
 ```
 
 <Callout type="success">
-  **Fully Typed**: Direct adapter access ensures perfect TypeScript inference and IDE autocomplete!
+  **Simplified & Automatic**: Use `connect()` and `disconnect()` helpers - accounts update automatically after approval!
 </Callout>
 
 ## When to Use Each Approach

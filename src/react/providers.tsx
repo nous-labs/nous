@@ -87,6 +87,12 @@ interface WalletConnectContextValue {
   isConnected: boolean;
   isReady: boolean;
   error: Error | null;
+  connect: () => Promise<{
+    uri: string;
+    waitForApproval: () => Promise<WalletAccount[]>;
+  }>;
+  disconnect: () => Promise<void>;
+  refreshAccounts: () => Promise<WalletAccount[]>;
 }
 
 const WalletConnectContext = createContext<
@@ -102,6 +108,7 @@ export function WalletConnectProvider({
   const [accounts, setAccounts] = useState<WalletAccount[]>([]);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -138,6 +145,89 @@ export function WalletConnectProvider({
     };
   }, [options.projectId, autoRestoreSession]);
 
+  // Poll for account changes when connected
+  useEffect(() => {
+    if (!adapter || !adapter.isConnected || isConnecting) return;
+
+    const intervalId = setInterval(() => {
+      adapter
+        .requestAccounts()
+        .then((accts) => {
+          if (
+            accts.length > 0 &&
+            accts[0]?.identity !== accounts[0]?.identity
+          ) {
+            setAccounts(accts);
+          }
+        })
+        .catch(() => {
+          // Silently fail - connection might have been lost
+        });
+    }, 2000); // Check every 2 seconds
+
+    return () => clearInterval(intervalId);
+  }, [adapter, accounts, isConnecting]);
+
+  const connect = useCallback(async () => {
+    if (!adapter) {
+      throw new WalletIntegrationError("WalletConnect adapter not ready");
+    }
+
+    setIsConnecting(true);
+    setError(null);
+
+    try {
+      const connection = await adapter.connect();
+
+      return {
+        uri: connection.uri,
+        waitForApproval: async () => {
+          try {
+            const approvedAccounts = await connection.approve();
+            setAccounts(approvedAccounts);
+            setIsConnecting(false);
+            return approvedAccounts;
+          } catch (err) {
+            setIsConnecting(false);
+            throw err;
+          }
+        },
+      };
+    } catch (err) {
+      setIsConnecting(false);
+      setError(err as Error);
+      throw err;
+    }
+  }, [adapter]);
+
+  const disconnect = useCallback(async () => {
+    if (!adapter) return;
+
+    try {
+      await adapter.disconnect();
+      setAccounts([]);
+      setError(null);
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, [adapter]);
+
+  const refreshAccounts = useCallback(async () => {
+    if (!adapter) {
+      throw new WalletIntegrationError("WalletConnect adapter not ready");
+    }
+
+    try {
+      const accts = await adapter.requestAccounts();
+      setAccounts(accts);
+      return accts;
+    } catch (err) {
+      setError(err as Error);
+      throw err;
+    }
+  }, [adapter]);
+
   const value = useMemo<WalletConnectContextValue>(
     () => ({
       adapter,
@@ -145,8 +235,11 @@ export function WalletConnectProvider({
       isConnected: accounts.length > 0,
       isReady,
       error,
+      connect,
+      disconnect,
+      refreshAccounts,
     }),
-    [adapter, accounts, isReady, error],
+    [adapter, accounts, isReady, error, connect, disconnect, refreshAccounts],
   );
 
   return (
