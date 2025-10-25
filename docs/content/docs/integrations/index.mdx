@@ -98,7 +98,11 @@ function TradingDashboard() {
 
 ## WalletConnect Integration
 
-Both approaches support WalletConnect for wallet interactions:
+Integrate secure wallet connections via WalletConnect in your Next.js application:
+
+[→ Complete Next.js + WalletConnect Guide](./nextjs-walletconnect)
+
+Both basic and React Query approaches support WalletConnect for wallet interactions:
 
 ```tsx
 import { WalletConnectProvider, useWalletConnect } from '@nvlabs/qts/react';
@@ -159,6 +163,9 @@ function App() {
   </Card>
   <Card title="Contract Hooks" href="/docs/integrations/react-query-contracts">
     Pre-built hooks for all Qubic smart contracts
+  </Card>
+  <Card title="Next.js + WalletConnect" href="/docs/integrations/nextjs-walletconnect">
+    Complete guide to integrating WalletConnect in Next.js apps
   </Card>
 </Cards>
 

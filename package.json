@@ -1,6 +1,6 @@
 {
   "name": "@nvlabs/qts",
-  "version": "2.0.0",
+  "version": "1.2.3",
   "description": "TypeScript SDK for Qubic blockchain - Complete integration library for frontend and backend applications",
   "main": "./index.ts",
   "module": "./index.ts",

@@ -141,6 +141,17 @@ We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md)
 4. Push to your branch
 5. Open a Pull Request
 
+## Support the Project
+
+If you find this SDK valuable, consider supporting its development! Donations help us maintain the project, add new features, and improve documentation.
+
+**Donation Address:**
+```
+TXTDKTULWFCOGGNTKBCZEHAVDTYBOLGQVCLRBVWUIBLZWEFZXSBBFZGEBLUJ
+```
+
+Every contribution, no matter the size, helps us dedicate more time to making the Qubic ecosystem better for everyone. [Learn more about supporting the project →](https://github.com/nvlabs/qts/tree/main/docs/content/docs/donations.mdx)
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
@@ -150,6 +161,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 - **GitHub Issues** - [Report bugs or request features](https://github.com/nvlabs/qts/issues)
 - **GitHub Discussions** - [Ask questions and share ideas](https://github.com/nvlabs/qts/discussions)
 - **Discord** - [Join the Qubic community](https://discord.gg/qubic)
+- **Donations** - [Support the project](https://github.com/nvlabs/qts/tree/main/docs/content/docs/donations.mdx) 💝
 
 ## Resources
 

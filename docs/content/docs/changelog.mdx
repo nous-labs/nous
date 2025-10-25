@@ -22,6 +22,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.3] - 2025-01-26
+
+### Added
+- **Next.js + WalletConnect Integration Guide**: Comprehensive documentation for integrating WalletConnect in Next.js applications
+  - Complete context provider implementation with TypeScript
+  - QR code display and connection flow examples
+  - Transaction signing and smart contract interaction patterns
+  - Best practices, error handling, and troubleshooting
+- **Donations Page**: Added support page with official donation address and contributor recognition tiers
+  - Hall of Fame for major supporters with exclusive tiers (10M - 10B QUBIC)
+  - Community recognition for contributions at all levels
+  - Multiple contribution pathways (financial, code, documentation, community support)
+- **TypeScript Patterns Documentation**: Added common type-safe patterns for WalletConnect usage
+  - Type-safe connection management
+  - Strongly-typed event handlers and context patterns
+  - Async connection handling with proper error types
+
+### Fixed
+- **WalletConnect Import Compatibility**: Resolved "No matching export" error when bundling with Bun
+  - Changed from ESM default import to hybrid approach using `require()` for runtime and `import type` for types
+  - Maintains full TypeScript type safety while ensuring successful builds
+  - Fixes: `error: No matching export in "node_modules/@walletconnect/sign-client/dist/index.cjs"`
+- **Storage Type Definition**: Fixed TypeScript error in Node.js environments
+  - Replaced DOM `Storage` type reference with explicit `StorageLike` interface
+  - Ensures compatibility across both browser and Node.js environments
+  - Fixes: `TS2304: Cannot find name 'Storage'`
+- **TypeScript Type Errors in Documentation**: Corrected WalletConnect context types
+  - Updated `connect()` return type to use `WalletConnectConnection` from SDK
+  - Fixed "Property 'approve' does not exist" and "Property 'uri' does not exist" errors
+  - Added comprehensive type safety examples and troubleshooting guide
+
+### Changed
+- **Donation Tier Structure**: Refactored recognition tiers to reflect realistic QUBIC market value (~1M QUBIC ≈ $1)
+  - Diamond Supporter: 10B+ QUBIC (~$10,000+) with priority support and feature requests
+  - Platinum Supporter: 5B+ QUBIC (~$5,000+) with direct maintainer access
+  - Gold Supporter: 1B+ QUBIC (~$1,000+) featured on Hall of Fame
+  - Silver/Bronze/Friend tiers for community supporters at all levels
+- **Navigation Updates**: Added "Donations" link to main documentation navigation
+- **Documentation Structure**: Enhanced integrations index with WalletConnect section and cross-references
+
+### Documentation
+- Added complete Next.js + WalletConnect setup guide (`/docs/integrations/nextjs-walletconnect`)
+- Added donations and supporter recognition page (`/docs/donations`)
+- Updated main README with donation address and support section
+- Enhanced contributing guide with financial support options
+
+---
+
+
 ## [1.2.0] - 2025-10-25
 
 ### Added
