@@ -160,7 +160,7 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 - **GitHub Issues** - [Report bugs or request features](https://github.com/nvlabs/qts/issues)
 - **GitHub Discussions** - [Ask questions and share ideas](https://github.com/nvlabs/qts/discussions)
-- **Discord** - [Join the Qubic community](https://discord.gg/qubic)
+- **Discord** - [Join the Qubic community](https://discord.gg/sWX3BakE)
 - **Donations** - [Support the project](https://github.com/nvlabs/qts/tree/main/docs/content/docs/donations.mdx) 💝
 
 ## Resources

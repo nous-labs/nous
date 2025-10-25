@@ -81,7 +81,7 @@ We are committed to providing a welcoming and inclusive environment. Please be:
 
 - **GitHub Issues** - [Report bugs or request features](https://github.com/nvlabs/qts/issues)
 - **GitHub Discussions** - [Ask questions](https://github.com/nvlabs/qts/discussions)
-- **Discord** - [Join the community](https://discord.gg/qubic)
+- **Discord** - [Join the community](https://discord.gg/sWX3BakE)
 
 ## License
 
