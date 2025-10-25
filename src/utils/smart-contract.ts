@@ -241,7 +241,21 @@ export class SmartContractResponse {
    */
   readIdentity(): string {
     const bytes = hexToBytes(this.readHex(32));
-    return identityBytesToString(bytes);
+
+    if (!bytes || bytes.length !== 32 || bytes.every((b) => b === 0)) {
+      return "";
+    }
+
+    try {
+      return identityBytesToString(bytes);
+    } catch (err) {
+      console.warn(
+        "Skipping invalid identity (not 32 bytes or checksum failed):",
+        bytes,
+        err instanceof Error ? err.message : err,
+      );
+      return "";
+    }
   }
 
   /**
