@@ -1,0 +1,53 @@
+---
+title: Advanced Guides
+description: Opinionated playbooks for running production-grade workloads on the Qubic TypeScript SDK.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
+
+# Advanced Guides
+
+The base docs explain *what* each client does, while this section focuses on the **decisions** you have to make in
+production: how you organise queries, deal with latency, and cross-wire contracts. Each guide is self-contained, so you
+can jump directly to whatever task you are automating.
+
+<Callout type="info" title="Everything is still MDX">
+  The advanced guides reuse the same component set as the rest of the documentation, so feel free to embed snippets,
+  tabs, or even interactive sandboxes if you expand on them.
+</Callout>
+
+## What you will find
+
+<Steps>
+  <div>
+    <strong>Real-world playbooks</strong>
+    <p>
+      Recipes for price tickers, portfolio monitors, and automated governance agents. Each goes beyond “call this method”
+      and explains batching, retries, and validation.
+    </p>
+  </div>
+  <div>
+    <strong>Contract anatomy</strong>
+    <p>
+      Deep dives into how Qubic smart contracts are structured, what the QPI restrictions mean, and how function/procedure
+      calls flow through the network.
+    </p>
+  </div>
+  <div>
+    <strong>Operational checklists</strong>
+    <p>
+      Guard rails for observability, caching, rate limiting, and multi-region deployments of SDK powered services.
+    </p>
+  </div>
+</Steps>
+
+## Jump in
+
+- [Real-world playbooks](./real-world-playbooks) - price boards, alerting bots, and settlement pipelines.
+- [Smart contract lifecycle](./smart-contract-lifecycle) - how the QPI runtime executes your calls, with diagrams and troubleshooting tips.
+- [Wallet integration helpers](./wallet-integration) - detect injected providers, normalise accounts, and forward signed transactions.
+
+Need framework-specific wiring? Head over to the [Framework Integrations](/docs/integrations) section for React/Vue/Angular UI layers plus Node, Hono, and Elysia back-end recipes.
+
+If you would like to see a guide for a new workflow, open an issue or drop a PR with your own MDX page.

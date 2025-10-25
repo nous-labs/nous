@@ -1,0 +1,718 @@
+---
+title: Smart Contracts
+description: Complete guide to querying Qubic smart contracts
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Smart Contracts
+
+Qubic smart contracts are programs deployed on the Qubic network that can be queried to retrieve data or execute operations. The QTS SDK provides powerful utilities to interact with these contracts.
+
+## Overview
+
+Each smart contract has:
+- **Contract Index**: Unique identifier (1-17+)
+- **Input Types**: Different functions/procedures within the contract
+- **Request Data**: Encoded parameters for the operation
+- **Response Data**: Encoded return values
+
+## Available Contracts
+
+| Index | Constant | Contract | Core Header | Contract address | Description |
+|-------|----------|----------|-------------|------------------|-------------|
+| 1 | `QUBIC_CONTRACTS.QX` | QX | `Qx.h` | `BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARMID` | Decentralised exchange |
+| 2 | `QUBIC_CONTRACTS.QUOTTERY` | QTRY / Quottery | `Quottery.h` | `CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACNKL` | Betting / prediction markets |
+| 3 | `QUBIC_CONTRACTS.RANDOM` | Random | `Random.h` | `DAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANMIG` | Random number generator |
+| 4 | `QUBIC_CONTRACTS.QUTIL` | QUtil | `QUtil.h` | `EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVWRF` | Polls, send-to-many fees, asset metrics |
+| 5 | `QUBIC_CONTRACTS.MYLASTMATCH` | MLM (MyLastMatch) | `MyLastMatch.h` | `FAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYWJB` | Game leaderboard data |
+| 6 | `QUBIC_CONTRACTS.GQMP` | GQMPROP | `GeneralQuorumProposal.h` | `GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQGNM` | Governance proposal registry |
+| 7 | `QUBIC_CONTRACTS.SUPPLYWATCHER` | SWATCH | `SupplyWatcher.h` | `HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHYCM` | Network-wide supply stats |
+| 8 | `QUBIC_CONTRACTS.CCF` | CCF | `ComputorControlledFund.h` | `IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABXSH` | Managed treasury + proposals |
+| 9 | `QUBIC_CONTRACTS.QEARN` | QEARN | `Qearn.h` | `JAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVKHO` | Staking / lock-ups / boosts |
+| 10 | `QUBIC_CONTRACTS.QVAULT` | QVAULT | `QVAULT.h` | `KAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAXIUO` | Governance vault + multisig |
+| 11 | `QUBIC_CONTRACTS.MSVAULT` | MSVAULT | `MsVault.h` | `LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKPTJ` | Multi-signature vault instance |
+| 12 | `QUBIC_CONTRACTS.QBAY` | QBAY | `Qbay.h` | `MAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWLWD` | Marketplace data |
+| 13 | `QUBIC_CONTRACTS.QSWAP` | QSWAP | `Qswap.h` | `NAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAML` | Automated market maker |
+| 14 | `QUBIC_CONTRACTS.NOSTROMO` | NOST | `Nostromo.h` | `OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAZTPD` | Strategy orchestration contract |
+| 15 | `QUBIC_CONTRACTS.QDRAW` | QDRAW | `Qdraw.h` | `PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYVRC` | Drawing / lottery helper |
+| 16 | `QUBIC_CONTRACTS.RANDOMLOTTERY` | RL (Random Lottery) | `RandomLottery.h` | `QAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPIYE` | Chain-native lottery |
+| 17 | `QUBIC_CONTRACTS.QBOND` | QBOND | `QBond.h` | `RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADKAH` | Bond auctions & coupons |
+
+> The `core/contracts` directory (checked into this repo under `core/`) mirrors the upstream `qubic/core` repository, so
+> you can inspect struct layouts and `REGISTER_USER_FUNCTION` indices directly whenever you need to decode obscure fields.
+
+All contract addresses are exported via `QUBIC_CONTRACT_ADDRESSES` from `@nvlabs/qts` in case you need to build raw transactions.
+
+## Helper shortcuts
+
+Every entry in `QUBIC_CONTRACTS` has a matching `query*` helper exported from `@nvlabs/qts` to keep call sites terse:
+
+```ts
+import {
+  queryQX,
+  queryQuottery,
+  queryRandom,
+  queryQutil,
+  queryMyLastMatch,
+  queryGQMP,
+  querySupplyWatcher,
+  queryCCF,
+  queryQearn,
+  queryQvault,
+  queryMsVault,
+  queryQbay,
+  queryQswap,
+  queryNostromo,
+  queryQdraw,
+  queryRandomLottery,
+  queryQbond,
+} from '@nvlabs/qts';
+```
+
+Each helper simply fills in the `contractIndex` for you. When an "easy contract" wrapper exists (see the [Easy Contracts](/docs/easy-contracts)
+page) you can use that instead, but the `query*` helpers are the lowest common denominator that always match the headers listed above.
+
+## Procedures and transactions
+
+Functions cover read-only queries. To mutate contract state you need to invoke **procedures** by embedding the right
+payload inside a transaction. The SDK now ships with `ProcedureBuilder` utilities that mirror the query builder so you
+can keep everything type-safe:
+
+```ts
+import {
+  createProcedure,
+  defineProcedure,
+  procedureCallToTransaction,
+  QUBIC_CONTRACTS,
+} from '@nvlabs/qts';
+
+// Ad-hoc builder
+const builder = createProcedure(QUBIC_CONTRACTS.QX, 9)
+  .addInt64(42n)            // asset name
+  .addInt64(5000n)          // price
+  .addIdentity(identity);   // maker
+
+const call = builder.toProcedureCall();
+
+// Reusable definition
+const castVote = defineProcedure<{ pollId: bigint; weight: number }>({
+  contractIndex: QUBIC_CONTRACTS.QUTIL,
+  procedureIndex: 5,
+  encode: (proc, params) => {
+    proc.addInt64(params.pollId).addInt32(params.weight);
+  },
+});
+
+const voteCall = castVote.build({ pollId: 1n, weight: 100 });
+```
+
+Once you have a `ProcedureCall`, turn it into a wallet-friendly transaction object:
+
+```ts
+const transaction = procedureCallToTransaction(call, {
+  from: identity,
+  to: contractIdentity, // usually the contract's issuer
+  amount: '0',          // amount expressed in qu (uint64 string)
+});
+
+await walletConnectAdapter.signAndBroadcast({
+  client: qubic.live,
+  transaction,
+});
+```
+
+These helpers power the new React hooks (`useWalletConnect().signProcedureCall`) so you can move from contract headers →
+typed procedure definitions → signed transactions without hand-rolling hex strings. See the
+[`Wallet Integration` guide](/docs/guides/wallet-integration) for full end-to-end examples.
+
+<Callout type="info" title="Need the full mental model?">
+  The new <a href="/docs/guides/smart-contract-lifecycle">Smart Contract Lifecycle</a> guide explains how functions,
+  procedures, and QPI rules combine to process your requests.
+</Callout>
+
+## How execution works
+
+- **Functions** are read-only entry points registered via `REGISTER_USER_FUNCTION`. They cannot mutate state and are
+  executed immediately when you call `querySmartContract`.
+- **Procedures** mutate state and are triggered by transactions (with invocation rewards). They run when the containing
+  tick is processed, so you only receive their effects through subsequent queries.
+- **Deterministic structs**: contracts declare fixed-size structs/arrays, so parsing is always deterministic. The SDK
+  mirrors these layouts inside `contracts-easy.ts`.
+- **Identity encoding**: all addresses are 32-byte public keys plus a checksum. Use `addIdentity`/`readIdentity` to avoid
+  manually juggling base32 conversions.
+
+## Querying Contracts
+
+### Method 1: Query Builder (Recommended)
+
+The query builder provides a fluent API for constructing contract queries:
+
+```typescript
+import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
+
+const query = createQuery(QUBIC_CONTRACTS.QX, 1)
+  .addByte(0x01)
+  .addInt32(100)
+  .addInt64(1000n);
+
+const response = await query.execute(client);
+const parser = parseResponse(response.responseData);
+const result = parser.readInt64();
+```
+
+### Method 2: Helper Functions
+
+Pre-built helpers for common contracts:
+
+```typescript
+import { queryQX, queryQearn, parseResponse } from '@nvlabs/qts';
+
+const qxResponse = await queryQX(client, 1, requestData);
+const qearnResponse = await queryQearn(client, 1, requestData);
+```
+
+### Method 3: Direct Query
+
+For maximum control:
+
+```typescript
+const response = await client.querySmartContract({
+  contractIndex: 1,
+  inputType: 1,
+  inputSize: 32,
+  requestData: 'base64EncodedData'
+});
+```
+
+## Building Queries
+
+### SmartContractQuery API
+
+The query builder provides methods for all data types:
+
+```typescript
+import { createQuery } from '@nvlabs/qts';
+
+const query = createQuery(contractIndex, inputType)
+  .addByte(0xFF)                    // Single byte
+  .addInt16(1234)                   // 16-bit integer
+  .addInt32(100000)                 // 32-bit integer
+  .addInt64(1000000000n)            // 64-bit BigInt
+  .addIdentity('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA') // 32-byte public key + checksum
+  .addHex('deadbeef')               // Raw hex data
+  .addPadding(16);                  // Zero padding
+```
+
+### Data Types
+
+<Tabs items={['Integers', 'Strings', 'Raw Data']}>
+  <Tab value="Integers">
+    ```typescript
+    // All integers are little-endian encoded
+    query
+      .addByte(255)           // 0-255
+      .addInt16(32767)        // -32768 to 32767
+      .addInt32(2147483647)   // -2^31 to 2^31-1
+      .addInt64(9223372036854775807n); // BigInt
+    ```
+  </Tab>
+  <Tab value="Strings">
+    ```typescript
+    // Strings are UTF-8 encoded and padded. Use addIdentity for addresses.
+    query
+      .addIdentity('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+      .addString('NOTES', 10);    // Padded to 10 bytes
+    ```
+  </Tab>
+  <Tab value="Raw Data">
+    ```typescript
+    // Add raw hex data or padding
+    query
+      .addHex('deadbeef')    // Raw hex string
+      .addPadding(32);       // Add 32 zero bytes
+    ```
+  </Tab>
+</Tabs>
+
+### Example: Complex Query
+
+```typescript
+const query = createQuery(QUBIC_CONTRACTS.QSWAP, 3)
+  .addByte(0x01)                    // Operation type
+  .addInt32(assetPairId)            // Asset pair ID
+  .addInt64(amountIn)               // Input amount
+  .addInt64(minAmountOut)           // Minimum output
+  .addString(recipient, 60)         // Recipient identity
+  .addInt32(deadline);              // Deadline tick
+```
+
+## Parsing Responses
+
+### SmartContractResponse API
+
+Parse contract responses with type-safe methods:
+
+```typescript
+import { parseResponse } from '@nvlabs/qts';
+
+const parser = parseResponse(response.responseData);
+
+const statusCode = parser.readByte();
+const value = parser.readInt64();
+const identity = parser.readString(60);
+const hex = parser.readHex(32);
+
+// Check for remaining data
+if (parser.hasMore()) {
+  console.log('More data available');
+}
+```
+
+### Reading Data Types
+
+```typescript
+// Numeric types
+const byte = parser.readByte();        // 0-255
+const int16 = parser.readInt16();      // 16-bit
+const int32 = parser.readInt32();      // 32-bit
+const int64 = parser.readInt64();      // BigInt
+
+// String types
+const identity = parser.readString(60); // Fixed length
+const text = parser.readString(32);
+
+// Raw data
+const hex = parser.readHex(16);        // 16 bytes as hex
+```
+
+### Example: Parse Complex Response
+
+```typescript
+const parser = parseResponse(response.responseData);
+
+// Check status code
+const status = parser.readByte();
+if (status !== 0) {
+  throw new Error(`Contract error: ${status}`);
+}
+
+// Parse result
+const result = {
+  orderId: parser.readInt64(),
+  price: parser.readInt64(),
+  quantity: parser.readInt64(),
+  creator: parser.readString(60),
+  timestamp: parser.readInt32()
+};
+```
+
+## Contract Details
+
+### QX - Decentralized Exchange
+
+The QX contract is Qubic's decentralized exchange for trading assets.
+
+```typescript
+import { QUBIC_CONTRACTS, createQuery } from '@nvlabs/qts';
+
+// Query order book
+const query = createQuery(QUBIC_CONTRACTS.QX, 5)
+  .addInt32(assetPairId);
+
+const response = await query.execute(client);
+const parser = parseResponse(response.responseData);
+
+const orderCount = parser.readInt32();
+const orders = [];
+
+for (let i = 0; i < orderCount; i++) {
+  orders.push({
+    price: parser.readInt64(),
+    quantity: parser.readInt64(),
+    creator: parser.readString(60)
+  });
+}
+```
+
+**Common Operations**:
+- Get entity information
+- Query order books
+- Check exchange fees
+- Get asset trading pairs
+
+**Resources**:
+- [QX Documentation](https://docs.qubic.org/learn/qx/)
+- [Source Code](https://github.com/qubic/core/blob/main/src/contracts/Qx.h)
+
+---
+
+### QUtil - Utility Functions
+
+QUtil provides utility operations like batch transfers.
+
+```typescript
+import { QUBIC_CONTRACTS, createQuery } from '@nvlabs/qts';
+
+// SendToMany - batch transfer
+const query = createQuery(QUBIC_CONTRACTS.QUTIL, 1);
+
+// Add up to 25 recipients
+const recipients = [
+  { address: 'IDENTITY1...', amount: 1000n },
+  { address: 'IDENTITY2...', amount: 2000n }
+];
+
+recipients.forEach(({ address, amount }) => {
+  query
+    .addString(address, 60)
+    .addInt64(amount);
+});
+
+const response = await query.execute(client);
+```
+
+**Features**:
+- SendToMany (batch transfers)
+- Burn QUBIC
+- Benchmarking tools
+
+---
+
+### Qearn - Staking Platform
+
+Qearn allows users to stake QUBIC and earn rewards.
+
+```typescript
+import { queryQearn, parseResponse } from '@nvlabs/qts';
+
+// Get staking information
+const response = await queryQearn(client, 1, identityData);
+const parser = parseResponse(response.responseData);
+
+const stakingInfo = {
+  stakedAmount: parser.readInt64(),
+  lockEndTick: parser.readInt32(),
+  earnedRewards: parser.readInt64()
+};
+
+console.log(`Staked: ${stakingInfo.stakedAmount}`);
+console.log(`Unlocks at tick: ${stakingInfo.lockEndTick}`);
+```
+
+**Operations**:
+- Query staking info
+- Get total staked amount
+- Calculate rewards
+- Check lock periods
+
+---
+
+### Qswap - Token Swap
+
+Qswap enables token swapping with liquidity pools.
+
+```typescript
+import { QUBIC_CONTRACTS, createQuery } from '@nvlabs/qts';
+
+// Get swap quote
+const query = createQuery(QUBIC_CONTRACTS.QSWAP, 1)
+  .addInt32(fromAssetId)
+  .addInt32(toAssetId)
+  .addInt64(amountIn);
+
+const response = await query.execute(client);
+const parser = parseResponse(response.responseData);
+
+const amountOut = parser.readInt64();
+const priceImpact = parser.readInt32();
+```
+
+---
+
+### Random - Random Number Generator
+
+Secure random number generation for the network.
+
+```typescript
+import { queryRandom, parseResponse } from '@nvlabs/qts';
+
+const response = await queryRandom(client, 1, '');
+const parser = parseResponse(response.responseData);
+
+const randomNumber = parser.readInt64();
+console.log(`Random: ${randomNumber}`);
+```
+
+---
+
+### CCF - Computor Controlled Fund
+
+Fund controlled by computors for ecosystem development.
+
+```typescript
+import { queryCCF, parseResponse } from '@nvlabs/qts';
+
+// Query fund balance
+const response = await queryCCF(client, 1, '');
+const parser = parseResponse(response.responseData);
+
+const balance = parser.readInt64();
+console.log(`CCF Balance: ${balance}`);
+```
+
+## Complete Example
+
+Here's a full workflow for querying the QX exchange:
+
+```typescript
+import {
+  QubicLiveClient,
+  QUBIC_CONTRACTS,
+  createQuery,
+  parseResponse
+} from '@nvlabs/qts';
+
+async function getQXOrderBook() {
+  const client = new QubicLiveClient();
+  
+  try {
+    // Build query
+    const query = createQuery(QUBIC_CONTRACTS.QX, 5)
+      .addInt32(0); // Asset pair ID
+    
+    // Execute
+    const response = await query.execute(client);
+    
+    // Parse
+    const parser = parseResponse(response.responseData);
+    
+    // Check status
+    const status = parser.readByte();
+    if (status !== 0) {
+      throw new Error(`Contract returned error: ${status}`);
+    }
+    
+    // Read order count
+    const orderCount = parser.readInt32();
+    console.log(`Found ${orderCount} orders`);
+    
+    // Read each order
+    const orders = [];
+    for (let i = 0; i < orderCount; i++) {
+      orders.push({
+        price: parser.readInt64(),
+        quantity: parser.readInt64(),
+        creator: parser.readString(60)
+      });
+    }
+    
+    return orders;
+    
+  } catch (error) {
+    console.error('Query failed:', error.message);
+    throw error;
+  }
+}
+```
+
+## Error Handling
+
+Always validate contract responses:
+
+```typescript
+const parser = parseResponse(response.responseData);
+
+// Many contracts return status codes
+const statusCode = parser.readByte();
+
+if (statusCode !== 0) {
+  throw new Error(`Contract error code: ${statusCode}`);
+}
+
+// Validate data availability
+if (!parser.hasMore()) {
+  throw new Error('Expected more data from contract');
+}
+
+// Read expected data
+const value = parser.readInt64();
+```
+
+## Best Practices
+
+### 1. Validate Input Data
+
+```typescript
+// ✅ Good - validate before encoding
+if (amount < 0) {
+  throw new Error('Amount must be positive');
+}
+
+const query = createQuery(contractIndex, inputType)
+  .addInt64(amount);
+```
+
+### 2. Check Response Status
+
+```typescript
+// ✅ Always check contract status codes
+const status = parser.readByte();
+if (status !== 0) {
+  handleContractError(status);
+}
+```
+
+### 3. Handle Timeouts
+
+```typescript
+// ✅ Increase timeout for complex queries
+const client = new QubicLiveClient({ timeout: 60000 });
+```
+
+### 4. Use Constants
+
+```typescript
+// ✅ Use provided constants
+import { QUBIC_CONTRACTS } from '@nvlabs/qts';
+const query = createQuery(QUBIC_CONTRACTS.QX, 1);
+
+// ❌ Don't hardcode indices
+const query = createQuery(1, 1);
+```
+
+### 5. Validate Responses
+
+```typescript
+// ✅ Check for remaining unexpected data
+const value = parser.readInt64();
+
+if (parser.hasMore()) {
+  console.warn('Unexpected data remaining in response');
+}
+```
+
+## Advanced Usage
+
+### Custom Serialization
+
+For complex data structures:
+
+```typescript
+function serializeSwapRequest(params: SwapParams): string {
+  const query = createQuery(QUBIC_CONTRACTS.QSWAP, params.inputType)
+    .addByte(params.operation)
+    .addInt32(params.pairId)
+    .addInt64(params.amountIn)
+    .addInt64(params.minAmountOut)
+    .addString(params.recipient, 60)
+    .addInt32(params.deadline)
+    .addPadding(32);
+  
+  return query.getRequestData();
+}
+```
+
+### Batch Queries
+
+Query multiple contracts in parallel:
+
+```typescript
+const [qxResponse, qearnResponse, randomResponse] = await Promise.all([
+  queryQX(client, 1, qxData),
+  queryQearn(client, 1, qearnData),
+  queryRandom(client, 1, '')
+]);
+```
+
+### Caching Responses
+
+Cache contract data that changes infrequently:
+
+```typescript
+const cache = new Map<string, { data: any; tick: number }>();
+
+async function getCachedContractData(contractIndex: number, tick: number) {
+  const key = `${contractIndex}-${tick}`;
+  
+  if (cache.has(key)) {
+    return cache.get(key)!.data;
+  }
+  
+  const response = await queryContract(contractIndex);
+  cache.set(key, { data: response, tick });
+  
+  return response;
+}
+```
+
+## Helper Functions Reference
+
+All available helper functions:
+
+```typescript
+import {
+  queryQX,           // QX exchange
+  queryQuottery,     // Quottery betting
+  queryRandom,       // Random numbers
+  queryQutil,        // Utility functions
+  queryQearn,        // Qearn staking
+  queryQswap,        // Qswap exchange
+  queryQvault,       // Qvault storage
+  queryCCF,          // Computor Controlled Fund
+} from '@nvlabs/qts';
+```
+
+## Troubleshooting
+
+### "Invalid hex/base64 data"
+
+Ensure your request data is properly encoded:
+
+```typescript
+// ✅ Use query builder
+const query = createQuery(index, type).addInt64(value);
+
+// ❌ Don't manually encode
+const data = Buffer.from(value.toString()).toString('base64');
+```
+
+### "Request timeout"
+
+Increase timeout for complex queries:
+
+```typescript
+const client = new QubicLiveClient({ timeout: 60000 });
+```
+
+### "Contract error code"
+
+Check the contract source code for error code meanings:
+
+```typescript
+const status = parser.readByte();
+// Status codes are contract-specific
+// Check contract documentation
+```
+
+## Resources
+
+- [Qubic Core Repository](https://github.com/qubic/core)
+- [Contract Source Code](https://github.com/qubic/core/tree/main/src/contracts)
+- [Qubic Documentation](https://docs.qubic.org/)
+- [Discord Community](https://discord.gg/qubic)
+
+## Next Steps
+
+<Cards>
+  <Card title="Encoding Utilities" href="/docs/utilities">
+    Learn about hex, base64, and data encoding
+  </Card>
+  <Card title="Examples" href="/docs/examples">
+    See practical smart contract examples
+  </Card>
+  <Card title="Advanced Guides" href="/docs/guides/smart-contract-lifecycle">
+    Walk through the full contract lifecycle with real-world context
+  </Card>
+</Cards>

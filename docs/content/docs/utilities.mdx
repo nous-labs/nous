@@ -1,0 +1,672 @@
+---
+title: Utilities & Encoding
+description: Complete reference for encoding, decoding, and utility functions
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Utilities & Encoding
+
+The QTS SDK provides comprehensive utilities for data encoding, decoding, and manipulation needed for smart contract interactions and binary data handling.
+
+## Overview
+
+All utility functions are designed for:
+- Smart contract request/response handling
+- Binary data encoding/decoding
+- Format conversions (hex, base64, bytes, strings)
+- Integer serialization (little-endian)
+- Data validation
+
+## Encoding Utilities
+
+### Format Conversions
+
+Convert between hex, base64, and byte arrays.
+
+#### hexToBase64()
+
+Convert hex string to base64.
+
+```typescript
+import { hexToBase64 } from '@nvlabs/qts';
+
+const hex = 'deadbeef';
+const base64 = hexToBase64(hex);
+console.log(base64); // '3q2+7w=='
+```
+
+**Parameters**:
+- `hex` (string): Hex string (without '0x' prefix)
+
+**Returns**: `string` - Base64 encoded string
+
+---
+
+#### base64ToHex()
+
+Convert base64 to hex string.
+
+```typescript
+import { base64ToHex } from '@nvlabs/qts';
+
+const base64 = '3q2+7w==';
+const hex = base64ToHex(base64);
+console.log(hex); // 'deadbeef'
+```
+
+**Parameters**:
+- `base64` (string): Base64 encoded string
+
+**Returns**: `string` - Hex string (lowercase)
+
+---
+
+#### hexToBytes()
+
+Convert hex string to byte array.
+
+```typescript
+import { hexToBytes } from '@nvlabs/qts';
+
+const hex = 'deadbeef';
+const bytes = hexToBytes(hex);
+console.log(bytes); // Uint8Array(4) [222, 173, 190, 239]
+```
+
+**Parameters**:
+- `hex` (string): Hex string
+
+**Returns**: `Uint8Array` - Byte array
+
+---
+
+#### bytesToHex()
+
+Convert byte array to hex string.
+
+```typescript
+import { bytesToHex } from '@nvlabs/qts';
+
+const bytes = new Uint8Array([222, 173, 190, 239]);
+const hex = bytesToHex(bytes);
+console.log(hex); // 'deadbeef'
+```
+
+**Parameters**:
+- `bytes` (Uint8Array): Byte array
+
+**Returns**: `string` - Hex string (lowercase)
+
+---
+
+### String Conversions
+
+Encode strings as hex and decode them later. Pair `stringToHex` / `hexToString` with `hexToBytes` / `bytesToHex` whenever you need to move between text, hex, and raw `Uint8Array` payloads.
+
+#### stringToHex()
+
+Convert string to hex (UTF-8 encoded).
+
+```typescript
+import { stringToHex } from '@nvlabs/qts';
+
+const hex = stringToHex('Hello');
+console.log(hex); // '48656c6c6f'
+```
+
+**Parameters**:
+- `str` (string): String to encode
+
+**Returns**: `string` - Hex string
+
+---
+
+#### hexToString()
+
+Convert hex to string (UTF-8 decoded).
+
+```typescript
+import { hexToString } from '@nvlabs/qts';
+
+const text = hexToString('48656c6c6f');
+console.log(text); // 'Hello'
+```
+
+**Parameters**:
+- `hex` (string): Hex string
+
+**Returns**: `string` - Decoded string
+
+Need a byte buffer for hashing or signing? Compose the helpers:
+
+```typescript
+import { stringToHex, hexToBytes } from '@nvlabs/qts';
+
+const bytes = hexToBytes(stringToHex('Hello, Qubic!'));
+```
+
+---
+
+### Integer Encoding
+
+All integers are encoded in **little-endian** format for Qubic compatibility.
+
+<Callout type="info">
+Qubic uses little-endian byte order for all integer types. The SDK handles this automatically.
+</Callout>
+
+#### encodeInt64LE()
+
+Encode 64-bit integer (BigInt) to hex.
+
+```typescript
+import { encodeInt64LE } from '@nvlabs/qts';
+
+const value = 1000n;
+const hex = encodeInt64LE(value);
+console.log(hex); // 'e803000000000000' (little-endian)
+```
+
+**Parameters**:
+- `value` (bigint): 64-bit integer value
+
+**Returns**: `string` - 16-character hex string
+
+**Range**: -2^63 to 2^63-1
+
+---
+
+#### decodeInt64LE()
+
+Decode hex to 64-bit integer (BigInt).
+
+```typescript
+import { decodeInt64LE } from '@nvlabs/qts';
+
+const hex = 'e803000000000000';
+const value = decodeInt64LE(hex);
+console.log(value); // 1000n
+```
+
+**Parameters**:
+- `hex` (string): 16-character hex string
+
+**Returns**: `bigint` - Decoded value
+
+---
+
+#### encodeInt32LE()
+
+Encode 32-bit integer to hex.
+
+```typescript
+import { encodeInt32LE } from '@nvlabs/qts';
+
+const value = 12345;
+const hex = encodeInt32LE(value);
+console.log(hex); // '39300000'
+```
+
+**Parameters**:
+- `value` (number): 32-bit integer value
+
+**Returns**: `string` - 8-character hex string
+
+**Range**: -2^31 to 2^31-1
+
+---
+
+#### decodeInt32LE()
+
+Decode hex to 32-bit integer.
+
+```typescript
+import { decodeInt32LE } from '@nvlabs/qts';
+
+const hex = '39300000';
+const value = decodeInt32LE(hex);
+console.log(value); // 12345
+```
+
+**Parameters**:
+- `hex` (string): 8-character hex string
+
+**Returns**: `number` - Decoded value
+
+---
+
+#### encodeInt16LE()
+
+Encode 16-bit integer to hex.
+
+```typescript
+import { encodeInt16LE } from '@nvlabs/qts';
+
+const value = 1000;
+const hex = encodeInt16LE(value);
+console.log(hex); // 'e803'
+```
+
+**Parameters**:
+- `value` (number): 16-bit integer value
+
+**Returns**: `string` - 4-character hex string
+
+**Range**: -32768 to 32767
+
+---
+
+#### decodeInt16LE()
+
+Decode hex to 16-bit integer.
+
+```typescript
+import { decodeInt16LE } from '@nvlabs/qts';
+
+const hex = 'e803';
+const value = decodeInt16LE(hex);
+console.log(value); // 1000
+```
+
+**Parameters**:
+- `hex` (string): 4-character hex string
+
+**Returns**: `number` - Decoded value
+
+---
+
+### Hex Manipulation
+
+Utilities for working with hex strings.
+
+#### padHex()
+
+Pad hex string to specified length.
+
+```typescript
+import { padHex } from '@nvlabs/qts';
+
+const hex = 'ff';
+const padded = padHex(hex, 4); // Pad to 4 bytes (8 chars)
+console.log(padded); // '000000ff'
+```
+
+**Parameters**:
+- `hex` (string): Hex string to pad
+- `bytes` (number): Target length in bytes
+
+**Returns**: `string` - Padded hex string (zero-padded on left)
+
+---
+
+#### concatHex()
+
+Concatenate multiple hex strings.
+
+```typescript
+import { concatHex } from '@nvlabs/qts';
+
+const combined = concatHex('dead', 'beef', 'cafe');
+console.log(combined); // 'deadbeefcafe'
+```
+
+**Parameters**:
+- `...hexStrings` (string[]): Hex strings to concatenate
+
+**Returns**: `string` - Combined hex string
+
+---
+
+#### sliceHex()
+
+Extract portion of hex string by byte positions.
+
+```typescript
+import { sliceHex } from '@nvlabs/qts';
+
+const hex = 'deadbeefcafe';
+const slice = sliceHex(hex, 1, 4); // Bytes 1-3
+console.log(slice); // 'adbeef'
+```
+
+**Parameters**:
+- `hex` (string): Hex string to slice
+- `start` (number): Start byte position
+- `end` (number, optional): End byte position (exclusive)
+
+**Returns**: `string` - Sliced hex string
+
+---
+
+## Validation
+
+### isValidHex()
+
+Check if string is valid hexadecimal.
+
+```typescript
+import { isValidHex } from '@nvlabs/qts';
+
+console.log(isValidHex('deadbeef')); // true
+console.log(isValidHex('0xdeadbeef')); // false (no prefix)
+console.log(isValidHex('xyz')); // false
+```
+
+**Parameters**:
+- `hex` (string): String to validate
+
+**Returns**: `boolean` - True if valid hex
+
+---
+
+### isValidBase64()
+
+Check if string is valid base64.
+
+```typescript
+import { isValidBase64 } from '@nvlabs/qts';
+
+console.log(isValidBase64('SGVsbG8=')); // true
+console.log(isValidBase64('invalid!')); // false
+```
+
+**Parameters**:
+- `base64` (string): String to validate
+
+**Returns**: `boolean` - True if valid base64
+
+---
+
+## Complete Examples
+
+### Smart Contract Data Encoding
+
+```typescript
+import {
+  encodeInt32LE,
+  encodeInt64LE,
+  stringToHex,
+  concatHex,
+  padHex,
+  hexToBase64
+} from '@nvlabs/qts';
+
+// Build contract request data
+const operation = padHex('01', 1); // 1 byte operation code
+const pairId = encodeInt32LE(42); // 4 bytes pair ID
+const amount = encodeInt64LE(1000000n); // 8 bytes amount
+const identity = padHex(stringToHex('IDENTITY...'), 60); // 60 bytes identity
+
+// Combine all parts
+const requestHex = concatHex(operation, pairId, amount, identity);
+
+// Convert to base64 for API
+const requestData = hexToBase64(requestHex);
+
+console.log('Request data:', requestData);
+```
+
+### Parsing Contract Response
+
+```typescript
+import {
+  base64ToHex,
+  sliceHex,
+  decodeInt32LE,
+  decodeInt64LE,
+  hexToString
+} from '@nvlabs/qts';
+
+// Response from contract
+const responseBase64 = 'AQAAAAAA8D8AAAAAAAAAQEhlbGxv';
+
+// Convert to hex
+const responseHex = base64ToHex(responseBase64);
+
+// Parse fields
+let offset = 0;
+
+const status = parseInt(sliceHex(responseHex, offset, offset + 1), 16);
+offset += 1;
+
+const value1 = decodeInt32LE(sliceHex(responseHex, offset, offset + 4));
+offset += 4;
+
+const value2 = decodeInt64LE(sliceHex(responseHex, offset, offset + 8));
+offset += 8;
+
+const text = hexToString(sliceHex(responseHex, offset));
+
+console.log({ status, value1, value2, text });
+```
+
+### Identity Encoding
+
+```typescript
+import { stringToHex, padHex, hexToBytes } from '@nvlabs/qts';
+
+const identity = 'BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA';
+
+// Encode as 60-byte padded hex
+const identityHex = padHex(stringToHex(identity), 60);
+
+// Convert to bytes for hashing
+const identityBytes = hexToBytes(identityHex);
+
+console.log(`Hex: ${identityHex}`);
+console.log(`Bytes: ${identityBytes.length}`);
+```
+
+### Batch Data Processing
+
+```typescript
+import { encodeInt64LE, concatHex } from '@nvlabs/qts';
+
+// Encode array of amounts
+const amounts = [1000n, 2000n, 3000n, 4000n];
+const encodedAmounts = amounts.map(amt => encodeInt64LE(amt));
+
+// Combine into single hex string
+const batchData = concatHex(...encodedAmounts);
+
+console.log(`Batch data: ${batchData}`);
+console.log(`Total bytes: ${batchData.length / 2}`);
+```
+
+## Best Practices
+
+### 1. Always Validate Input
+
+```typescript
+import { isValidHex } from '@nvlabs/qts';
+
+function processHexData(hex: string) {
+  if (!isValidHex(hex)) {
+    throw new Error('Invalid hex string');
+  }
+  // Process data...
+}
+```
+
+### 2. Use BigInt for Large Numbers
+
+```typescript
+// ✅ Good - use BigInt for 64-bit values
+const amount = 1000000000n;
+const hex = encodeInt64LE(amount);
+
+// ❌ Bad - number loses precision above 2^53
+const amount = 1000000000;
+const hex = encodeInt64LE(amount); // Type error
+```
+
+### 3. Check String Encoding
+
+```typescript
+// ✅ Good - UTF-8 encoding
+import { stringToHex, hexToBytes } from '@nvlabs/qts';
+const bytes = hexToBytes(stringToHex('Hello'));
+
+// ❌ Bad - platform-dependent
+const bytes = Buffer.from('Hello'); // Node.js specific
+```
+
+### 4. Pad Fixed-Length Fields
+
+```typescript
+// ✅ Good - pad to expected length
+const hex = padHex('ff', 4); // '000000ff'
+
+// ❌ Bad - incorrect length
+const hex = 'ff'; // Only 1 byte instead of 4
+```
+
+### 5. Use Helper Functions
+
+```typescript
+import { createQuery } from '@nvlabs/qts';
+
+// ✅ Good - use query builder
+const query = createQuery(1, 1)
+  .addInt64(1000n);
+
+// ❌ Bad - manual encoding prone to errors
+const hex = encodeInt64LE(1000n);
+const base64 = hexToBase64(hex);
+```
+
+## Common Patterns
+
+### Building Fixed-Size Structs
+
+```typescript
+import { concatHex, padHex, encodeInt32LE, encodeInt64LE } from '@nvlabs/qts';
+
+interface FixedStruct {
+  id: number;      // 4 bytes
+  amount: bigint;  // 8 bytes
+  flags: number;   // 1 byte
+  reserved: void;  // 3 bytes padding
+}
+
+function encodeStruct(data: FixedStruct): string {
+  return concatHex(
+    encodeInt32LE(data.id),
+    encodeInt64LE(data.amount),
+    padHex(data.flags.toString(16), 1),
+    padHex('', 3) // Reserved padding
+  );
+}
+```
+
+### Parsing Variable-Length Data
+
+```typescript
+import { sliceHex, decodeInt32LE } from '@nvlabs/qts';
+
+function parseArray(hex: string): number[] {
+  let offset = 0;
+  
+  // Read count (first 4 bytes)
+  const count = decodeInt32LE(sliceHex(hex, offset, offset + 4));
+  offset += 4;
+  
+  // Read each element
+  const values: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const value = decodeInt32LE(sliceHex(hex, offset, offset + 4));
+    values.push(value);
+    offset += 4;
+  }
+  
+  return values;
+}
+```
+
+## Performance Tips
+
+### 1. Reuse Buffers
+
+For repeated encoding/decoding operations:
+
+```typescript
+const buffer = new Uint8Array(8);
+// Reuse buffer for multiple operations
+```
+
+### 2. Batch Conversions
+
+Convert multiple values together:
+
+```typescript
+const hexStrings = values.map(v => encodeInt64LE(v));
+const combined = concatHex(...hexStrings);
+```
+
+### 3. Avoid Unnecessary Conversions
+
+```typescript
+// ✅ Good - direct hex manipulation
+const result = concatHex(hex1, hex2);
+
+// ❌ Bad - unnecessary conversions
+const result = hexToBase64(concatHex(
+  base64ToHex(base64_1),
+  base64ToHex(base64_2)
+));
+```
+
+## Troubleshooting
+
+### "Invalid hex string"
+
+Ensure hex strings don't have '0x' prefix and contain only valid characters:
+
+```typescript
+// ✅ Correct
+const hex = 'deadbeef';
+
+// ❌ Wrong
+const hex = '0xdeadbeef';
+const hex = 'xyz123';
+```
+
+### "BigInt expected"
+
+Use BigInt for 64-bit integers:
+
+```typescript
+// ✅ Correct
+encodeInt64LE(1000n);
+
+// ❌ Wrong
+encodeInt64LE(1000);
+```
+
+### "Invalid padding"
+
+Check byte lengths match expected sizes:
+
+```typescript
+// ✅ Correct - 4 bytes = 8 hex chars
+const hex = padHex('ff', 4); // '000000ff'
+
+// ❌ Wrong - odd number of chars
+const hex = 'fff';
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="Smart Contracts" href="/docs/smart-contracts">
+    Use these utilities in smart contract queries
+  </Card>
+  <Card title="API Clients" href="/docs/api-clients">
+    Integrate with API client methods
+  </Card>
+  <Card title="Examples" href="/docs/examples">
+    See practical usage examples
+  </Card>
+</Cards>

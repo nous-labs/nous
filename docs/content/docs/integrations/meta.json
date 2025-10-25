@@ -1,0 +1,4 @@
+{
+  "title": "Framework Integrations",
+  "description": "Recipes for wiring the Qubic TypeScript SDK into popular front-end and back-end frameworks."
+}

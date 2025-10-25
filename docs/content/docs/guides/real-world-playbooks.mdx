@@ -1,0 +1,201 @@
+---
+title: Real-world Playbooks
+description: End-to-end examples that combine multiple contracts, validation layers, and error-handling strategies.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+
+# Real-world Playbooks
+
+These playbooks capture the workflows we repeatedly build when shipping production integrations. They emphasise the
+pieces **between** API calls: batching, deduplication, retries, and modelling data across contracts.
+
+## Multi-pair price board
+
+Goal: render a board that shows the **best bid/ask** for a list of issuer/asset pairs, refreshed every tick.
+
+<Tabs items={['Concept', 'Implementation']}>
+  <Tab value="Concept">
+    - Keep a canonical list of assets you care about (e.g. GARTH, MATILDA passive funds).
+    - Query `qx.getAssetAskOrders` and `qx.getAssetBidOrders` in parallel, but only parse the first non-empty entry.
+    - Cache the `identityToBytes` result so you don’t recompute the 32-byte public key on every loop.
+    - Express all numeric comparisons in BigInt and format right before rendering.
+  </Tab>
+  <Tab value="Implementation">
+
+```ts
+import { QubicLiveClient, qx, identityToBytes } from '@nvlabs/qts';
+
+const client = new QubicLiveClient();
+
+const watchList = [
+  {
+    label: 'GARTH spot',
+    issuer: 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF',
+    assetName: 'GARTH',
+  },
+  {
+    label: 'Matilda QX pool',
+    issuer: 'UFMYCIGCNBKEWDUTVOOOIXJOLBHCAHBVACLFFOBZEDKDWACOPWRBLFOGPYIL',
+    assetName: 'MATILDA',
+  },
+];
+
+const encodedAssets = new Map<string, bigint>();
+
+function encode(name: string): bigint {
+  if (encodedAssets.has(name)) return encodedAssets.get(name)!;
+  const bytes = new TextEncoder().encode(name.toUpperCase());
+  const padded = new Uint8Array(8);
+  padded.set(bytes);
+  const value = new DataView(padded.buffer).getBigUint64(0, true);
+  encodedAssets.set(name, value);
+  return value;
+}
+
+export async function loadPriceBoard() {
+  const snapshots = await Promise.all(
+    watchList.map(async ({ label, issuer, assetName }) => {
+      const assetId = encode(assetName);
+      const [asks, bids] = await Promise.all([
+        qx.getAssetAskOrders(client, issuer, assetId),
+        qx.getAssetBidOrders(client, issuer, assetId),
+      ]);
+
+      const bestAsk = asks.orders.find((o) => o.numberOfShares > 0n);
+      const bestBid = bids.orders.find((o) => o.numberOfShares > 0n);
+
+      return {
+        label,
+        bestAsk,
+        bestBid,
+        mid:
+          bestAsk && bestBid ? (bestAsk.price + bestBid.price) / 2n : undefined,
+      };
+    }),
+  );
+
+  return snapshots;
+}
+```
+
+  </Tab>
+</Tabs>
+
+<Callout type="warning" title="Throttling">
+  The Qubic RPC endpoints can rate-limit bursty traffic. Spread the pair queries over two ticks or introduce a simple
+  queue with `setTimeout` if you monitor dozens of assets.
+</Callout>
+
+## Vault health monitor
+
+Goal: alert operations whenever a vault configuration drifts from policy (auth owners updated, reinvesting address not
+approved, or banned addresses present).
+
+1. Use `qvault.getData` to retrieve the current configuration.
+2. Keep the reference policy inside your service (JSON or env).
+3. Run a diff that highlights:
+   - Missing authorised multi-sig addresses.
+   - Unexpected banned addresses.
+   - Distribution permilles that do not sum to 1000.
+4. Emit both human-readable strings and structured JSON (for SIEM ingestion).
+
+```ts
+import { qvault, QubicLiveClient } from '@nvlabs/qts';
+
+const POLICY = {
+  auth: new Set([
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+    'BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB',
+  ]),
+  banned: new Set<string>(),
+  totalPermille: 1000,
+};
+
+export async function checkVaultHealth(client = new QubicLiveClient()) {
+  const snapshot = await qvault.getData(client);
+
+  const authOk =
+    POLICY.auth.has(snapshot.authAddress1) &&
+    POLICY.auth.has(snapshot.authAddress2) &&
+    POLICY.auth.has(snapshot.authAddress3);
+
+  const bannedUnknown = [
+    snapshot.bannedAddress1,
+    snapshot.bannedAddress2,
+    snapshot.bannedAddress3,
+  ].filter((id) => id && !POLICY.banned.has(id));
+
+  const permille =
+    snapshot.QCAPHolderPermille +
+    snapshot.reinvestingPermille +
+    snapshot.devPermille;
+
+  return {
+    authOk,
+    bannedUnknown,
+    permilleMismatch: permille !== POLICY.totalPermille,
+    snapshot,
+  };
+}
+```
+
+Pipe the result into whichever alerting backend you use. Because the RPC output already returns identities as canonical
+strings, you can drop them directly into dashboards or human-readable e-mails.
+
+## Governance autopilot
+
+Many Qubic projects use a **two-step** interaction model:
+
+1. Inspect proposals via the CCF contract (functions 1–4).
+2. Post votes / execution transactions (procedures) from a signing service.
+
+This playbook covers the read-path side and surfaces proposals that require attention.
+
+```ts
+import { ccf, QubicLiveClient } from '@nvlabs/qts';
+
+const client = new QubicLiveClient();
+
+export async function loadActiveProposals({
+  includeHistorical = false,
+} = {}) {
+  const indices = await ccf.getProposalIndices(client, {
+    activeProposals: !includeHistorical,
+    prevProposalIndex: -1,
+  });
+
+  return Promise.all(
+    indices.indices.map(async (idx) => {
+      const raw = await ccf.getProposal(client, idx);
+      const parser = raw.parser;
+
+      return {
+        index: idx,
+        epoch: parser.readInt32(),
+        amount: parser.readInt64(),
+        destination: parser.readIdentity(),
+        description: parser.readString(256),
+      };
+    }),
+  );
+}
+```
+
+Hook this into Slack/Discord to notify signers when a quorum threatens to fail or expire.
+
+## Building reliable alerts
+
+- **Retry strategy**: the RPC endpoints return HTTP 429/503 under load. Wrap every high-frequency playbook in a tiny
+  retry helper with exponential backoff and jitter.
+- **Idempotent parsing**: keep the raw `responseData` when something looks off. Being able to re-parse later is invaluable
+  when a contract upgrades its schema.
+- **Identity sanitation**: whenever you need to compare inputs from humans, run them through `identityToBytes` +
+  `identityBytesToString`. That guarantees the checksum and uppercase rules are respected before you touch the network.
+
+## What’s next?
+
+- Combine the price board with the governance autopilot to stop proposals that would drain liquidity pools.
+- Extend the vault health monitor to write Prometheus metrics (`vault_permille_total`, `vault_auth_mismatch`).
+- Share your own playbooks in a PR — the more real-world flows we document, the easier it is for new teams to join the ecosystem.

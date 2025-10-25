@@ -1,0 +1,113 @@
+---
+title: Back-end APIs
+description: Wire the SDK into Node.js, Express, Hono (Bun), and Elysia servers.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Back-end integrations
+
+`createQubicClient()` spins up three ready-to-use clients (live, query, archive). The snippets below show how to expose
+them through popular back-end frameworks.
+
+<Callout type="info">
+  The clients are lightweight wrappers around <code>fetch</code>. Reuse a single instance per process so keep-alive
+  connections and caches stay warm.
+</Callout>
+
+## Node.js / Express
+
+```ts
+import express from 'express';
+import { createQubicClient } from '@nvlabs/qts';
+
+const qubic = createQubicClient();
+const app = express();
+
+app.get('/balances/:identity', async (req, res) => {
+  try {
+    const { balance } = await qubic.live.getBalance(req.params.identity);
+    res.json(balance);
+  } catch (error) {
+    res.status(500).json({ message: (error as Error).message });
+  }
+});
+
+app.listen(3000, () => console.log('API listening on :3000'));
+```
+
+For higher throughput, add a simple cache between ticks:
+
+```ts
+const balanceCache = new Map<string, { tick: number; payload: unknown }>();
+
+app.get('/balances/:identity', async (req, res) => {
+  const key = req.params.identity;
+  const cached = balanceCache.get(key);
+  if (cached && cached.tick === lastTick) return res.json(cached.payload);
+
+  const payload = await qubic.live.getBalance(key);
+  balanceCache.set(key, { tick: payload.balance.validForTick, payload });
+  res.json(payload);
+});
+```
+
+## Hono (Bun)
+
+```ts
+import { Hono } from 'hono';
+import { createQubicClient } from '@nvlabs/qts';
+
+const app = new Hono();
+const qubic = createQubicClient();
+
+app.get('/ticks', async (c) => {
+  const { tickInfo } = await qubic.live.getTickInfo();
+  return c.json(tickInfo);
+});
+
+app.get('/orders/:issuer/:asset', async (c) => {
+  const { issuer, asset } = c.req.param();
+  const { qx } = await import('@nvlabs/qts/utils');
+  const { orders } = await qx.getAssetAskOrders(qubic.live, issuer, BigInt(asset));
+  return c.json(orders);
+});
+
+export default app;
+```
+
+Deploy the handler with `bun run src/server.ts` or bundle it into your existing Hono router.
+
+## Elysia
+
+```ts
+import { Elysia } from 'elysia';
+import { createQubicClient } from '@nvlabs/qts';
+import { qearn } from '@nvlabs/qts/utils';
+
+const qubic = createQubicClient();
+const app = new Elysia();
+
+app.get('/staking/:identity', async ({ params }) => {
+  const lock = await qearn.getUserLockedInfo(qubic.live, params.identity, 0);
+  return { identity: params.identity, lockedAmount: lock.lockedAmount.toString() };
+});
+
+app.listen(3000);
+```
+
+## Background jobs and workers
+
+- Use the `query` helpers from `@nvlabs/qts/utils` inside schedulers (BullMQ, Agenda, Cloudflare Workers) in the same
+  way. The clients do not rely on Node-specific APIs beyond `fetch`.
+- For Workers (Cloudflare, Vercel Edge), pass the platform-provided `fetch` implementation to `createQubicClient({ fetchFn: env.fetch })`.
+- Wrap long-running jobs in the retry helper from the [Operations guide](/docs/integrations/operations) so temporary RPC
+  hiccups do not abort the workflow.
+
+## Observability tips
+
+- Log the `validForTick` field that every balance/asset response contains. It lets you correlate cache hits with tick
+  ranges.
+- When broadcasting transactions from the back end, capture `transactionId` from `broadcast()` for post-trade monitoring.
+- Keep counters for `QubicApiError.status` to see when remote limits are being enforced (most notably 408 timeouts).
+

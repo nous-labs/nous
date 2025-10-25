@@ -55,6 +55,7 @@ export {
   parseResponse,
   queryContract,
   QUBIC_CONTRACTS,
+  QUBIC_CONTRACT_ADDRESSES,
   queryQuottery,
   queryQutil,
   queryQX,

@@ -1,0 +1,305 @@
+---
+title: Easy Contracts
+description: Contract-specific helpers that mirror the user functions baked into the Qubic core contracts.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
+
+# Easy Contracts
+
+The Easy Contracts API wraps the binary boilerplate required to talk to the official Qubic contracts. Every helper lives
+in `src/utils/contracts-easy.ts` and mirrors the function indices from `qubic/core/src/contracts/*`.
+
+<Callout type="info" title="Source of truth">
+  The tables below were generated from <code>src/utils/contracts-easy.ts</code>, which is kept in lockstep with the
+  headers inside <code>core/contracts</code> (pulled from <code>github.com/qubic/core</code>). If a contract registers a
+  new user function, we update the helper and this page together so the docs remain accurate.
+</Callout>
+
+## Importing the helpers
+
+All helpers are exported through the `@nvlabs/qts/utils` entrypoint:
+
+```typescript
+import { qx, qutil, quottery, qearn, qswap, qvault, ccf } from '@nvlabs/qts/utils';
+import { QubicLiveClient, stringToUint64 } from '@nvlabs/qts';
+
+const client = new QubicLiveClient();
+const assetName = stringToUint64('GARTH');
+const { orders } = await qx.getAssetAskOrders(
+  client,
+  'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF',
+  assetName
+);
+```
+
+<Steps>
+  <div>
+    <strong>Create or reuse a client</strong>
+    <p>Each helper expects an instance of <code>QubicLiveClient</code>. Reuse clients to share connection pools.</p>
+  </div>
+  <div>
+    <strong>Pass the required fields</strong>
+    <p>Parameters are typed (identities, BigInts, offsets) so you cannot accidentally send malformed payloads.</p>
+  </div>
+  <div>
+    <strong>Receive parsed objects</strong>
+    <p>The helpers return ready-to-use objects instead of raw hex so you can focus on your business logic.</p>
+  </div>
+</Steps>
+
+## Contract catalogue
+
+| Contract | Helper | User functions covered |
+|----------|--------|------------------------|
+| QX (Decentralised exchange) | `qx` | `getFees`, `getAssetAskOrders`, `getAssetBidOrders`, `getEntityAskOrders`, `getEntityBidOrders` |
+| QUtil (utility primitives) | `qutil` | `getSendToManyV1Fee`, `getTotalNumberOfAssetShares`, `getCurrentResult`, `getPollsByCreator`, `getCurrentPollId`, `getPollInfo` |
+| Quottery (betting) | `quottery` | `basicInfo`, `getBetInfo`, `getBetOptionDetail`, `getActiveBet`, `getBetByCreator` |
+| QEarn (staking) | `qearn` | `getLockInfoPerEpoch`, `getUserLockedInfo`, `getStateOfRound`, `getUserLockStatus`, `getEndedStatus`, `getStatsPerEpoch`, `getBurnedAndBoostedStats`, `getBurnedAndBoostedStatsPerEpoch` |
+| QSwap (AMM) | `qswap` | `getFees`, `getPoolBasicState`, `getLiquidityOf`, `quoteExactQuInput`, `quoteExactQuOutput`, `quoteExactAssetInput`, `quoteExactAssetOutput`, `getTeamInfo` |
+| QVault (governance vault) | `qvault` | `getData` |
+| CCF (Computor Controlled Fund) | `ccf` | `getProposalIndices`, `getProposal`, `getVote`, `getVotingResults`, `getLatestTransfers`, `getProposalFee` |
+
+## Price board for GARTH
+
+The most requested snippet: fetch the live order book for the GARTH issuer
+(`GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF`, asset name `GARTH`).
+
+```typescript
+import { QubicLiveClient, stringToUint64 } from '@nvlabs/qts';
+import { qx } from '@nvlabs/qts/utils';
+
+const GARTH_ISSUER = 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF';
+const GARTH_ASSET = stringToUint64('GARTH');
+
+async function fetchSpotQuote() {
+  const client = new QubicLiveClient();
+  const [asks, bids] = await Promise.all([
+    qx.getAssetAskOrders(client, GARTH_ISSUER, GARTH_ASSET),
+    qx.getAssetBidOrders(client, GARTH_ISSUER, GARTH_ASSET),
+  ]);
+
+  const bestAsk = asks.orders[0];
+  const bestBid = bids.orders[0];
+  const mid =
+    bestAsk && bestBid ? (bestAsk.price + bestBid.price) / 2n : bestAsk?.price ?? bestBid?.price ?? null;
+
+  return {
+    bestAsk,
+    bestBid,
+    mid,
+    depth: {
+      asks: asks.orders.slice(0, 10),
+      bids: bids.orders.slice(0, 10),
+    },
+  };
+}
+
+const garthQuote = await fetchSpotQuote();
+console.log('GARTH mid price (raw qu):', garthQuote.mid?.toString() ?? 'NA');
+```
+
+Use the entity helpers when you want to see everything a trader is doing across assets:
+
+```typescript
+const userOrders = await qx.getEntityAskOrders(client, 'BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA');
+```
+
+## QX (decentralised exchange)
+
+`qx` wraps the five user functions declared inside `Qx.h`. Each helper returns typed arrays of orders (entity, price, volume).
+
+- `getFees(client)` - fetch issuance, transfer, and trading fees as `uint32`.
+- `getAssetAskOrders(client, issuer, assetName, offset?)` - top 256 ask orders for a given asset.
+- `getAssetBidOrders(client, issuer, assetName, offset?)` - top 256 bid orders.
+- `getEntityAskOrders(client, entity, offset?)` - everything a trader is selling.
+- `getEntityBidOrders(client, entity, offset?)` - everything a trader is bidding on.
+
+```typescript
+const entity = 'BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA';
+const [{ orders: asks }, { orders: bids }] = await Promise.all([
+  qx.getEntityAskOrders(client, entity),
+  qx.getEntityBidOrders(client, entity),
+]);
+
+console.table({ asks, bids });
+```
+
+Pagination works by passing the `offset` parameter in multiples of 256.
+
+## QUtil (polls, asset stats, send-to-many fees)
+
+The QUtil helper focuses on governance and accounting utilities:
+
+- `getSendToManyV1Fee` - current fee (sint64) for bulk payments.
+- `getTotalNumberOfAssetShares({ issuer, assetName })` - total circulation of a share class.
+- `getCurrentResult(pollId)` - live tally arrays for 64 options.
+- `getPollsByCreator(creator)` - IDs created by a given identity.
+- `getCurrentPollId()` - currently active poll IDs and counts.
+- `getPollInfo(pollId)` - metadata (name, assets, creator, link) and whether it is active.
+
+```typescript
+const { poll, pollLink } = await qutil.getPollInfo(client, 42n);
+console.log('Poll', poll.pollName, 'assets allowed', poll.allowedAssets.filter((a) => a.issuer));
+console.log('Read more', pollLink);
+```
+
+## Quottery (betting)
+
+`quottery` exposes read-only analytics for the on-chain betting contract:
+
+- `basicInfo` - protocol-wide fee configuration and treasury balances.
+- `getBetInfo(betId)` - descriptors, oracle info, payouts, and results.
+- `getBetOptionDetail(betId, option)` - up to 1024 bettors per option.
+- `getActiveBet()` - IDs of currently active bets.
+- `getBetByCreator(creator)` - bets issued by a specific identity.
+
+```typescript
+const bet = await quottery.getBetInfo(client, 1);
+console.log('Bet', bet.betId, 'options', bet.optionDesc.filter(Boolean));
+```
+
+## QEarn (staking and boosts)
+
+- `getLockInfoPerEpoch(epoch)` - locked amounts, bonus pools, and yields.
+- `getUserLockedInfo(user, epoch)` - a wallet's position for that epoch.
+- `getStateOfRound(epoch)` - current round state (uint32).
+- `getUserLockStatus(user)` - bitset of which epochs the user is locked in.
+- `getEndedStatus(user)` - fully unlocked, rewarded, and early exit stats.
+- `getStatsPerEpoch(epoch)` - high level network stats.
+- `getBurnedAndBoostedStats()` / `getBurnedAndBoostedStatsPerEpoch(epoch)` - aggregate burn/boost metrics.
+
+```typescript
+const [network, user] = await Promise.all([
+  qearn.getStatsPerEpoch(client, 512),
+  qearn.getUserLockedInfo(client, entity, 512),
+]);
+console.log('Epoch 512', network.totalLockedAmount.toString(), 'locked qu');
+console.log('User locked', user.lockedAmount.toString());
+```
+
+## QSwap (AMM pools and quotes)
+
+- `getFees()` - issuance, pool creation, transfer, swap, protocol, and team fees.
+- `getPoolBasicState(assetIssuer, assetName)` - reserves and LP supply.
+- `getLiquidityOf(assetIssuer, assetName, account)` - LP position for a wallet.
+- `quoteExactQuInput`, `quoteExactQuOutput`, `quoteExactAssetInput`, `quoteExactAssetOutput` - deterministic routing quotes.
+- `getTeamInfo()` - current team fee and ID.
+
+```typescript
+const pool = await qswap.getPoolBasicState(client, issuer, assetName);
+if (pool.poolExists) {
+  const { assetAmountOut } = await qswap.quoteExactQuInput(client, issuer, assetName, 1_000_000n);
+  console.log('Swap 1 qu ->', assetAmountOut, 'units');
+}
+```
+
+## QVault (governance vault)
+
+`qvault.getData` returns every configured address plus fee distributions and ban lists in a single call.
+
+```typescript
+const vault = await qvault.getData(client);
+console.log('Shareholder dividend permille:', vault.shareholderDividend);
+console.log('Admin queue:', [
+  vault.adminAddress,
+  vault.newAdminAddress1,
+  vault.newAdminAddress2,
+  vault.newAdminAddress3,
+]);
+```
+
+## CCF (Computor Controlled Fund)
+
+- `getProposalIndices({ activeProposals, prevProposalIndex })` - two integers and up to 64 proposal indices.
+- `getProposal(index)` - raw buffer plus a parser for custom decoding.
+- `getVote(index)` - same as above but for votes.
+- `getVotingResults(index)` - aggregated tallies.
+- `getLatestTransfers()` - newest fund movements.
+- `getProposalFee()` - current fee in qu.
+
+Because the contract returns complex structs, the helpers expose `raw` and `parser` so you can read fields manually:
+
+```typescript
+const { parser } = await ccf.getProposal(client, 12);
+const proposalType = parser.readByte();
+const requestedAmount = parser.readInt64();
+```
+
+## Generic fallback queries
+
+When the helper set does not yet support a function you need, fall back to `query` or `simpleQuery`:
+
+```typescript
+import { query, QUBIC_CONTRACTS } from '@nvlabs/qts/utils';
+
+const response = await query(
+  client,
+  QUBIC_CONTRACTS.QUTIL,
+  7,
+  (builder) => builder.addIdentity(entity),
+  (parser) => ({
+    burnedAmount: parser.readInt64(),
+    boostedAmount: parser.readInt64(),
+  })
+);
+```
+
+`simpleQuery` skips the parser callback and simply returns `{ raw, parser, response }`.
+
+## Composing dashboards
+
+Because each helper only requires a `QubicLiveClient`, you can stitch them together quickly:
+
+```typescript
+import { QubicLiveClient } from '@nvlabs/qts';
+import { qx, qswap, qearn, qutil, qvault } from '@nvlabs/qts/utils';
+
+async function buildOverview(identity: string, assetIssuer: string, assetName: bigint | number) {
+  const client = new QubicLiveClient();
+
+  const [fees, pool, staking, polls, vaultData] = await Promise.all([
+    qx.getFees(client),
+    qswap.getPoolBasicState(client, assetIssuer, assetName),
+    qearn.getUserLockedInfo(client, identity, 0),
+    qutil.getPollsByCreator(client, identity),
+    qvault.getData(client),
+  ]);
+
+  return {
+    exchange: fees,
+    pool,
+    staking,
+    polls,
+    governance: {
+      adminAddress: vaultData.adminAddress,
+      reinvestingAddress: vaultData.reinvestingAddress,
+    },
+  };
+}
+```
+
+## Error handling and validation
+
+- Every helper throws `QubicApiError` when the underlying RPC fails. Catch it to display actionable messages.
+- Identities are expected to be uppercase base32 strings; use the validation helpers in `@nvlabs/qts/utils`.
+- All asset names are encoded as ASCII into `uint64`. Use `stringToUint64` (from the encoding module) and keep the raw
+  `bigint` around so you do not lose precision.
+
+```typescript
+import type { QubicApiError } from '@nvlabs/qts';
+
+try {
+  await qx.getAssetBidOrders(client, issuer, assetName);
+} catch (error) {
+  const apiError = error as QubicApiError;
+  console.error('Contract call failed', apiError.status, apiError.message);
+}
+```
+
+## Next steps
+
+- Dive into the lower-level [`Smart Contracts`](/docs/smart-contracts) guide for custom serialization.
+- Explore [`Framework Integrations`](/docs/integrations) to drop these helpers into React, Vue, Angular, or back-end frameworks.
+- Experiment locally by cloning the `/examples/easy-contracts.ts` file or using the snippets in the [Examples](/docs/examples) page.

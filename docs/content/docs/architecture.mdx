@@ -1,0 +1,688 @@
+---
+title: Architecture
+description: Deep dive into the QTS SDK architecture and design patterns
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Architecture
+
+The Qubic TypeScript SDK is designed with modularity, type safety, and developer experience as core principles.
+
+## Design Principles
+
+### 1. Type Safety First
+
+Complete TypeScript definitions for all APIs with strict mode support.
+
+```typescript
+// All responses are fully typed
+const { tickInfo } = await client.getTickInfo();
+// tickInfo.tick is number
+// tickInfo.epoch is number
+```
+
+### 2. Developer Experience
+
+Simple, intuitive APIs with sensible defaults.
+
+```typescript
+// One line to get started
+const qubic = createQubicClient();
+```
+
+### 3. Universal Compatibility
+
+Works in browsers, Node.js, Bun, and Deno without modifications.
+
+### 4. Modular Design
+
+Tree-shakeable exports - import only what you need.
+
+```typescript
+// Import specific clients
+import { QubicLiveClient } from '@nvlabs/qts';
+
+// Import utilities
+import { encodeInt64LE, hexToBase64 } from '@nvlabs/qts';
+```
+
+### 5. Error Resilience
+
+Comprehensive error handling and meaningful error messages.
+
+### 6. Zero Dependencies
+
+Core functionality has no external dependencies (except Zod for validation).
+
+### 7. Performance
+
+Efficient encoding/decoding with minimal overhead.
+
+## Project Structure
+
+```
+qts/
+├── src/
+│   ├── clients/          # API client implementations
+│   │   ├── base-client.ts          # Base HTTP client
+│   │   ├── qubic-live-client.ts    # Real-time data
+│   │   ├── archive-client.ts       # Historical data (legacy)
+│   │   ├── query-client.ts         # Advanced queries
+│   │   └── index.ts                # Client exports
+│   ├── types/            # Type definitions
+│   │   ├── common.ts               # Shared types
+│   │   ├── responses.ts            # API response types
+│   │   └── index.ts                # Type exports
+│   ├── utils/            # Utility functions
+│   │   ├── encoding.ts             # Hex/Base64/Binary
+│   │   ├── smart-contract.ts       # Contract helpers
+│   │   ├── validation.ts           # Zod schemas
+│   │   └── index.ts                # Utility exports
+│   └── index.ts          # Main entry point
+├── examples/             # Usage examples
+├── test/                 # Test suite
+├── docs/                 # Documentation site
+├── index.ts              # Root entry point
+└── package.json          # Package configuration
+```
+
+## Architecture Layers
+
+### Layer 1: Transport Layer
+
+**File**: `src/clients/base-client.ts`
+
+The base client handles all HTTP communication:
+
+```typescript
+abstract class BaseClient {
+  protected async get<T>(path: string): Promise<T>
+  protected async post<T>(path: string, body: unknown): Promise<T>
+}
+```
+
+**Features**:
+- Unified error handling
+- Timeout management
+- AbortController integration
+- Custom headers support
+- Configurable fetch implementation
+
+**Design Pattern**: Template Method
+- `get()` and `post()` implement common HTTP logic
+- Derived clients focus on API-specific concerns
+
+### Layer 2: API Client Layer
+
+Three specialized clients for different endpoints:
+
+<Tabs items={['QubicLiveClient', 'QueryClient', 'ArchiveClient']}>
+  <Tab value="QubicLiveClient">
+    **Purpose**: Real-time network state and operations
+    
+    **Base URL**: `https://rpc.qubic.org`
+    
+    **Capabilities**:
+    - Current tick information
+    - Balance queries
+    - Asset management
+    - Smart contract queries
+    - Transaction broadcasting
+    
+    **Use Cases**:
+    - Wallet applications
+    - Real-time dashboards
+    - Smart contract interactions
+  </Tab>
+  <Tab value="QueryClient">
+    **Purpose**: Advanced historical data querying
+    
+    **Base URL**: `https://api.qubic.org`
+    
+    **Capabilities**:
+    - Archive status
+    - Transaction history with filters
+    - Tick data retrieval
+    - Computor lists per epoch
+    - Advanced pagination
+    
+    **Use Cases**:
+    - Block explorers
+    - Analytics platforms
+    - Historical analysis
+  </Tab>
+  <Tab value="ArchiveClient">
+    **Purpose**: Legacy historical data access
+    
+    **Base URL**: `https://rpc.qubic.org`
+    
+    **Status**: Deprecated endpoints
+    
+    **Migration**: Use QueryClient for new development
+  </Tab>
+</Tabs>
+
+### Layer 3: Type System
+
+**Files**: `src/types/`
+
+Complete type coverage for compile-time safety:
+
+```typescript
+// Common types
+export interface Transaction {
+  sourceId: string;
+  destId: string;
+  amount: string;
+  tickNumber: number;
+  inputType: number;
+  inputSize: number;
+  inputHex: string;
+  signatureHex: string;
+  txId: string;
+}
+
+// Response types
+export interface TickInfoResponse {
+  tickInfo: TickInfo;
+}
+
+// API error types
+export class QubicApiError extends Error {
+  status: number;
+  statusText: string;
+  url: string;
+}
+```
+
+**Organization**:
+- `common.ts` - Shared types (Transaction, Balance, TickInfo)
+- `responses.ts` - Endpoint-specific response types
+- Discriminated unions for polymorphic responses
+- Optional properties where API may omit fields
+
+**Benefits**:
+- IDE autocomplete
+- Compile-time error detection
+- Self-documenting code
+- Refactoring safety
+
+### Layer 4: Utility Layer
+
+#### Encoding Utilities
+
+**File**: `src/utils/encoding.ts`
+
+Binary data manipulation for smart contract I/O:
+
+```typescript
+// Format conversions
+export function hexToBase64(hex: string): string
+export function base64ToHex(base64: string): string
+export function hexToBytes(hex: string): Uint8Array
+export function bytesToHex(bytes: Uint8Array): string
+
+// String encoding
+export function utf8ToBytes(str: string): Uint8Array
+export function bytesToUtf8(bytes: Uint8Array): string
+
+// Integer encoding (little-endian)
+export function encodeInt64LE(value: bigint): string
+export function decodeInt64LE(hex: string): bigint
+export function encodeInt32LE(value: number): string
+export function decodeInt32LE(hex: string): number
+
+// Hex manipulation
+export function padHex(hex: string, bytes: number): string
+export function concatHex(...hexStrings: string[]): string
+export function sliceHex(hex: string, start: number, end?: number): string
+```
+
+#### Smart Contract Helpers
+
+**File**: `src/utils/smart-contract.ts`
+
+Simplified smart contract interaction:
+
+**1. SmartContractQuery (Builder Pattern)**
+
+```typescript
+export class SmartContractQuery {
+  addByte(value: number): this
+  addInt16(value: number): this
+  addInt32(value: number): this
+  addInt64(value: bigint): this
+  addString(str: string, length: number): this
+  addHex(hex: string): this
+  addPadding(bytes: number): this
+  execute(client: QubicLiveClient): Promise<Response>
+}
+```
+
+Fluent API for building contract requests with automatic size calculation.
+
+**2. SmartContractResponse (Parser Pattern)**
+
+```typescript
+export class SmartContractResponse {
+  readByte(): number
+  readInt16(): number
+  readInt32(): number
+  readInt64(): bigint
+  readString(length: number): string
+  readHex(bytes: number): string
+  hasMore(): boolean
+}
+```
+
+Sequential data reading with offset tracking.
+
+**3. Contract Constants**
+
+```typescript
+  export const QUBIC_CONTRACTS = {
+    QX: 1,
+    QUOTTERY: 2,
+    RANDOM: 3,
+    QUTIL: 4,
+    QEARN: 9,
+    QSWAP: 10,
+    QVAULT: 11,
+    CCF: 17
+  };
+```
+
+#### Wallet Integration Helpers
+
+**File**: `src/wallet/index.ts`, `src/wallet/walletconnect.ts`
+
+- `WalletAdapter` wraps injected providers (e.g. `window.qubic`) with connect/getAccounts/sign/broadcast helpers.
+- `WalletConnectAdapter` wraps `@walletconnect/sign-client`, restores sessions, and exposes the same surface (including
+  `signAndBroadcast`).
+- Both adapters share the `WalletIntegrationError` type for predictable error handling.
+
+## Design Patterns
+
+### 1. Factory Pattern
+
+**Location**: `createQubicClient()`
+
+```typescript
+export function createQubicClient(config?: ClientConfig) {
+  return {
+    live: new QubicLiveClient(config),
+    query: new QueryClient(config),
+    archive: new ArchiveClient(config)
+  };
+}
+```
+
+**Purpose**: Unified client creation with all services  
+**Benefit**: Single configuration point for all APIs
+
+### 2. Builder Pattern
+
+**Location**: `SmartContractQuery`
+
+```typescript
+const query = createQuery(contractIndex, inputType)
+  .addInt32(value1)
+  .addInt64(value2)
+  .addString(text, 60);
+```
+
+**Purpose**: Fluent API for complex data structures  
+**Benefit**: Readable, chainable contract query construction
+
+### 3. Template Method Pattern
+
+**Location**: `BaseClient`
+
+```typescript
+abstract class BaseClient {
+  protected async get<T>(path: string): Promise<T> {
+    // Common logic: timeout, headers, error handling
+  }
+}
+```
+
+**Purpose**: Common HTTP logic with extension points  
+**Benefit**: DRY principle, consistent error handling
+
+### 4. Strategy Pattern
+
+**Location**: Custom `fetchFn` in `ClientConfig`
+
+```typescript
+const client = new QubicLiveClient({
+  fetchFn: async (url, options) => {
+    // Custom implementation
+    return customFetch(url, options);
+  }
+});
+```
+
+**Purpose**: Pluggable HTTP implementation  
+**Benefit**: Testing, Node.js compatibility, custom transports
+
+### 5. Parser Pattern
+
+**Location**: `SmartContractResponse`
+
+```typescript
+const parser = parseResponse(responseData);
+const value1 = parser.readInt32();
+const value2 = parser.readInt64();
+```
+
+**Purpose**: Sequential binary data extraction  
+**Benefit**: Type-safe parsing with offset management
+
+## Data Flow
+
+### Query Flow (Read Operations)
+
+```
+User Code
+    ↓
+Client Method (e.g., getBalance)
+    ↓
+BaseClient.get()
+    ↓
+HTTP Request (fetch)
+    ↓
+Response Validation
+    ↓
+JSON Parsing
+    ↓
+Typed Response
+    ↓
+User Code
+```
+
+### Smart Contract Query Flow
+
+```
+User Code
+    ↓
+SmartContractQuery.build()
+    ↓
+Data Encoding (hex/base64)
+    ↓
+QubicLiveClient.querySmartContract()
+    ↓
+HTTP POST to /v1/querySmartContract
+    ↓
+Response (base64 data)
+    ↓
+SmartContractResponse.parse()
+    ↓
+Decoded Values
+    ↓
+User Code
+```
+
+## Error Handling Strategy
+
+### Error Types
+
+<Callout type="info">
+All errors extend `QubicApiError` with status codes and detailed messages.
+</Callout>
+
+**1. Network Errors (status: 0)**
+- Connection failures
+- DNS resolution failures
+- Network timeouts
+
+**2. HTTP Errors (status: 400-599)**
+- 400: Bad Request (invalid parameters)
+- 404: Not Found (resource doesn't exist)
+- 500: Server Error (API malfunction)
+
+**3. Timeout Errors (status: 408)**
+- Request exceeded configured timeout
+- AbortController triggered
+
+**4. API Errors (with RpcStatus)**
+- Qubic-specific error codes
+- Detailed error messages
+- Optional error details array
+
+### Error Handling Best Practices
+
+```typescript
+try {
+  const result = await client.getBalance(identity);
+} catch (error) {
+  const apiError = error as QubicApiError;
+  
+  if (apiError.status === 0) {
+    // Network issue - retry
+  } else if (apiError.status === 404) {
+    // Resource not found - handle gracefully
+  } else if (apiError.status === 408) {
+    // Timeout - increase timeout or retry
+  } else {
+    // Other error - log and report
+  }
+}
+```
+
+## Performance Considerations
+
+### 1. Request Batching
+
+Group related queries when possible:
+
+```typescript
+const [tickInfo, balance, assets] = await Promise.all([
+  client.getTickInfo(),
+  client.getBalance(identity),
+  client.getIssuedAssets(identity)
+]);
+```
+
+### 2. Caching Strategy
+
+<Callout type="warn">
+The library doesn't cache - implement your own caching layer.
+</Callout>
+
+**Recommendations**:
+- Cache tick info for short periods (tick duration)
+- Cache balance data with tick validation
+- Cache historical data indefinitely (immutable)
+
+### 3. Timeout Configuration
+
+**Defaults**: 30 seconds
+
+**Tuning**:
+- Increase for slow networks or large datasets
+- Decrease for real-time applications with strict SLAs
+
+```typescript
+const client = new QubicLiveClient({ timeout: 60000 });
+```
+
+### 4. Tree Shaking
+
+**Import Strategy**:
+
+```typescript
+// ✅ Good - imports only what's needed
+import { QubicLiveClient } from '@nvlabs/qts';
+
+// ❌ Less optimal - imports everything
+import * as qts from '@nvlabs/qts';
+```
+
+## Extension Points
+
+### 1. Custom Fetch Implementation
+
+```typescript
+const client = new QubicLiveClient({
+  fetchFn: async (url, options) => {
+    console.log('Request:', url);
+    const response = await fetch(url, options);
+    console.log('Response:', response.status);
+    return response;
+  }
+});
+```
+
+### 2. Custom Headers
+
+```typescript
+const client = new QubicLiveClient({
+  headers: {
+    'X-API-Key': 'your-key',
+    'X-Request-ID': generateRequestId()
+  }
+});
+```
+
+### 3. Runtime Configuration
+
+```typescript
+// Change base URL for testing
+client.setBaseUrl('https://test.qubic.org');
+
+// Add authentication
+client.setHeaders({ 'Authorization': 'Bearer token' });
+
+// Increase timeout for slow operations
+client.setTimeout(60000);
+```
+
+## Security Considerations
+
+### 1. API Keys
+
+<Callout type="error">
+Never hardcode API keys in your source code.
+</Callout>
+
+```typescript
+// ✅ Good - use environment variables
+const client = new QubicLiveClient({
+  headers: {
+    'X-API-Key': process.env.QUBIC_API_KEY
+  }
+});
+
+// ❌ Bad - hardcoded key
+const client = new QubicLiveClient({
+  headers: {
+    'X-API-Key': 'sk_live_abc123...'
+  }
+});
+```
+
+### 2. Input Validation
+
+- Library validates types via TypeScript
+- Users should validate business logic
+- Sanitize user inputs before encoding
+
+### 3. HTTPS Only
+
+- All default endpoints use HTTPS
+- Custom URLs should use HTTPS
+- No sensitive data in query parameters
+
+### 4. Rate Limiting
+
+- Implement client-side rate limiting
+- Handle 429 responses gracefully
+- Use exponential backoff for retries
+
+## Testing Strategy
+
+### Unit Tests
+
+**Coverage**: Core utilities and builders
+
+```typescript
+describe('encodeInt64LE', () => {
+  test('encodes positive values', () => {
+    expect(encodeInt64LE(1000n)).toBe('e803000000000000');
+  });
+});
+```
+
+### Integration Tests
+
+**Coverage**: API clients (skipped by default)
+
+```typescript
+describe.skip('QubicLiveClient', () => {
+  test('getTickInfo returns current tick', async () => {
+    const client = new QubicLiveClient();
+    const { tickInfo } = await client.getTickInfo();
+    expect(tickInfo.tick).toBeGreaterThan(0);
+  });
+});
+```
+
+### Running Tests
+
+```bash
+# Unit tests only
+bun test
+
+# Include integration tests
+bun test --run-skipped
+
+# With coverage
+bun test --coverage
+```
+
+## Future Enhancements
+
+### Planned Features
+
+**v1.1.0**
+- WebSocket support for real-time updates
+- Automatic retry logic with exponential backoff
+- Request caching layer
+- Transaction builder utilities
+
+**v1.2.0**
+- Wallet integration helpers
+- Key management utilities
+- HD wallet support
+- Multi-signature support
+
+**v2.0.0**
+- Remove deprecated Archive API methods
+- Breaking changes to improve API consistency
+- Performance optimizations
+- Enhanced error messages
+
+## Contributing
+
+When adding new features, follow these patterns:
+
+1. **Define types** in `src/types/common.ts` or `responses.ts`
+2. **Add method** to appropriate client
+3. **Add JSDoc** documentation
+4. **Export** from `src/index.ts`
+5. **Add tests** in `test/`
+6. **Add examples** in `examples/`
+7. **Document** in docs site
+
+## Resources
+
+- [Source Code](https://github.com/nvlabs/qts)
+- [Issue Tracker](https://github.com/nvlabs/qts/issues)
+- [Discussions](https://github.com/nvlabs/qts/discussions)
+- [Discord Community](https://discord.gg/qubic)
+
+---
+
+**Built with modern TypeScript patterns for the Qubic ecosystem**

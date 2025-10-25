@@ -1,0 +1,201 @@
+---
+title: Front-end + Wallets
+description: React context providers, WalletConnect flows, and framework-specific recipes for Vue and Angular.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Front-end integrations
+
+These patterns show how to embed the SDK into UI frameworks while keeping wallet state in sync.
+
+<Callout type="info">
+  React ships with first-class helpers (`QubicProvider`, `WalletConnectProvider`). Vue and Angular use the same
+  primitives under the hood (`createQubicClient`, `WalletAdapter`, `WalletConnectAdapter`).
+</Callout>
+
+## React + context providers
+
+Wrap your tree in `QubicProvider` to gain access to ready-made `live`, `query`, and `archive` clients:
+
+```tsx
+'use client';
+
+import { QubicProvider } from '@nvlabs/qts/react';
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+  return <QubicProvider>{children}</QubicProvider>;
+}
+```
+
+Inside components call `useQubic()`:
+
+```tsx
+import { useEffect, useState } from 'react';
+import { useQubic } from '@nvlabs/qts/react';
+
+export function BalanceCard({ identity }: { identity: string }) {
+  const { live } = useQubic();
+  const [balance, setBalance] = useState<string>();
+
+  useEffect(() => {
+    live.getBalance(identity).then((res) => setBalance(res.balance.balance));
+  }, [identity, live]);
+
+  return <span>Balance: {balance ?? 'Loading...'}</span>;
+}
+```
+
+### WalletConnect context
+
+`WalletConnectProvider` boots `WalletConnectAdapter` once and exposes connection state through `useWalletConnect`.
+
+```tsx
+import { WalletConnectProvider, useWalletConnect } from '@nvlabs/qts/react';
+
+function WalletConnectButton() {
+  const { connect, disconnect, accounts, pairingUri, isConnecting } = useWalletConnect();
+
+  return (
+    <div>
+      {accounts.length === 0 ? (
+        <button onClick={connect} disabled={isConnecting}>
+          Connect wallet
+        </button>
+      ) : (
+        <button onClick={disconnect}>Disconnect {accounts[0]?.identity.slice(0, 6)}...</button>
+      )}
+      {pairingUri && <pre>Scan: {pairingUri}</pre>}
+    </div>
+  );
+}
+
+export function WalletConnectSection({ children }: { children: React.ReactNode }) {
+  return (
+    <WalletConnectProvider
+      options={{
+        projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
+        metadata: {
+          name: 'QTS Demo',
+          description: 'WalletConnect integration',
+          url: 'https://example.com',
+          icons: ['https://walletconnect.com/walletconnect-logo.png'],
+        },
+      }}
+    >
+      {children}
+    </WalletConnectProvider>
+  );
+}
+```
+
+### Injected wallets (WalletAdapter)
+
+For browser extensions, reuse the `WalletAdapter` from `@nvlabs/qts/wallet`.
+
+```tsx
+import { useEffect, useState } from 'react';
+import { WalletAdapter, detectWalletProviders } from '@nvlabs/qts';
+
+export function InjectedWalletButton() {
+  const [wallet, setWallet] = useState<WalletAdapter>();
+
+  useEffect(() => {
+    const [detected] = detectWalletProviders();
+    if (detected) setWallet(new WalletAdapter(detected.provider));
+  }, []);
+
+  if (!wallet) return <button disabled>Waiting for wallet</button>;
+  return <button onClick={() => wallet.connect()}>Connect injected wallet</button>;
+}
+```
+
+## Vue 3
+
+Provide the client instance at the root and inject wherever needed.
+
+```ts
+// qubic.ts
+import { createQubicClient } from '@nvlabs/qts';
+import type { App } from 'vue';
+
+export const qubicKey = Symbol('qubic');
+
+export function installQubic(app: App) {
+  app.provide(qubicKey, createQubicClient());
+}
+```
+
+```ts
+// BalanceCard.vue
+import { inject, onMounted, ref } from 'vue';
+import { qubicKey } from './qubic';
+
+const qubic = inject(qubicKey);
+const props = defineProps<{ identity: string }>();
+const balance = ref<string>();
+
+onMounted(async () => {
+  if (!qubic) return;
+  const { balance: data } = await qubic.live.getBalance(props.identity);
+  balance.value = data.balance;
+});
+```
+
+WalletConnect works by instantiating the adapter inside a composable:
+
+```ts
+import { WalletConnectAdapter } from '@nvlabs/qts';
+
+export async function useWalletConnect() {
+  const adapter = await WalletConnectAdapter.init({ projectId: 'abc123' });
+  return adapter;
+}
+```
+
+## Angular
+
+Create an injectable service that owns the client.
+
+```ts
+import { Injectable } from '@angular/core';
+import { createQubicClient } from '@nvlabs/qts';
+
+@Injectable({ providedIn: 'root' })
+export class QubicService {
+  readonly client = createQubicClient();
+}
+```
+
+Consume the service inside components:
+
+```ts
+import { Component, inject } from '@angular/core';
+import { QubicService } from './qubic.service';
+
+@Component({
+  selector: 'app-balance-card',
+  template: `<p>Balance: {{ balance ?? 'Loading...' }}</p>`,
+})
+export class BalanceCardComponent {
+  private readonly qubic = inject(QubicService);
+  balance?: string;
+
+  async ngOnInit() {
+    const { balance } = await this.qubic.client.live.getBalance('...');
+    this.balance = balance.balance;
+  }
+}
+```
+
+For WalletConnect, initialise the adapter once (for example inside an `APP_INITIALIZER`) and expose it via your own service.
+
+## Best practices
+
+- Store WalletConnect pairing URIs in state so you can show a QR modal while awaiting `approve()`.
+- Remember that assets use `stringToUint64` for names. Convert once and reuse the resulting `bigint`.
+- Prototype queries locally using the snippets in `/examples` or the scripts in the docs before wiring them into your UI.
+- Use `useWalletConnect().signProcedureCall` together with `procedureCallToTransaction` for predictable state-changing
+  calls—no manual hex strings required.
+- In React, keep the providers high in the tree (e.g., `app/layout.tsx` in Next.js) so every route can share the same
+  WalletConnect session.

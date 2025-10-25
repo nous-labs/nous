@@ -1,0 +1,232 @@
+---
+title: Wallet Integration Helpers
+description: Detect injected wallets, manage connections, and forward signed transactions with a single adapter.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Steps } from 'fumadocs-ui/components/steps';
+
+# Wallet Integration Helpers
+
+<Callout type="info">
+  As of today the official Qubic wallets expose either <strong>WalletConnect</strong> (Sign v2) or a Metamask Snap. The
+  SDK therefore ships with helpers for both injected window providers and WalletConnect sessions.
+</Callout>
+
+QTS ships with a tiny abstraction over browser-injected wallets so you can:
+
+- Detect providers exposed on `window` (e.g., `window.qubicWallet`, `window.qubic`).
+- Normalise accounts into consistent `{ identity, label }` objects.
+- Sign messages or transactions as hex strings.
+- Forward signed payloads to `QubicLiveClient.broadcast()` without re-implementing encoding.
+
+The module lives in `@nvlabs/qts/wallet` and is tree-shakeable.
+
+```ts
+import {
+  WalletAdapter,
+  detectWalletProviders,
+  waitForWalletProvider,
+} from '@nvlabs/qts/wallet';
+```
+
+## Detection strategies
+
+<Steps>
+  <div>
+    <strong>Grab anything available</strong>
+    <p>
+      Call <code>detectWalletProviders()</code> to list all injected providers that expose a <code>request()</code> API.
+    </p>
+  </div>
+  <div>
+    <strong>Await injection</strong>
+    <p>
+      Some extensions inject late. Use <code>waitForWalletProvider()</code> with a timeout to suspend rendering until a
+      provider appears.
+    </p>
+  </div>
+  <div>
+    <strong>Create an adapter</strong>
+    <p>
+      Wrap the provider once and reuse the adapter wherever you need to connect, sign, or broadcast.
+    </p>
+  </div>
+</Steps>
+
+```ts
+const detection = detectWalletProviders();
+const provider =
+  detection[0]?.provider ?? (await waitForWalletProvider({ timeoutMs: 8000 })).provider;
+
+const wallet = new WalletAdapter(provider);
+```
+
+## Connecting and retrieving accounts
+
+```ts
+const accounts = await wallet.connect();
+accounts.forEach((account) => {
+  console.log(account.identity, account.label);
+});
+
+wallet.provider.on?.('accountsChanged', async () => {
+  const updated = await wallet.getAccounts();
+  // update UI
+});
+```
+
+The adapter normalises the payload into `{ identity, label, publicKey }` regardless of how the underlying wallet shapes
+its responses.
+
+## Signing messages and transactions
+
+All signing helpers accept either strings or `Uint8Array`. Strings are treated as hex by default (strip the `0x` prefix
+for you).
+
+```ts
+const signature = await wallet.signMessage('0xdeadbeef');
+console.log('Hex signature:', signature);
+
+const { signedTransaction } = await wallet.signTransaction(rawTxBytes);
+```
+
+## Broadcast helper
+
+Use `signAndBroadcast` to forward the signed payload to a `QubicLiveClient`. The adapter automatically converts signed
+hex into base64 before calling `client.broadcast()` and lets you pass extra arguments if you need to hit custom RPC hosts.
+
+```ts
+import { QubicLiveClient } from '@nvlabs/qts';
+
+const client = new QubicLiveClient();
+await wallet.signAndBroadcast({
+  client,
+  transaction: unsignedTxHex,
+});
+```
+
+## Customising method names
+
+Some wallets expose different RPC names. Override them via the adapter options:
+
+```ts
+const wallet = new WalletAdapter(provider, {
+  methods: {
+    connect: 'custom_connect',
+    signTransaction: 'custom_signTx',
+  },
+});
+```
+
+## WalletConnect (Sign v2)
+
+For mobile wallets (or desktop apps that only expose WalletConnect) use the dedicated adapter that wraps
+`@walletconnect/sign-client`.
+
+```ts
+import { WalletConnectAdapter } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nvlabs/qts';
+
+const wallet = await WalletConnectAdapter.init({
+  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
+  metadata: {
+    name: 'My Qubic DApp',
+    description: 'WalletConnect example',
+    url: 'https://example.com',
+    icons: ['https://walletconnect.com/walletconnect-logo.png'],
+  },
+});
+
+const { uri, approve } = await wallet.connect();
+// Display `uri` via QR modal or deeplink
+await approve();
+
+const accounts = await wallet.requestAccounts();
+
+await wallet.signAndBroadcast({
+  client: new QubicLiveClient(),
+  transaction: {
+    from: accounts[0]!.identity,
+    to: 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF',
+    amount: '1000000', // 1 QUBIC in qu (uint64 string)
+    inputType: 0,
+    payload: '00', // optional hex payload
+  },
+});
+```
+
+- The adapter automatically restores previous sessions (using `localStorage` when available).
+- `connect()` returns the pairing URI and a deferred `approve()` promise: display the URI with your favourite QR modal,
+  then call `approve()` once the user confirms in their wallet.
+- `signTransaction()` accepts arbitrary JSON payloads (matching the wallet's schema) and returns either hex or base64.
+
+> **Chain ID**: the adapter defaults to `qubic:mainnet`. Override `chainId` if you connect to a different network.
+
+## React context providers
+
+The SDK also exports React-specific helpers so you can initialise clients and WalletConnect just once:
+
+```tsx
+import { QubicProvider, useQubic, WalletConnectProvider, useWalletConnect } from '@nvlabs/qts/react';
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <QubicProvider>
+      <WalletConnectProvider
+        options={{
+          projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
+          metadata: {
+            name: 'QTS Demo',
+            description: 'WalletConnect integration',
+            url: 'https://example.com',
+            icons: ['https://walletconnect.com/walletconnect-logo.png'],
+          },
+        }}
+      >
+        {children}
+      </WalletConnectProvider>
+    </QubicProvider>
+  );
+}
+
+export function WalletButton() {
+  const { connect, disconnect, accounts, pairingUri } = useWalletConnect();
+  // render buttons / QR UI here
+}
+```
+
+`useQubic()` returns `{ live, query, archive }` clients for API calls, while `useWalletConnect()` exposes the adapter
+state (`accounts`, `isConnecting`, `pairingUri`, etc.). Pair this with the [`Front-end integrations`](/docs/integrations/frontend)
+guide for framework-specific tips.
+
+The hook also exposes helpers for signing payloads:
+
+- `signTransaction(transaction, walletParams?)`
+- `signAndBroadcast({ client, transaction, walletParams?, broadcastParams? })`
+- `signProcedureCall({ call, transaction, walletParams? })`
+- `signAndBroadcastProcedureCall({ call, transaction, client, walletParams?, broadcastParams? })`
+
+Use `defineProcedure` + `procedureCallToTransaction` from the [Smart Contracts](/docs/smart-contracts) page to keep the
+`transaction` payloads in sync with the contract headers and feed the result into these helpers.
+
+## Error handling
+
+All helpers throw `WalletIntegrationError` when a provider misbehaves (missing identity, unsupported response shape,
+timeouts). Catch it to show actionable feedback:
+
+```ts
+try {
+  await wallet.signMessage(messageHex);
+} catch (error) {
+  if (error instanceof WalletIntegrationError) {
+    console.error('Wallet error:', error.message);
+  }
+}
+```
+
+## Related reading
+
+- [Front-end Integrations](/docs/integrations/frontend) - framework-specific recipes (React, Vue, Angular).
+- [Real-world Playbooks](/docs/guides/real-world-playbooks) - pipe wallet accounts into price boards or health monitors.
+- [Smart Contract Lifecycle](/docs/guides/smart-contract-lifecycle) - understand what you are signing before you broadcast it.

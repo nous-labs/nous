@@ -1,0 +1,210 @@
+---
+title: Examples
+description: Practical snippets that show how to use the Qubic TypeScript SDK end-to-end.
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Examples
+
+Use these snippets as starting points when wiring the SDK into bots, dashboards, or services.
+
+<Callout type="info" title="Need larger blueprints?">
+  Check the <a href="/docs/guides/real-world-playbooks">Real-world Playbooks</a> for multi-step runbooks or fork the
+  <code>examples/</code> directory in this repo to try things locally.
+</Callout>
+
+## Basic Examples
+
+### Simple balance check
+
+```typescript
+import { QubicLiveClient } from '@nvlabs/qts';
+
+async function getBalance(identity: string) {
+  const client = new QubicLiveClient();
+  const { balance } = await client.getBalance(identity);
+
+  console.log({
+    address: balance.id,
+    qubic: balance.balance,
+    incomingTransfers: balance.numberOfIncomingTransfers,
+    outgoingTransfers: balance.numberOfOutgoingTransfers,
+  });
+
+  return balance;
+}
+
+await getBalance('BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA');
+```
+
+### Network status ticker
+
+```typescript
+import { QubicLiveClient } from '@nvlabs/qts';
+
+const client = new QubicLiveClient();
+
+async function logTick() {
+  const { tickInfo } = await client.getTickInfo();
+  console.log(
+    `Tick ${tickInfo.tick} (epoch ${tickInfo.epoch}) - aligned ${tickInfo.numberOfAlignedVotes} / misaligned ${tickInfo.numberOfMisalignedVotes}`
+  );
+}
+
+setInterval(logTick, 1_000);
+```
+
+## Transaction examples
+
+### Fetch recent transactions with pagination
+
+```typescript
+import { QueryClient } from '@nvlabs/qts';
+
+const query = new QueryClient();
+
+export async function listTransactions(identity: string, pageSize = 25) {
+  const history = [];
+  let offset = 0;
+
+  while (true) {
+    const { transactions } = await query.getTransactionsForIdentity(identity, {
+      pagination: { offset, size: pageSize },
+    });
+
+    history.push(...transactions);
+
+    if (transactions.length < pageSize) {
+      break; // last page reached
+    }
+
+    offset += pageSize;
+  }
+
+  return history;
+}
+
+const txs = await listTransactions('GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF');
+console.log('Fetched', txs.length, 'transactions');
+```
+
+### Tick-scoped transaction feed
+
+```typescript
+import { QueryClient } from '@nvlabs/qts';
+
+const query = new QueryClient();
+
+async function streamTick(tickNumber: number) {
+  const transactions = await query.getTransactionsForTick(tickNumber);
+  console.log(`Tick ${tickNumber} contains ${transactions.length} transactions`);
+  return transactions;
+}
+```
+
+## Contract examples
+
+### GARTH order book snapshot (QX)
+
+```typescript
+import { QubicLiveClient, stringToUint64 } from '@nvlabs/qts';
+import { qx } from '@nvlabs/qts/utils';
+
+const GARTH_ISSUER = 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF';
+const GARTH_ASSET = stringToUint64('GARTH');
+
+async function getGarthQuote() {
+  const client = new QubicLiveClient();
+  const [asks, bids] = await Promise.all([
+    qx.getAssetAskOrders(client, GARTH_ISSUER, GARTH_ASSET),
+    qx.getAssetBidOrders(client, GARTH_ISSUER, GARTH_ASSET),
+  ]);
+
+  const bestAsk = asks.orders[0];
+  const bestBid = bids.orders[0];
+
+  return {
+    bestAsk,
+    bestBid,
+    spread: bestAsk && bestBid ? bestAsk.price - bestBid.price : null,
+  };
+}
+
+console.log(await getGarthQuote());
+```
+
+### Poll scoreboard (QUtil)
+
+```typescript
+import { QubicLiveClient } from '@nvlabs/qts';
+import { qutil } from '@nvlabs/qts/utils';
+
+async function renderPoll(pollId: bigint) {
+  const client = new QubicLiveClient();
+  const { result, voterCount } = await qutil.getCurrentResult(client, pollId);
+
+  result.forEach((votes, index) => {
+    if (votes === 0n) return;
+    console.log(`Option ${index}: ${votes} votes (${voterCount[index]} voters)`);
+  });
+}
+
+await renderPoll(42n);
+```
+
+## Wallet and broadcast examples
+
+### WalletConnect sign and broadcast
+
+```typescript
+import { QubicLiveClient } from '@nvlabs/qts';
+import { WalletConnectAdapter } from '@nvlabs/qts';
+
+const GARTH_ISSUER = 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF';
+
+const adapter = await WalletConnectAdapter.init({
+  projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
+  metadata: {
+    name: 'QTS Demo',
+    description: 'WalletConnect transfer demo',
+    url: 'https://example.com',
+    icons: ['https://walletconnect.com/walletconnect-logo.png'],
+  },
+});
+
+const { uri, approve } = await adapter.connect();
+console.log('Scan this URI:', uri);
+
+const accounts = await approve();
+const sender = accounts[0]?.identity;
+if (!sender) throw new Error('No account selected');
+
+await adapter.signAndBroadcast({
+  client: new QubicLiveClient(),
+  transaction: {
+    from: sender,
+    to: GARTH_ISSUER,
+    amount: '1000000', // 1 qubic expressed as uint64 string
+    inputType: 0,
+    payload: '00',
+  },
+});
+```
+
+### Manual broadcast after signing
+
+```typescript
+import { QubicLiveClient, hexToBase64 } from '@nvlabs/qts';
+import { WalletAdapter } from '@nvlabs/qts';
+
+const provider = window.qubicWallet;
+const wallet = new WalletAdapter(provider);
+const client = new QubicLiveClient();
+const rawTxHex = '00...'; // unsigned transaction hex payload
+
+const { signedTransaction } = await wallet.signTransaction(rawTxHex);
+await client.broadcast(hexToBase64(signedTransaction));
+```
+
+Need a different scenario? Duplicate one of these snippets and adjust the inputs -- they are all self-contained.

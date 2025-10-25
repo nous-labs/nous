@@ -1,0 +1,618 @@
+---
+title: API Clients
+description: Complete reference for QubicLiveClient, QueryClient, and ArchiveClient
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# API Clients
+
+The Qubic TypeScript SDK provides three specialized API clients, each designed for specific use cases.
+
+## Overview
+
+| Client | Purpose | Base URL | Use Case |
+|--------|---------|----------|----------|
+| **QubicLiveClient** | Real-time network data | `https://rpc.qubic.org` | Current state, balances, smart contracts |
+| **QueryClient** | Historical data querying | `https://api.qubic.org` | Transaction history, analytics |
+| **ArchiveClient** | Legacy archive access | `https://rpc.qubic.org` | Historical data (deprecated methods) |
+
+<Callout type="info">
+  **Recommendation**: Use `QueryClient` for historical data queries instead of deprecated `ArchiveClient` methods.
+</Callout>
+
+## QubicLiveClient
+
+Access real-time network data and current blockchain state.
+
+### Initialization
+
+```typescript
+import { QubicLiveClient } from '@nvlabs/qts';
+
+const client = new QubicLiveClient({
+  baseUrl: 'https://rpc.qubic.org', // optional
+  timeout: 30000, // optional, default 30s
+  headers: {}, // optional
+  fetchFn: fetch // optional, custom fetch implementation
+});
+```
+
+### Methods
+
+#### getTickInfo()
+
+Get current tick information including epoch and tick number.
+
+```typescript
+const { tickInfo } = await client.getTickInfo();
+
+console.log({
+  tick: tickInfo.tick,
+  epoch: tickInfo.epoch,
+  numberOfAlignedVotes: tickInfo.numberOfAlignedVotes,
+  numberOfMisalignedVotes: tickInfo.numberOfMisalignedVotes
+});
+```
+
+**Returns**: `Promise<{ tickInfo: TickInfo }>`
+
+**Response Structure**:
+```typescript
+interface TickInfo {
+  tick: number;
+  duration: number;
+  epoch: number;
+  initialTick: number;
+  numberOfAlignedVotes: number;
+  numberOfMisalignedVotes: number;
+}
+```
+
+---
+
+#### getBalance(identity)
+
+Query the balance for a specific identity.
+
+```typescript
+const identity = 'BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA';
+const { balance } = await client.getBalance(identity);
+
+console.log({
+  id: balance.id,
+  balance: balance.balance,
+  validForTick: balance.validForTick,
+  latestIncomingTransferTick: balance.latestIncomingTransferTick,
+  latestOutgoingTransferTick: balance.latestOutgoingTransferTick
+});
+```
+
+**Parameters**:
+- `identity` (string): The Qubic identity address (60 uppercase letters)
+
+**Returns**: `Promise<{ balance: Balance }>`
+
+**Response Structure**:
+```typescript
+interface Balance {
+  id: string;
+  balance: string;
+  validForTick: number;
+  latestIncomingTransferTick: number;
+  latestOutgoingTransferTick: number;
+  incomingAmount: string;
+  outgoingAmount: string;
+  numberOfIncomingTransfers: number;
+  numberOfOutgoingTransfers: number;
+}
+```
+
+---
+
+#### getIssuedAssets(identity)
+
+Get all assets issued by an identity.
+
+```typescript
+const { issuedAssets } = await client.getIssuedAssets(identity);
+
+issuedAssets.forEach(asset => {
+  console.log(`${asset.name} (${asset.tick})`);
+});
+```
+
+**Returns**: `Promise<{ issuedAssets: AssetIssuance[] }>`
+
+---
+
+#### getOwnedAssets(identity)
+
+Get all assets owned by an identity.
+
+```typescript
+const { ownedAssets } = await client.getOwnedAssets(identity);
+```
+
+**Returns**: `Promise<{ ownedAssets: AssetOwnership[] }>`
+
+---
+
+#### getPossessedAssets(identity)
+
+Get all assets currently possessed by an identity.
+
+```typescript
+const { possessedAssets } = await client.getPossessedAssets(identity);
+```
+
+**Returns**: `Promise<{ possessedAssets: AssetPossession[] }>`
+
+---
+
+#### querySmartContract(request)
+
+Query a smart contract with custom parameters.
+
+```typescript
+const response = await client.querySmartContract({
+  contractIndex: 1, // QX exchange
+  inputType: 1,
+  inputSize: 32,
+  requestData: 'base64EncodedData'
+});
+
+console.log({
+  responseData: response.responseData,
+  validForTick: response.validForTick
+});
+```
+
+**Parameters**:
+```typescript
+interface QuerySmartContractRequest {
+  contractIndex: number;
+  inputType: number;
+  inputSize: number;
+  requestData: string; // base64 encoded
+}
+```
+
+**Returns**: `Promise<QuerySmartContractResponse>`
+
+<Callout type="tip">
+  Use the `createQuery()` helper for easier smart contract queries. See [Smart Contracts](/docs/smart-contracts/querying) documentation.
+</Callout>
+
+---
+
+#### broadcastTransaction(transaction)
+
+Broadcast a signed transaction to the network.
+
+```typescript
+const result = await client.broadcastTransaction({
+  encodedTransaction: 'base64EncodedSignedTransaction'
+});
+
+console.log({
+  peersBroadcasted: result.peersBroadcasted,
+  encodedTransaction: result.encodedTransaction
+});
+```
+
+**Parameters**:
+```typescript
+interface BroadcastTransactionRequest {
+  encodedTransaction: string; // base64 encoded
+}
+```
+
+**Returns**: `Promise<BroadcastTransactionResponse>`
+
+---
+
+### Configuration Methods
+
+#### setTimeout(ms)
+
+Update the request timeout for this client instance.
+
+```typescript
+client.setTimeout(60000); // 60 seconds
+```
+
+#### setHeaders(headers)
+
+Set custom headers for all requests.
+
+```typescript
+client.setHeaders({
+  'X-API-Key': 'your-key',
+  'User-Agent': 'MyApp/1.0'
+});
+```
+
+#### setBaseUrl(url)
+
+Change the base URL (useful for testing).
+
+```typescript
+client.setBaseUrl('https://test.qubic.org');
+```
+
+---
+
+## QueryClient
+
+Advanced historical data querying with filtering and pagination.
+
+### Initialization
+
+```typescript
+import { QueryClient } from '@nvlabs/qts';
+
+const query = new QueryClient({
+  baseUrl: 'https://api.qubic.org',
+  timeout: 30000
+});
+```
+
+### Methods
+
+#### getLastProcessedTick()
+
+Get the last tick processed by the archive.
+
+```typescript
+const { lastProcessedTick } = await query.getLastProcessedTick();
+
+console.log({
+  tickNumber: lastProcessedTick.tickNumber,
+  epoch: lastProcessedTick.epoch
+});
+```
+
+**Returns**: `Promise<{ lastProcessedTick: LastProcessedTick }>`
+
+---
+
+#### getProcessedTickIntervals()
+
+Get intervals of processed ticks to identify gaps.
+
+```typescript
+const { processedTickIntervals } = await query.getProcessedTickIntervals();
+
+processedTickIntervals.forEach(interval => {
+  console.log(`${interval.initialProcessedTick} - ${interval.lastProcessedTick}`);
+});
+```
+
+**Returns**: `Promise<{ processedTickIntervals: ProcessedTickInterval[] }>`
+
+---
+
+#### getTickData(tickNumber)
+
+Get complete data for a specific tick.
+
+```typescript
+const { tickData } = await query.getTickData(15000000);
+
+console.log({
+  computorIndex: tickData.computorIndex,
+  epoch: tickData.epoch,
+  tick: tickData.tick,
+  timestamp: tickData.timestamp
+});
+```
+
+**Returns**: `Promise<{ tickData: TickData }>`
+
+---
+
+#### getComputorsListForEpoch(epoch)
+
+Get the list of computors for a specific epoch.
+
+```typescript
+const { computors } = await query.getComputorsListForEpoch(100);
+
+computors.forEach(computor => {
+  console.log(computor.identity);
+});
+```
+
+**Returns**: `Promise<{ computors: Computor[] }>`
+
+---
+
+#### getTransactionByHash(txId)
+
+Get a specific transaction by its hash.
+
+```typescript
+const txId = 'eyigxqgkgmbktbgrmxwstofdfcibusadawqfnpqvfqzagxrpvwjpdjtwhgqai';
+const { transaction } = await query.getTransactionByHash(txId);
+
+console.log({
+  source: transaction.sourceId,
+  destination: transaction.destId,
+  amount: transaction.amount,
+  tick: transaction.tickNumber
+});
+```
+
+**Returns**: `Promise<{ transaction: Transaction }>`
+
+---
+
+#### getTransactionsForTick(tickNumber)
+
+Get all transactions for a specific tick.
+
+```typescript
+const { transactions } = await query.getTransactionsForTick(15000000);
+
+console.log(`Found ${transactions.length} transactions`);
+```
+
+**Returns**: `Promise<{ transactions: Transaction[] }>`
+
+---
+
+#### getTransactionsForIdentity(identity, options?)
+
+Get transaction history for an identity with optional filtering.
+
+```typescript
+const { transactions } = await query.getTransactionsForIdentity(
+  identity,
+  {
+    pagination: {
+      offset: 0,
+      size: 50
+    },
+    ranges: {
+      tickNumber: {
+        gte: '15000000',
+        lte: '15100000'
+      }
+    },
+    filters: {
+      moneyFlew: 'true', // only successful transfers
+      transfers: 'true'   // only transfer transactions
+    },
+    sort: {
+      field: 'tickNumber',
+      desc: true
+    }
+  }
+);
+```
+
+**Parameters**:
+```typescript
+interface TransactionQueryOptions {
+  pagination?: {
+    offset: number;
+    size: number;
+  };
+  ranges?: {
+    tickNumber?: {
+      gte?: string;
+      lte?: string;
+    };
+  };
+  filters?: {
+    moneyFlew?: 'true' | 'false';
+    transfers?: 'true' | 'false';
+  };
+  sort?: {
+    field: 'tickNumber' | 'amount';
+    desc: boolean;
+  };
+}
+```
+
+**Returns**: `Promise<{ transactions: Transaction[] }>`
+
+---
+
+#### getTransactionsForIdentityPaginated(identity, offset, size)
+
+Simplified pagination without filters.
+
+```typescript
+const { transactions } = await query.getTransactionsForIdentityPaginated(
+  identity,
+  0,   // offset
+  100  // page size
+);
+```
+
+---
+
+#### getTransactionsForIdentityInRange(identity, startTick, endTick)
+
+Get transactions within a specific tick range.
+
+```typescript
+const { transactions } = await query.getTransactionsForIdentityInRange(
+  identity,
+  15000000,
+  15100000
+);
+```
+
+---
+
+## ArchiveClient
+
+Legacy archive API client (some methods deprecated).
+
+<Callout type="warn">
+  **Deprecation Notice**: Several ArchiveClient methods are deprecated. Use QueryClient for new development.
+</Callout>
+
+### Initialization
+
+```typescript
+import { ArchiveClient } from '@nvlabs/qts';
+
+const archive = new ArchiveClient({
+  baseUrl: 'https://rpc.qubic.org'
+});
+```
+
+### Methods
+
+#### getLatestTick()
+
+<Callout type="error">
+  **Deprecated**: Use `QubicLiveClient.getTickInfo()` or `QueryClient.getLastProcessedTick()` instead.
+</Callout>
+
+```typescript
+// ❌ Deprecated
+const { latestTick } = await archive.getLatestTick();
+
+// ✅ Use instead
+const { tickInfo } = await liveClient.getTickInfo();
+// or
+const { lastProcessedTick } = await queryClient.getLastProcessedTick();
+```
+
+---
+
+#### getTransaction(txId)
+
+<Callout type="error">
+  **Deprecated**: Use `QueryClient.getTransactionByHash()` instead.
+</Callout>
+
+```typescript
+// ❌ Deprecated
+const { transaction } = await archive.getTransaction(txId);
+
+// ✅ Use instead
+const { transaction } = await queryClient.getTransactionByHash(txId);
+```
+
+---
+
+## Unified Client
+
+For convenience, use `createQubicClient()` to get all clients in one object.
+
+```typescript
+import { createQubicClient } from '@nvlabs/qts';
+
+const qubic = createQubicClient({
+  timeout: 30000,
+  liveUrl: 'https://rpc.qubic.org',
+  queryUrl: 'https://api.qubic.org',
+  archiveUrl: 'https://rpc.qubic.org'
+});
+
+// Access all clients
+const tickInfo = await qubic.live.getTickInfo();
+const transactions = await qubic.query.getTransactionsForIdentity(identity);
+```
+
+## Error Handling
+
+All clients throw `QubicApiError` for failed requests:
+
+```typescript
+import type { QubicApiError } from '@nvlabs/qts';
+
+try {
+  const balance = await client.getBalance(identity);
+} catch (error) {
+  const apiError = error as QubicApiError;
+  
+  console.error({
+    status: apiError.status,        // HTTP status or 0 for network errors
+    message: apiError.message,      // Error description
+    statusText: apiError.statusText,
+    url: apiError.url
+  });
+  
+  // Handle specific errors
+  if (apiError.status === 404) {
+    console.log('Resource not found');
+  } else if (apiError.status === 408) {
+    console.log('Request timed out');
+  } else if (apiError.status === 0) {
+    console.log('Network error - check connection');
+  }
+}
+```
+
+## Best Practices
+
+### 1. Reuse Client Instances
+
+Create clients once and reuse them:
+
+```typescript
+// ✅ Good
+const client = new QubicLiveClient();
+const balance1 = await client.getBalance(id1);
+const balance2 = await client.getBalance(id2);
+
+// ❌ Bad
+const balance1 = await new QubicLiveClient().getBalance(id1);
+const balance2 = await new QubicLiveClient().getBalance(id2);
+```
+
+### 2. Use Appropriate Timeouts
+
+Set timeouts based on operation complexity:
+
+```typescript
+const client = new QueryClient({ timeout: 60000 }); // 60s for large queries
+```
+
+### 3. Handle Errors Gracefully
+
+Always wrap API calls in try-catch:
+
+```typescript
+try {
+  const data = await client.getData();
+  processData(data);
+} catch (error) {
+  logError(error);
+  showUserFriendlyMessage();
+}
+```
+
+### 4. Leverage Parallel Requests
+
+Use `Promise.all()` for independent queries:
+
+```typescript
+const [tickInfo, balance, assets] = await Promise.all([
+  client.getTickInfo(),
+  client.getBalance(identity),
+  client.getIssuedAssets(identity)
+]);
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="Smart Contracts" href="/docs/smart-contracts/overview">
+    Learn how to query smart contracts
+  </Card>
+  <Card title="Utilities" href="/docs/api/utilities">
+    Explore encoding and parsing utilities
+  </Card>
+  <Card title="Examples" href="/docs/examples/basic">
+    See practical code examples
+  </Card>
+</Cards>
