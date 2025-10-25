@@ -9,81 +9,33 @@ import { Steps } from 'fumadocs-ui/components/steps';
 
 # Next.js + WalletConnect Integration
 
-This guide shows you how to integrate WalletConnect into your Next.js application using the Qubic TypeScript SDK. WalletConnect enables secure wallet connections via QR codes and deep links, allowing users to sign transactions with their mobile or desktop wallets.
+This guide shows you how to integrate WalletConnect into your Next.js application using the Qubic TypeScript SDK. WalletConnect enables secure wallet connections via QR codes and deep links.
 
 <Callout type="info">
-  **Prerequisites**: You'll need a WalletConnect Project ID. Get one for free at [WalletConnect Cloud](https://cloud.walletconnect.com/).
-</Callout>
-
-## Type-Safe Quick Example
-
-Here's a complete type-safe example showing the connection flow:
-
-```tsx
-import { WalletConnectAdapter, type WalletConnectConnection } from '@nvlabs/qts';
-
-// Initialize adapter
-const adapter = await WalletConnectAdapter.init({
-  projectId: 'YOUR_PROJECT_ID',
-  metadata: {
-    name: 'My Qubic App',
-    description: 'Qubic TypeScript SDK Demo',
-    url: 'https://myapp.com',
-    icons: ['https://myapp.com/icon.png'],
-  },
-});
-
-// Connect and get typed connection object
-const connection: WalletConnectConnection = await adapter.connect();
-
-// connection.uri is typed as string
-console.log('Scan this:', connection.uri);
-
-// connection.approve() is typed as () => Promise<WalletAccount[]>
-const accounts = await connection.approve();
-console.log('Connected:', accounts[0].identity);
-
-// Sign a transaction
-const transaction = {
-  sourceId: accounts[0].identity,
-  destId: 'RECIPIENT_ADDRESS',
-  amount: 1000000,
-  tick: currentTick + 5,
-};
-
-const result = await adapter.signAndBroadcast({
-  client: qubicClient.live,
-  transaction,
-});
-```
-
-<Callout type="success">
-  All types are automatically inferred from the SDK. No manual type annotations needed except for clarity!
+  **Prerequisites**: Get a free WalletConnect Project ID at [WalletConnect Cloud](https://cloud.walletconnect.com/).
 </Callout>
 
 ## Installation
 
-Install the required packages:
-
 <Tabs items={['npm', 'yarn', 'bun', 'pnpm']}>
   <Tab value="npm">
     ```bash
-    npm install @nvlabs/qts @walletconnect/sign-client @walletconnect/types react
+    npm install @nvlabs/qts @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
   <Tab value="yarn">
     ```bash
-    yarn add @nvlabs/qts @walletconnect/sign-client @walletconnect/types react
+    yarn add @nvlabs/qts @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
   <Tab value="bun">
     ```bash
-    bun add @nvlabs/qts @walletconnect/sign-client @walletconnect/types react
+    bun add @nvlabs/qts @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
   <Tab value="pnpm">
     ```bash
-    pnpm add @nvlabs/qts @walletconnect/sign-client @walletconnect/types react
+    pnpm add @nvlabs/qts @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
 </Tabs>
@@ -92,173 +44,29 @@ Install the required packages:
 
 <Steps>
 
-### Create WalletConnect Context
+### Add Provider to Layout
 
-Create a context to manage WalletConnect state across your application:
+The SDK includes a built-in `WalletConnectProvider` - no need to create it manually!
 
-```tsx title="contexts/WalletConnectContext.tsx"
-'use client';
-
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  type ReactNode,
-} from 'react';
-import {
-  WalletConnectAdapter,
-  type WalletAccount,
-  type WalletConnectAdapterOptions,
-  type WalletConnectConnection,
-} from '@nvlabs/qts';
-
-interface WalletConnectContextValue {
-  adapter: WalletConnectAdapter | null;
-  accounts: WalletAccount[];
-  isConnected: boolean;
-  isConnecting: boolean;
-  connect: () => Promise<WalletConnectConnection>;
-  disconnect: () => Promise<void>;
-  error: Error | null;
-}
-
-const WalletConnectContext = createContext<WalletConnectContextValue | null>(null);
-
-interface WalletConnectProviderProps {
-  projectId: string;
-  metadata?: WalletConnectAdapterOptions['metadata'];
-  children: ReactNode;
-}
-
-export function WalletConnectProvider({
-  projectId,
-  metadata,
-  children,
-}: WalletConnectProviderProps) {
-  const [adapter, setAdapter] = useState<WalletConnectAdapter | null>(null);
-  const [accounts, setAccounts] = useState<WalletAccount[]>([]);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Initialize adapter on mount
-  useEffect(() => {
-    let mounted = true;
-
-    WalletConnectAdapter.init({
-      projectId,
-      metadata: metadata ?? {
-        name: 'My Qubic App',
-        description: 'Qubic application using WalletConnect',
-        url: typeof window !== 'undefined' ? window.location.origin : '',
-        icons: ['https://walletconnect.com/walletconnect-logo.png'],
-      },
-    })
-      .then((adapter) => {
-        if (mounted) {
-          setAdapter(adapter);
-          // Check if there's an existing session
-          if (adapter.isConnected) {
-            adapter.requestAccounts().then(setAccounts).catch(console.error);
-          }
-        }
-      })
-      .catch((err) => {
-        if (mounted) {
-          setError(err);
-          console.error('Failed to initialize WalletConnect:', err);
-        }
-      });
-
-    return () => {
-      mounted = false;
-    };
-  }, [projectId, metadata]);
-
-  const connect = useCallback(async () => {
-    if (!adapter) {
-      throw new Error('WalletConnect adapter not initialized');
-    }
-
-    setIsConnecting(true);
-    setError(null);
-
-    try {
-      const connection = await adapter.connect();
-      
-      return {
-        uri: connection.uri,
-        approve: async () => {
-          const accounts = await connection.approve();
-          setAccounts(accounts);
-          setIsConnecting(false);
-          return accounts;
-        },
-      };
-    } catch (err) {
-      setIsConnecting(false);
-      setError(err as Error);
-      throw err;
-    }
-  }, [adapter]);
-
-  const disconnect = useCallback(async () => {
-    if (!adapter) return;
-
-    try {
-      await adapter.disconnect();
-      setAccounts([]);
-      setError(null);
-    } catch (err) {
-      setError(err as Error);
-      throw err;
-    }
-  }, [adapter]);
-
-  return (
-    <WalletConnectContext.Provider
-      value={{
-        adapter,
-        accounts,
-        isConnected: accounts.length > 0,
-        isConnecting,
-        connect,
-        disconnect,
-        error,
-      }}
-    >
-      {children}
-    </WalletConnectContext.Provider>
-  );
-}
-
-export function useWalletConnect() {
-  const context = useContext(WalletConnectContext);
-  if (!context) {
-    throw new Error('useWalletConnect must be used within WalletConnectProvider');
-  }
-  return context;
-}
-```
-
-### Add Provider to Your App
-
-Wrap your application with the `WalletConnectProvider`:
+Import and use the provider in `app/layout.tsx`:
 
 ```tsx title="app/layout.tsx"
-import { WalletConnectProvider } from '@/contexts/WalletConnectContext';
+import { WalletConnectProvider } from '@nvlabs/qts/react';
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <WalletConnectProvider 
-          projectId={process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!}
+        <WalletConnectProvider
+          options={{
+            projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+            metadata: {
+              name: 'My Qubic App',
+              description: 'Qubic TypeScript SDK Demo',
+              url: 'https://myapp.com',
+              icons: ['https://myapp.com/icon.png'],
+            },
+          }}
         >
           {children}
         </WalletConnectProvider>
@@ -268,712 +76,922 @@ export default function RootLayout({
 }
 ```
 
-### Create Connection Component
+<Callout type="success">
+  **Built-in Provider**: The SDK exports `WalletConnectProvider` and `useWalletConnect` hook with full TypeScript support!
+</Callout>
 
-Build a component to handle wallet connections:
+### Create Connect Button Component
 
-```tsx title="components/WalletConnectButton.tsx"
+Use the hook in your components:
+
+```tsx title="components/connect-button.tsx"
 'use client';
 
 import { useState } from 'react';
-import { useWalletConnect } from '@/contexts/WalletConnectContext';
-import QRCode from 'qrcode.react'; // npm install qrcode.react
+import { useWalletConnect } from '@nvlabs/qts/react';
 
-export function WalletConnectButton() {
-  const { isConnected, isConnecting, accounts, connect, disconnect } = useWalletConnect();
+export function ConnectButton() {
+  const { adapter, isReady, accounts, isConnected } = useWalletConnect();
   const [uri, setUri] = useState<string>('');
   const [showQR, setShowQR] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnect = async () => {
+    if (!adapter) return;
+
+    setIsConnecting(true);
     try {
-      const connection = await connect();
+      // adapter.connect() returns WalletConnectConnection - fully typed!
+      const connection = await adapter.connect();
+      
       setUri(connection.uri);
       setShowQR(true);
 
-      // Wait for user to approve in their wallet
-      const accounts = await connection.approve();
-      console.log('Connected accounts:', accounts);
-      
+      // connection.approve() returns Promise<WalletAccount[]>
+      await connection.approve();
       setShowQR(false);
-      setUri('');
     } catch (error) {
-      console.error('Failed to connect:', error);
-      setShowQR(false);
-      setUri('');
+      console.error('Connection failed:', error);
+    } finally {
+      setIsConnecting(false);
     }
   };
 
   const handleDisconnect = async () => {
-    try {
-      await disconnect();
-    } catch (error) {
-      console.error('Failed to disconnect:', error);
-    }
+    if (!adapter) return;
+    await adapter.disconnect();
   };
+
+  if (!isReady) {
+    return <button disabled>Loading...</button>;
+  }
 
   if (isConnected) {
     return (
-      <div className="space-y-2">
-        <div className="text-sm">
-          Connected: {accounts[0]?.identity.slice(0, 8)}...
-        </div>
-        <button
-          onClick={handleDisconnect}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          Disconnect
-        </button>
+      <div>
+        <p>Connected: {accounts[0].identity.slice(0, 8)}...</p>
+        <button onClick={handleDisconnect}>Disconnect</button>
       </div>
     );
   }
 
   return (
-    <div>
-      <button
-        onClick={handleConnect}
-        disabled={isConnecting}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-      >
+    <>
+      <button onClick={handleConnect} disabled={isConnecting}>
         {isConnecting ? 'Connecting...' : 'Connect Wallet'}
       </button>
 
       {showQR && uri && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-sm">
-            <h3 className="text-lg font-bold mb-4">Scan with your Qubic Wallet</h3>
-            <QRCode value={uri} size={256} />
-            <button
-              onClick={() => setShowQR(false)}
-              className="mt-4 w-full px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-            >
-              Cancel
-            </button>
-          </div>
+        <div className="qr-modal">
+          <h3>Scan with your wallet</h3>
+          <img 
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(uri)}`}
+            alt="WalletConnect QR Code"
+          />
+          <button onClick={() => setShowQR(false)}>Cancel</button>
         </div>
       )}
-    </div>
+    </>
   );
 }
 ```
 
-<Callout type="info" title="Type Safety Note">
-  The `connect()` method returns a `WalletConnectConnection` object with:
-  - `uri: string` - The WalletConnect URI for QR code or deep linking
-  - `approve: () => Promise<WalletAccount[]>` - Async function to wait for wallet approval
-  
-  Both properties are properly typed and will provide autocomplete in your IDE.
+<Callout type="info">
+  **State Management**: The provider tracks `accounts` and `isConnected` automatically. The `accounts` state updates when users approve the connection!
 </Callout>
-
-### Alternative Connection Pattern
-
-If you prefer to handle the connection flow differently:
-
-```tsx
-const handleConnect = async () => {
-  try {
-    // Get connection object
-    const connection = await connect();
-    
-    // Display QR code using the URI
-    setUri(connection.uri);
-    setShowQR(true);
-
-    // Option 1: Wait for approval inline
-    const accounts = await connection.approve();
-    console.log('Connected:', accounts);
-
-    // Option 2: Store approve function and call it later
-    // setApproveFunction(() => connection.approve);
-    
-    setShowQR(false);
-  } catch (error) {
-    console.error('Connection failed:', error);
-  }
-};
-```
 
 </Steps>
 
+## Provider API Reference
+
+The built-in `WalletConnectProvider` exports:
+
+```tsx
+interface WalletConnectContextValue {
+  adapter: WalletConnectAdapter | null;  // Direct access to adapter
+  accounts: WalletAccount[];             // Connected accounts
+  isConnected: boolean;                  // True if accounts exist
+  isReady: boolean;                      // True when adapter initialized
+  error: Error | null;                   // Initialization error if any
+}
+```
+
+### Provider Props
+
+```tsx
+<WalletConnectProvider
+  options={{
+    projectId: string;                   // Required: WalletConnect Project ID
+    metadata?: {                         // Optional: App metadata
+      name: string;
+      description: string;
+      url: string;
+      icons: string[];
+    };
+    chainId?: string;                    // Optional: Default 'qubic:mainnet'
+    methods?: string[];                  // Optional: Custom RPC methods
+    events?: string[];                   // Optional: Custom events
+    relayUrl?: string;                   // Optional: Custom relay URL
+    storage?: StorageLike;               // Optional: Custom storage
+    storageKey?: string;                 // Optional: Custom storage key
+  }}
+  autoRestoreSession={true}              // Optional: Auto-restore on mount
+>
+  {children}
+</WalletConnectProvider>
+```
+
+### Session Restoration
+
+The provider automatically restores existing sessions when `autoRestoreSession={true}` (default):
+
+```tsx
+// Session is automatically restored on page reload!
+const { accounts, isConnected } = useWalletConnect();
+
+// accounts will be populated if session exists
+```
+
 ## Signing Transactions
 
-### Type Definitions
-
-The SDK exports all necessary types for full type safety:
-
-```tsx
-import type {
-  WalletConnectConnection,
-  WalletAccount,
-  SignTransactionResult,
-  WalletConnectAdapterOptions,
-} from '@nvlabs/qts';
-
-// Connection object shape
-const connection: WalletConnectConnection = {
-  uri: 'wc:...', // WalletConnect URI
-  approve: async () => WalletAccount[], // Returns connected accounts
-};
-
-// Account shape
-const account: WalletAccount = {
-  identity: 'QUBIC_ADDRESS',
-  label?: 'My Wallet',
-  publicKey?: '0x...',
-  raw?: any, // Original wallet response
-};
-```
-
-### Common TypeScript Patterns
-
-Here are type-safe patterns for common WalletConnect scenarios:
-
-**Pattern 1: Store Connection for Later Use**
-
-```tsx
-import { useState } from 'react';
-import type { WalletConnectConnection } from '@nvlabs/qts';
-
-function WalletManager() {
-  const [connection, setConnection] = useState<WalletConnectConnection | null>(null);
-  
-  const initiateConnection = async () => {
-    const conn = await adapter.connect();
-    setConnection(conn); // Store the entire connection object
-    return conn.uri; // Return URI for QR display
-  };
-  
-  const completeConnection = async () => {
-    if (!connection) throw new Error('No connection initiated');
-    const accounts = await connection.approve();
-    setConnection(null); // Clear after approval
-    return accounts;
-  };
-}
-```
-
-**Pattern 2: Type-Safe Event Handlers**
-
-```tsx
-import type { WalletAccount, SignTransactionResult } from '@nvlabs/qts';
-
-interface TransactionHandlers {
-  onSign: (result: SignTransactionResult) => void;
-  onError: (error: Error) => void;
-  onSuccess: (accounts: WalletAccount[]) => void;
-}
-
-const handleTransaction = async (
-  adapter: WalletConnectAdapter,
-  handlers: TransactionHandlers
-) => {
-  try {
-    const result = await adapter.signTransaction(transaction);
-    handlers.onSign(result);
-  } catch (error) {
-    handlers.onError(error as Error);
-  }
-};
-```
-
-**Pattern 3: Strongly Typed Context**
-
-```tsx
-import type { 
-  WalletConnectAdapter,
-  WalletConnectConnection,
-  WalletAccount,
-} from '@nvlabs/qts';
-
-interface WalletState {
-  adapter: WalletConnectAdapter | null;
-  connection: WalletConnectConnection | null;
-  accounts: WalletAccount[];
-  status: 'disconnected' | 'connecting' | 'connected' | 'error';
-}
-
-const initialState: WalletState = {
-  adapter: null,
-  connection: null,
-  accounts: [],
-  status: 'disconnected',
-};
-```
-
-**Pattern 4: Async Connection with Proper Types**
-
-```tsx
-type ConnectionResult = 
-  | { success: true; accounts: WalletAccount[] }
-  | { success: false; error: Error };
-
-async function connectWallet(): Promise<ConnectionResult> {
-  try {
-    const connection = await adapter.connect();
-    // connection is properly typed as WalletConnectConnection
-    showQRCode(connection.uri);
-    
-    const accounts = await connection.approve();
-    // accounts is properly typed as WalletAccount[]
-    return { success: true, accounts };
-  } catch (error) {
-    return { success: false, error: error as Error };
-  }
-}
-```
-
-### Basic Transaction Signing
-
-```tsx title="components/SendTransaction.tsx"
+```tsx title="components/send-transaction.tsx"
 'use client';
 
 import { useState } from 'react';
-import { useWalletConnect } from '@/contexts/WalletConnectContext';
+import { useWalletConnect } from '@nvlabs/qts/react';
 import { createQubicClient } from '@nvlabs/qts';
 
 const qubic = createQubicClient();
 
 export function SendTransaction() {
-  const { adapter, accounts, isConnected } = useWalletConnect();
+  const { adapter, accounts } = useWalletConnect();
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [isSending, setIsSending] = useState(false);
 
   const handleSend = async () => {
-    if (!adapter || !isConnected) return;
+    if (!adapter || accounts.length === 0) return;
 
     setIsSending(true);
     try {
-      // Get current tick
       const { tickInfo } = await qubic.live.getTickInfo();
 
-      // Prepare transaction
       const transaction = {
         sourceId: accounts[0].identity,
         destId: recipient,
         amount: parseInt(amount),
-        tick: tickInfo.tick + 5, // Execute in 5 ticks
+        tick: tickInfo.tick + 5,
       };
 
-      // Sign and broadcast
+      // adapter.signAndBroadcast is fully typed
       const result = await adapter.signAndBroadcast({
         client: qubic.live,
         transaction,
       });
 
-      console.log('Transaction sent:', result);
-      alert('Transaction sent successfully!');
+      alert('Transaction sent! ID: ' + result.transactionId);
     } catch (error) {
-      console.error('Failed to send transaction:', error);
+      console.error(error);
       alert('Failed to send transaction');
     } finally {
       setIsSending(false);
     }
   };
 
-  if (!isConnected) {
-    return <div>Please connect your wallet first</div>;
-  }
-
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Send QUBIC</h2>
-      
-      <div>
-        <label className="block text-sm font-medium mb-1">Recipient</label>
-        <input
-          type="text"
-          value={recipient}
-          onChange={(e) => setRecipient(e.target.value)}
-          placeholder="QUBIC address"
-          className="w-full px-3 py-2 border rounded"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium mb-1">Amount</label>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0"
-          className="w-full px-3 py-2 border rounded"
-        />
-      </div>
-
-      <button
-        onClick={handleSend}
-        disabled={isSending || !recipient || !amount}
-        className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
-      >
-        {isSending ? 'Sending...' : 'Send Transaction'}
+    <div>
+      <input
+        value={recipient}
+        onChange={(e) => setRecipient(e.target.value)}
+        placeholder="Recipient address"
+      />
+      <input
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder="Amount"
+        type="number"
+      />
+      <button onClick={handleSend} disabled={isSending}>
+        {isSending ? 'Sending...' : 'Send'}
       </button>
     </div>
   );
-}
-```
-
-### Smart Contract Interaction
-
-```tsx title="components/ContractInteraction.tsx"
-'use client';
-
-import { useState } from 'react';
-import { useWalletConnect } from '@/contexts/WalletConnectContext';
-import { createQubicClient, createQuery, QUBIC_CONTRACTS } from '@nvlabs/qts';
-
-const qubic = createQubicClient();
-
-export function ContractInteraction() {
-  const { adapter, accounts, isConnected } = useWalletConnect();
-  const [isExecuting, setIsExecuting] = useState(false);
-
-  const executeContractCall = async () => {
-    if (!adapter || !isConnected) return;
-
-    setIsExecuting(true);
-    try {
-      // Build contract query
-      const query = createQuery(QUBIC_CONTRACTS.QX, 1) // QX contract, procedure 1
-        .addInt32(100)
-        .addInt64(1000n);
-
-      // Get query bytes
-      const queryBytes = query.build();
-
-      // Get current tick
-      const { tickInfo } = await qubic.live.getTickInfo();
-
-      // Prepare transaction to contract
-      const transaction = {
-        sourceId: accounts[0].identity,
-        destId: QUBIC_CONTRACTS.QX, // Contract address
-        amount: 0, // No transfer, just call
-        tick: tickInfo.tick + 5,
-        inputType: 1,
-        inputSize: queryBytes.length,
-      };
-
-      // Sign and broadcast
-      const result = await adapter.signAndBroadcast({
-        client: qubic.live,
-        transaction,
-      });
-
-      console.log('Contract call sent:', result);
-      alert('Contract call executed!');
-    } catch (error) {
-      console.error('Failed to execute contract call:', error);
-      alert('Failed to execute contract call');
-    } finally {
-      setIsExecuting(false);
-    }
-  };
-
-  if (!isConnected) {
-    return <div>Please connect your wallet first</div>;
-  }
-
-  return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Smart Contract Interaction</h2>
-      
-      <button
-        onClick={executeContractCall}
-        disabled={isExecuting}
-        className="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50"
-      >
-        {isExecuting ? 'Executing...' : 'Execute Contract Call'}
-      </button>
-    </div>
-  );
-}
-```
-
-## Advanced Features
-
-### Using Procedures
-
-The SDK provides a higher-level API for common operations:
-
-```tsx
-import { procedureCallToTransaction } from '@nvlabs/qts';
-
-// Transfer QUBIC
-const transferCall = {
-  type: 'transfer' as const,
-  sourceId: accounts[0].identity,
-  destId: recipientAddress,
-  amount: 1000000n,
-};
-
-const transaction = procedureCallToTransaction(transferCall, {
-  tick: currentTick + 5,
-});
-
-await adapter.signAndBroadcast({
-  client: qubic.live,
-  transaction,
-});
-```
-
-### Session Management
-
-Handle session persistence across page reloads:
-
-```tsx
-useEffect(() => {
-  if (adapter?.isConnected) {
-    // Restore accounts from existing session
-    adapter.requestAccounts()
-      .then(setAccounts)
-      .catch(console.error);
-  }
-}, [adapter]);
-```
-
-### Error Handling
-
-Implement robust error handling:
-
-```tsx
-try {
-  const result = await adapter.signTransaction(transaction);
-} catch (error) {
-  if (error.message.includes('User rejected')) {
-    console.log('User declined the request');
-  } else if (error.message.includes('timeout')) {
-    console.log('Request timed out');
-  } else {
-    console.error('Unexpected error:', error);
-  }
 }
 ```
 
 ## Environment Variables
 
-Create a `.env.local` file:
+Create `.env.local`:
 
 ```bash title=".env.local"
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
 ```
 
 <Callout type="warn">
-  Never commit your `.env.local` file to version control. Add it to `.gitignore`.
+  Never commit `.env.local` to version control. Add it to `.gitignore`.
 </Callout>
 
-## Configuration Options
+## TypeScript Types
 
-### Custom Metadata
+All types are automatically inferred from the SDK:
 
-Customize how your app appears in wallets:
+```tsx
+import type {
+  WalletConnectAdapter,
+  WalletConnectConnection,
+  WalletAccount,
+  SignTransactionResult,
+} from '@nvlabs/qts';
+
+// adapter.connect() returns WalletConnectConnection
+const connection: WalletConnectConnection = await adapter.connect();
+
+// connection.uri is string
+const qrCodeUri: string = connection.uri;
+
+// connection.approve() returns Promise<WalletAccount[]>
+const accounts: WalletAccount[] = await connection.approve();
+
+// Each account has this shape
+const account: WalletAccount = {
+  identity: 'QUBIC_ADDRESS',
+  label?: 'My Wallet',
+  publicKey?: '0x...',
+  raw?: any,
+};
+```
+
+## Troubleshooting
+
+### Types Not Showing Up
+
+If you see `const connect: () => Promise<void>` instead of proper types:
+
+**Solution 1**: Return the adapter method directly
+
+```tsx
+const connect = useCallback(() => {
+  if (!adapter) throw new Error('Not initialized');
+  return adapter.connect(); // Returns WalletConnectConnection
+}, [adapter]);
+```
+
+**Solution 2**: Use explicit return type
+
+```tsx
+const connect = useCallback((): ReturnType<WalletConnectAdapter['connect']> => {
+  if (!adapter) throw new Error('Not initialized');
+  return adapter.connect();
+}, [adapter]);
+```
+
+### Session Not Persisting
+
+If the wallet disconnects on page reload:
+
+```tsx
+useEffect(() => {
+  if (adapter?.isConnected) {
+    adapter.requestAccounts().then(setAccounts);
+  }
+}, [adapter]);
+```
+
+### Connection Timeout
+
+Increase timeout in adapter initialization:
+
+```tsx
+WalletConnectAdapter.init({
+  projectId,
+  metadata: { /* ... */ },
+  // Add custom relay URL or other options if needed
+})
+```
+
+## Best Practices
+
+### 1. Handle Loading States
+
+```tsx
+const { isReady } = useWalletConnect();
+
+if (!isReady) {
+  return <div>Initializing WalletConnect...</div>;
+}
+```
+
+### 2. Error Boundaries
+
+Wrap your app with error boundaries to catch WalletConnect errors.
+
+### 3. Disconnect on Unmount
+
+The adapter handles cleanup automatically, but you can manually disconnect:
+
+```tsx
+useEffect(() => {
+  return () => {
+    // Optional cleanup
+  };
+}, []);
+```
+
+### 4. Check Connection Before Operations
+
+```tsx
+const handleSign = async () => {
+  if (!adapter || accounts.length === 0) {
+    alert('Please connect wallet first');
+    return;
+  }
+  // Continue with signing...
+};
+```
+
+## Complete Working Example
+
+Here's a complete page component:
+
+```tsx title="app/page.tsx"
+'use client';
+
+import { WalletButton } from '@/components/wallet-button';
+import { SendTransaction } from '@/components/send-transaction';
+import { useWalletConnect } from '@nvlabs/qts/react';
+
+export default function HomePage() {
+  const { isConnected, accounts } = useWalletConnect();
+
+  return (
+    <div>
+      <header>
+        <h1>My Qubic App</h1>
+        <WalletButton />
+      </header>
+
+      <main>
+        {isConnected ? (
+          <>
+            <p>Connected as: {accounts[0].identity}</p>
+            <SendTransaction />
+          </>
+        ) : (
+          <p>Please connect your wallet to continue</p>
+        )}
+      </main>
+    </div>
+  );
+}
+```
+
+## React Query Integration
+
+For production apps, combine WalletConnect with React Query for automatic caching, background refetching, and optimistic updates.
+
+### Setup with React Query
+
+Install React Query:
+
+```bash
+npm install @tanstack/react-query
+```
+
+Add both providers to your layout:
+
+```tsx title="app/layout.tsx"
+'use client';
+
+import { QubicQueryProvider, WalletConnectProvider } from '@nvlabs/qts/react';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <QubicQueryProvider>
+          <WalletConnectProvider
+            options={{
+              projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+              metadata: {
+                name: 'My Qubic App',
+                description: 'Qubic App with React Query',
+                url: 'https://myapp.com',
+                icons: ['https://myapp.com/icon.png'],
+              },
+            }}
+          >
+            {children}
+          </WalletConnectProvider>
+        </QubicQueryProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+<Callout type="success">
+  **Automatic Integration**: React Query hooks automatically invalidate relevant caches after transactions!
+</Callout>
+
+### WalletConnect + React Query Hooks
+
+The SDK provides ready-made hooks that combine WalletConnect with React Query:
+
+```tsx title="components/transaction-form.tsx"
+'use client';
+
+import { useState } from 'react';
+import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWCSignAndBroadcast, useBalance } from '@nvlabs/qts/react/query';
+
+export function TransactionForm() {
+  const { accounts, isConnected } = useWalletConnect();
+  const [recipient, setRecipient] = useState('');
+  const [amount, setAmount] = useState('');
+  
+  // Automatically fetches and caches balance
+  const { data: balance, isLoading } = useBalance(
+    accounts[0]?.identity,
+    { enabled: isConnected }
+  );
+  
+  // Mutation with automatic cache invalidation
+  const signAndBroadcast = useWCSignAndBroadcast();
+
+  const handleSend = async () => {
+    try {
+      await signAndBroadcast.mutateAsync({
+        from: accounts[0].identity,
+        to: recipient,
+        amount: amount,
+      });
+      
+      // Balance is automatically refreshed!
+      alert('Transaction sent!');
+      setRecipient('');
+      setAmount('');
+    } catch (error) {
+      console.error('Failed:', error);
+    }
+  };
+
+  if (!isConnected) {
+    return <p>Connect your wallet first</p>;
+  }
+
+  return (
+    <div>
+      <div>
+        <strong>Your Balance:</strong>{' '}
+        {isLoading ? 'Loading...' : `${balance?.balance.balance} QUBIC`}
+      </div>
+      
+      <input
+        value={recipient}
+        onChange={(e) => setRecipient(e.target.value)}
+        placeholder="Recipient address"
+      />
+      
+      <input
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        placeholder="Amount"
+        type="number"
+      />
+      
+      <button 
+        onClick={handleSend}
+        disabled={signAndBroadcast.isPending || !recipient || !amount}
+      >
+        {signAndBroadcast.isPending ? 'Sending...' : 'Send Transaction'}
+      </button>
+      
+      {signAndBroadcast.isError && (
+        <p style={{ color: 'red' }}>Error: {signAndBroadcast.error.message}</p>
+      )}
+    </div>
+  );
+}
+```
+
+### Available WalletConnect Hooks
+
+All hooks automatically invalidate relevant queries after successful operations:
+
+**Transaction Signing**:
+- `useWCSignTransaction()` - Sign transaction (no broadcast)
+- `useWCSignAndBroadcast()` - Sign and broadcast transaction
+- `useWCSignProcedure()` - Sign smart contract procedure
+- `useWCSignAndBroadcastProcedure()` - Sign and broadcast procedure
+
+**Account Management**:
+- `useWCRequestAccounts()` - Request/refresh accounts
+- `useWCDisconnect()` - Disconnect and clear cache
+
+### Smart Contract Transactions
+
+Execute smart contract procedures with automatic cache management:
+
+```tsx title="components/contract-interaction.tsx"
+'use client';
+
+import { useWalletConnect } from '@nvlabs/qts/react';
+import { 
+  useWCSignAndBroadcastProcedure,
+  useCurrentTick 
+} from '@nvlabs/qts/react/query';
+
+export function ContractInteraction() {
+  const { accounts, isConnected } = useWalletConnect();
+  const { data: tickInfo } = useCurrentTick();
+  
+  const signAndBroadcast = useWCSignAndBroadcastProcedure();
+
+  const handleContractCall = async () => {
+    if (!tickInfo) return;
+    
+    try {
+      await signAndBroadcast.mutateAsync({
+        call: {
+          type: 'contract_call',
+          contractIndex: 1,
+          inputType: 1,
+          inputSize: 32,
+        },
+        transaction: {
+          from: accounts[0].identity,
+          to: 'CONTRACT_ADDRESS',
+          amount: 0,
+          tick: tickInfo.tickInfo.tick + 5,
+        },
+      });
+      
+      alert('Contract call successful!');
+    } catch (error) {
+      console.error('Contract call failed:', error);
+    }
+  };
+
+  if (!isConnected) {
+    return <p>Connect wallet to interact with contracts</p>;
+  }
+
+  return (
+    <div>
+      <h3>Smart Contract Interaction</h3>
+      <p>Current Tick: {tickInfo?.tickInfo.tick}</p>
+      
+      <button 
+        onClick={handleContractCall}
+        disabled={signAndBroadcast.isPending}
+      >
+        {signAndBroadcast.isPending ? 'Executing...' : 'Execute Contract Call'}
+      </button>
+    </div>
+  );
+}
+```
+
+### Real-time Balance Updates
+
+Combine queries and mutations for real-time UI updates:
+
+```tsx title="components/wallet-dashboard.tsx"
+'use client';
+
+import { useWalletConnect } from '@nvlabs/qts/react';
+import { 
+  useBalance,
+  useTransactionsForIdentity,
+  useCurrentTick 
+} from '@nvlabs/qts/react/query';
+
+export function WalletDashboard() {
+  const { accounts, isConnected } = useWalletConnect();
+  
+  // All these queries update automatically!
+  const { data: balance } = useBalance(accounts[0]?.identity, {
+    enabled: isConnected,
+    refetchInterval: 5000, // Refetch every 5 seconds
+  });
+  
+  const { data: transactions } = useTransactionsForIdentity(
+    accounts[0]?.identity,
+    { pagination: { offset: 0, size: 10 } },
+    { enabled: isConnected }
+  );
+  
+  const { data: tick } = useCurrentTick({
+    refetchInterval: 1000, // Update every second
+  });
+
+  if (!isConnected) {
+    return <p>Connect your wallet to view dashboard</p>;
+  }
+
+  return (
+    <div>
+      <h2>Wallet Dashboard</h2>
+      
+      <div>
+        <strong>Balance:</strong> {balance?.balance.balance || 0} QUBIC
+      </div>
+      
+      <div>
+        <strong>Current Tick:</strong> {tick?.tickInfo.tick}
+      </div>
+      
+      <h3>Recent Transactions</h3>
+      {transactions?.transactions.map((tx, i) => (
+        <div key={i}>
+          {tx.source} → {tx.destination}: {tx.amount}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Optimistic Updates
+
+Show instant feedback before transaction confirmation:
+
+```tsx
+import { useWCSignAndBroadcast } from '@nvlabs/qts/react/query';
+import { useQueryClient } from '@tanstack/react-query';
+
+export function OptimisticTransfer() {
+  const queryClient = useQueryClient();
+  const signAndBroadcast = useWCSignAndBroadcast({
+    onMutate: async (variables) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['balance', variables.from] });
+      
+      // Snapshot previous value
+      const previousBalance = queryClient.getQueryData(['balance', variables.from]);
+      
+      // Optimistically update balance
+      queryClient.setQueryData(['balance', variables.from], (old: any) => ({
+        ...old,
+        balance: {
+          ...old.balance,
+          balance: (old.balance.balance - parseInt(variables.amount)).toString(),
+        },
+      }));
+      
+      return { previousBalance };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousBalance) {
+        queryClient.setQueryData(['balance', variables.from], context.previousBalance);
+      }
+    },
+  });
+  
+  // UI instantly updates, then confirms on-chain
+}
+```
+
+## Advanced Usage
+
+### Combine with Basic QubicProvider
+
+Use both providers together if you need both React Query and basic client access:
+
+```tsx title="app/layout.tsx"
+import { QubicProvider, QubicQueryProvider, WalletConnectProvider } from '@nvlabs/qts/react';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <QubicProvider>
+          <QubicQueryProvider>
+            <WalletConnectProvider
+              options={{
+                projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+                metadata: {
+                  name: 'My Qubic App',
+                  description: 'Qubic App',
+                  url: 'https://myapp.com',
+                  icons: ['https://myapp.com/icon.png'],
+                },
+              }}
+            >
+              {children}
+            </WalletConnectProvider>
+          </QubicQueryProvider>
+        </QubicProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+Then use all hooks:
+
+```tsx
+import { useQubic, useWalletConnect } from '@nvlabs/qts/react';
+import { useBalance } from '@nvlabs/qts/react/query';
+
+export function Dashboard() {
+  const { live } = useQubic();              // Direct client access
+  const { adapter } = useWalletConnect();    // WalletConnect adapter
+  const { data: balance } = useBalance('ADDRESS'); // React Query hook
+  
+  // Access everything!
+}
+```
+
+### Custom Storage
+
+Use custom storage instead of localStorage:
 
 ```tsx
 <WalletConnectProvider
-  projectId={projectId}
-  metadata={{
-    name: 'My Awesome Qubic App',
-    description: 'Trade, stake, and manage your QUBIC',
-    url: 'https://myapp.com',
-    icons: ['https://myapp.com/logo.png'],
+  options={{
+    projectId: 'YOUR_PROJECT_ID',
+    metadata: { /* ... */ },
+    storage: window.sessionStorage,  // Use sessionStorage
+    storageKey: 'my-app-wc-session', // Custom key
   }}
 >
   {children}
 </WalletConnectProvider>
 ```
 
-### Custom Storage
+### Disable Auto-Restore
 
-Use custom storage for session persistence:
+Disable automatic session restoration:
 
 ```tsx
-const adapter = await WalletConnectAdapter.init({
-  projectId,
-  storage: window.sessionStorage, // Use sessionStorage instead of localStorage
-  storageKey: 'my-app-walletconnect-session',
-});
+<WalletConnectProvider
+  options={{ /* ... */ }}
+  autoRestoreSession={false}  // Don't auto-restore
+>
+  {children}
+</WalletConnectProvider>
 ```
 
-### Custom Chain Configuration
+## Complete Example App
 
-Configure custom chain settings:
+Here's a full Next.js page with WalletConnect + React Query:
 
-```tsx
-const adapter = await WalletConnectAdapter.init({
-  projectId,
-  chainId: 'qubic:testnet', // Custom chain ID
-  methods: [
-    'qubic_requestAccounts',
-    'qubic_signTransaction',
-    'qubic_sign',
-    // Add custom methods
-  ],
-  events: ['accountsChanged', 'amountChanged'],
-});
-```
+```tsx title="app/page.tsx"
+'use client';
 
-## Best Practices
+import { useState } from 'react';
+import { useWalletConnect } from '@nvlabs/qts/react';
+import { 
+  useBalance, 
+  useCurrentTick,
+  useWCSignAndBroadcast 
+} from '@nvlabs/qts/react/query';
 
-### 1. Handle Disconnections
-
-Listen for session disconnections:
-
-```tsx
-useEffect(() => {
-  const handleDisconnect = () => {
-    setAccounts([]);
-    console.log('Wallet disconnected');
-  };
-
-  // WalletConnect adapter handles disconnection events internally
-  // But you can add custom logic if needed
-
-  return () => {
-    // Cleanup
-  };
-}, [adapter]);
-```
-
-### 2. Request Accounts Explicitly
-
-Always request accounts when needed:
-
-```tsx
-const handleRequestAccounts = async () => {
-  if (!adapter) return;
+export default function HomePage() {
+  const { adapter, accounts, isConnected, isReady } = useWalletConnect();
+  const [recipient, setRecipient] = useState('');
+  const [amount, setAmount] = useState('');
+  const [uri, setUri] = useState('');
+  const [showQR, setShowQR] = useState(false);
   
-  try {
-    const accounts = await adapter.requestAccounts();
-    setAccounts(accounts);
-  } catch (error) {
-    console.error('Failed to request accounts:', error);
+  // React Query hooks
+  const { data: balance } = useBalance(accounts[0]?.identity, {
+    enabled: isConnected,
+    refetchInterval: 5000,
+  });
+  
+  const { data: tick } = useCurrentTick({
+    refetchInterval: 1000,
+  });
+  
+  const signAndBroadcast = useWCSignAndBroadcast();
+  
+  const handleConnect = async () => {
+    if (!adapter) return;
+    
+    try {
+      const connection = await adapter.connect();
+      setUri(connection.uri);
+      setShowQR(true);
+      
+      await connection.approve();
+      setShowQR(false);
+    } catch (error) {
+      console.error(error);
+      setShowQR(false);
+    }
+  };
+  
+  const handleSend = async () => {
+    if (!accounts[0]) return;
+    
+    try {
+      await signAndBroadcast.mutateAsync({
+        from: accounts[0].identity,
+        to: recipient,
+        amount: amount,
+      });
+      
+      alert('Transaction sent!');
+      setRecipient('');
+      setAmount('');
+    } catch (error) {
+      console.error('Transaction failed:', error);
+    }
+  };
+  
+  if (!isReady) {
+    return <div>Loading WalletConnect...</div>;
   }
-};
-```
 
-### 3. Verify Transactions
+  return (
+    <div style={{ padding: '2rem' }}>
+      <header>
+        <h1>Qubic Wallet App</h1>
+        <p>Current Tick: {tick?.tickInfo.tick || 'Loading...'}</p>
+      </header>
 
-Check transaction status after broadcasting:
-
-```tsx
-const result = await adapter.signAndBroadcast({
-  client: qubic.live,
-  transaction,
-});
-
-// Wait a few ticks and verify
-setTimeout(async () => {
-  const { transactions } = await qubic.query.getTransactionsForIdentity(
-    accounts[0].identity,
-    { pagination: { offset: 0, size: 10 } }
+      <main>
+        {!isConnected ? (
+          <div>
+            <button onClick={handleConnect}>Connect Wallet</button>
+            
+            {showQR && uri && (
+              <div style={{ marginTop: '1rem' }}>
+                <h3>Scan with your wallet:</h3>
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(uri)}`}
+                  alt="QR Code"
+                />
+                <button onClick={() => setShowQR(false)}>Cancel</button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div>
+            <div style={{ marginBottom: '2rem' }}>
+              <h2>Wallet Info</h2>
+              <p><strong>Address:</strong> {accounts[0].identity.slice(0, 12)}...</p>
+              <p><strong>Balance:</strong> {balance?.balance.balance || 0} QUBIC</p>
+              <button onClick={() => adapter.disconnect()}>Disconnect</button>
+            </div>
+            
+            <div>
+              <h2>Send Transaction</h2>
+              <input
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                placeholder="Recipient address"
+                style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem' }}
+              />
+              <input
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Amount"
+                type="number"
+                style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem' }}
+              />
+              <button 
+                onClick={handleSend}
+                disabled={signAndBroadcast.isPending || !recipient || !amount}
+                style={{ width: '100%', padding: '0.5rem' }}
+              >
+                {signAndBroadcast.isPending ? 'Sending...' : 'Send Transaction'}
+              </button>
+              
+              {signAndBroadcast.isError && (
+                <p style={{ color: 'red', marginTop: '0.5rem' }}>
+                  Error: {signAndBroadcast.error.message}
+                </p>
+              )}
+              
+              {signAndBroadcast.isSuccess && (
+                <p style={{ color: 'green', marginTop: '0.5rem' }}>
+                  Transaction sent successfully!
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   );
-  
-  console.log('Recent transactions:', transactions);
-}, 5000);
-```
-
-### 4. Use Loading States
-
-Provide clear feedback during async operations:
-
-```tsx
-const [status, setStatus] = useState<'idle' | 'connecting' | 'signing' | 'broadcasting'>('idle');
-
-const handleTransaction = async () => {
-  setStatus('signing');
-  const signed = await adapter.signTransaction(tx);
-  
-  setStatus('broadcasting');
-  await qubic.live.broadcast(signed.signedTransaction);
-  
-  setStatus('idle');
-};
-```
-
-## Troubleshooting
-
-### Connection Issues
-
-If users can't connect:
-
-1. Verify your Project ID is correct
-2. Check that the wallet supports WalletConnect v2
-3. Ensure HTTPS is used in production
-4. Check browser console for errors
-
-### Session Not Persisting
-
-If sessions don't persist across reloads:
-
-1. Verify localStorage is available
-2. Check that storage keys match
-3. Ensure the adapter is initialized before checking `isConnected`
-
-### Transaction Signing Fails
-
-If signing fails:
-
-1. Verify the transaction format is correct
-2. Check that the user has sufficient balance
-3. Ensure the tick is in the future
-4. Verify network connectivity
-
-### TypeScript Type Errors
-
-If you encounter TypeScript errors like "Property 'approve' does not exist" or "Property 'uri' does not exist":
-
-**Solution 1: Import the correct type**
-
-```tsx
-import type { WalletConnectConnection } from '@nvlabs/qts';
-
-// Use the type explicitly
-const connection: WalletConnectConnection = await connect();
-```
-
-**Solution 2: Update your connect function return type**
-
-```tsx
-interface WalletConnectContextValue {
-  connect: () => Promise<WalletConnectConnection>; // Use the SDK type
-  // ... other properties
 }
-```
-
-**Solution 3: Destructure correctly**
-
-```tsx
-// ✅ Correct - connection object is typed
-const connection = await connect();
-setUri(connection.uri);
-await connection.approve();
-
-// ❌ Incorrect - loses type information
-const { uri, approve } = await connect();
-```
-
-If errors persist, ensure you have the latest version of `@nvlabs/qts` installed:
-
-```bash
-npm install @nvlabs/qts@latest
 ```
 
 ## Next Steps
 
-- **[React Query Integration](/docs/integrations/react-query)**: Add automatic caching and refetching
-- **[Smart Contracts](/docs/smart-contracts)**: Learn more about contract interactions
-- **[API Reference](/docs/api-clients)**: Explore all available methods
+- [React Query Hooks](/docs/integrations/react-query) - Complete React Query reference
+- [Smart Contracts](/docs/smart-contracts) - Interact with Qubic contracts
+- [Contract Hooks](/docs/integrations/react-query-contracts) - Pre-built contract hooks
+- [API Reference](/docs/api-clients) - Explore all client methods
 
 <Callout type="success">
   **Need Help?** Join our [Discord](https://discord.gg/qubic) or open an issue on [GitHub](https://github.com/nvlabs/qts/issues).
 </Callout>
 
-## Example Projects
-
-Check out these complete examples:
-
-- [Next.js + WalletConnect Starter](https://github.com/nvlabs/qts/tree/main/examples/nextjs-walletconnect) - Full featured starter
-- [Qubic Wallet Dashboard](https://github.com/nvlabs/qts/tree/main/examples/wallet-dashboard) - Complete wallet UI
-
 ---
 
-*Built with ❤️ using the Qubic TypeScript SDK and WalletConnect*
+*Built with ❤️ using Qubic TypeScript SDK*

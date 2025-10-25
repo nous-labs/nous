@@ -98,41 +98,47 @@ function TradingDashboard() {
 
 ## WalletConnect Integration
 
-Integrate secure wallet connections via WalletConnect in your Next.js application:
+**Built-in Provider**: The SDK includes `WalletConnectProvider` and `useWalletConnect` hook - no manual setup required!
 
-[→ Complete Next.js + WalletConnect Guide](./nextjs-walletconnect)
+[→ Complete Next.js + WalletConnect + React Query Guide](./nextjs-walletconnect)
 
-Both basic and React Query approaches support WalletConnect for wallet interactions:
+Simple integration for wallet connections:
 
 ```tsx
 import { WalletConnectProvider, useWalletConnect } from '@nvlabs/qts/react';
 
 function WalletButton() {
-  const { connect, accounts, disconnect } = useWalletConnect();
+  const { adapter, accounts, isConnected } = useWalletConnect();
   
-  return accounts.length > 0 ? (
-    <button onClick={disconnect}>Disconnect</button>
+  const handleConnect = async () => {
+    if (!adapter) return;
+    const connection = await adapter.connect();
+    await connection.approve();
+  };
+  
+  return isConnected ? (
+    <button onClick={() => adapter.disconnect()}>Disconnect</button>
   ) : (
-    <button onClick={connect}>Connect Wallet</button>
+    <button onClick={handleConnect}>Connect Wallet</button>
   );
 }
 
 function App() {
   return (
-    <QubicProvider>
-      <WalletConnectProvider options={{
+    <WalletConnectProvider 
+      options={{
         projectId: 'YOUR_PROJECT_ID',
         metadata: { name: 'Your App', /* ... */ }
-      }}>
-        <YourApp />
-      </WalletConnectProvider>
-    </QubicProvider>
+      }}
+    >
+      <YourApp />
+    </WalletConnectProvider>
   );
 }
 ```
 
-<Callout type="info">
-  WalletConnect works with both basic React Provider and React Query integration. Choose based on your data fetching needs.
+<Callout type="success">
+  **Fully Typed**: Direct adapter access ensures perfect TypeScript inference and IDE autocomplete!
 </Callout>
 
 ## When to Use Each Approach

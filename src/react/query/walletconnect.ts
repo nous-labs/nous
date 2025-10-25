@@ -59,8 +59,11 @@ export function useWCSignTransaction(
 
   return useMutation({
     mutationFn: async (params) => {
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
       const { walletParams, ...transaction } = params;
-      return wallet.signTransaction(transaction, walletParams);
+      return wallet.adapter.signTransaction(transaction, walletParams);
     },
     ...options,
   });
@@ -82,8 +85,11 @@ export function useWCSignAndBroadcast(
 
   return useMutation({
     mutationFn: async (params) => {
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
       const { walletParams, broadcastParams, ...transaction } = params;
-      const result = await wallet.signAndBroadcast({
+      const result = await wallet.adapter.signAndBroadcast({
         client: live,
         transaction,
         walletParams,
@@ -125,7 +131,10 @@ export function useWCSignProcedure(
 
   return useMutation({
     mutationFn: async (params) => {
-      return wallet.signProcedureCall(params);
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
+      return wallet.adapter.signProcedure(params);
     },
     ...options,
   });
@@ -147,7 +156,10 @@ export function useWCSignAndBroadcastProcedure(
 
   return useMutation({
     mutationFn: async (params) => {
-      const result = await wallet.signAndBroadcastProcedureCall({
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
+      const result = await wallet.adapter.signAndBroadcastProcedure({
         ...params,
         client: live,
       });
@@ -186,9 +198,11 @@ export function useWCRequestAccounts(
   const wallet = useWalletConnect();
 
   return useMutation({
-    mutationFn: async (params) => {
-      await wallet.refreshAccounts();
-      return wallet.accounts;
+    mutationFn: async () => {
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
+      return await wallet.adapter.requestAccounts();
     },
     ...options,
   });
@@ -205,7 +219,10 @@ export function useWCDisconnect(
 
   return useMutation({
     mutationFn: async () => {
-      await wallet.disconnect();
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
+      await wallet.adapter.disconnect();
     },
     onSuccess: () => {
       // Clear all Qubic-related queries on disconnect

@@ -155,8 +155,11 @@ export function useExecuteProcedure<TParams>(
       walletParams,
       broadcastParams,
     }) => {
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
       const call = procedure.build(params);
-      return wallet.signAndBroadcastProcedureCall({
+      return wallet.adapter.signAndBroadcastProcedure({
         call,
         transaction,
         walletParams,
@@ -187,8 +190,11 @@ export function useSignProcedure<TParams>(
 
   return useMutation({
     mutationFn: async ({ procedure, params, transaction, walletParams }) => {
+      if (!wallet.adapter) {
+        throw new Error("WalletConnect adapter not initialized");
+      }
       const call = procedure.build(params);
-      return wallet.signProcedureCall({
+      return wallet.adapter.signProcedure({
         call,
         transaction,
         walletParams,

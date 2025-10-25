@@ -22,7 +22,85 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.2.3] - 2025-01-26
+## [1.3.1] - 2025-10-25
+
+### Fixed
+- **Documentation**: Removed duplicate donations button in navigation (was appearing in both nav and sidebar)
+- **Documentation**: Cleaned up and refactored integration guides for clarity
+
+### Changed
+- **Documentation**: Updated WalletConnect integration examples to show built-in provider usage
+- **Documentation**: Enhanced Next.js + WalletConnect guide with React Query examples
+- **Documentation**: Improved code examples to use direct adapter access pattern
+
+### Documentation
+- Clarified that `WalletConnectProvider` is built into the SDK (no manual creation needed)
+- Updated integrations index to reflect built-in provider
+- Added complete example app showing WalletConnect + React Query together
+- Improved TypeScript type examples throughout documentation
+
+---
+
+## [1.3.0] - 2025-10-25
+
+### Added
+- **Built-in WalletConnectProvider**: SDK now exports `WalletConnectProvider` and `useWalletConnect` hook
+  - No need to manually create provider in each project
+  - Import directly from `@nvlabs/qts/react`
+  - Full TypeScript support with automatic type inference
+  - Automatic session restoration on mount
+- **Simplified Provider API**: Cleaner context that exposes adapter directly
+  - Direct access to `WalletConnectAdapter` instance
+  - Better TypeScript type inference (no more `Promise<void>` issues)
+  - `isReady`, `isConnected`, `accounts`, and `error` state tracking
+  - Optional `autoRestoreSession` prop for session management
+- **React Query + WalletConnect Integration**: Complete documentation for combining both
+  - Ready-made hooks: `useWCSignAndBroadcast`, `useWCSignTransaction`, etc.
+  - Automatic cache invalidation after transactions
+  - Optimistic updates examples
+  - Real-time balance and transaction tracking
+  - Complete Next.js example app with both providers
+- **Enhanced Documentation**:
+  - Complete React Query integration guide in Next.js + WalletConnect docs
+  - Provider API reference with all props and return types
+  - Smart contract transaction examples with React Query
+  - Real-time dashboard example with auto-refetch
+  - Optimistic updates pattern examples
+
+### Changed
+- **WalletConnect Context Simplified**: Removed wrapper methods in favor of direct adapter access
+  - `connect()` method removed - use `adapter.connect()` directly
+  - `disconnect()` method removed - use `adapter.disconnect()` directly
+  - `signTransaction()` method removed - use `adapter.signTransaction()` directly
+  - Better type preservation and IDE autocomplete
+- **React Query Hooks Updated**: All WalletConnect hooks now use adapter directly
+  - `useWCSignAndBroadcast` uses `adapter.signAndBroadcast()`
+  - `useWCSignProcedure` uses `adapter.signProcedure()`
+  - `useWCRequestAccounts` uses `adapter.requestAccounts()`
+  - Proper TypeScript inference for all methods
+
+### Fixed
+- **TypeScript Type Inference**: WalletConnect methods now have proper return types
+  - `adapter.connect()` correctly returns `WalletConnectConnection`
+  - `connection.uri` properly typed as `string`
+  - `connection.approve()` properly typed as `() => Promise<WalletAccount[]>`
+  - No more `Promise<void>` type errors in components
+- **React Query Integration**: Fixed all hooks to work with simplified provider
+  - Updated contract hooks to use `adapter.signAndBroadcastProcedure()`
+  - Fixed `useWCRequestAccounts` to return accounts array
+  - Added missing `queryClient` import in disconnect hook
+
+### Documentation
+- Updated Next.js + WalletConnect guide with React Query integration
+- Added complete example app showing both providers working together
+- Added smart contract interaction examples with React Query
+- Added real-time balance and transaction tracking examples
+- Added optimistic updates pattern documentation
+- Updated all code examples to use built-in provider from SDK
+
+---
+
+## [1.2.3] - 2025-10-25
 
 ### Added
 - **Next.js + WalletConnect Integration Guide**: Comprehensive documentation for integrating WalletConnect in Next.js applications

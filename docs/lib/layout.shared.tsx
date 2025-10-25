@@ -5,11 +5,5 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: "Qubic Typescript SDK",
     },
-    links: [
-      {
-        text: "💝 Donations",
-        url: "/docs/donations",
-      },
-    ],
   };
 }

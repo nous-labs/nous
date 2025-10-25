@@ -75,46 +75,18 @@ export function useQubic() {
 
 // ===== WalletConnect React bindings =====
 
-interface WalletConnectState {
-  adapter?: WalletConnectAdapter;
-  accounts: WalletAccount[];
-  pairingUri?: string;
-  isConnecting: boolean;
-  ready: boolean;
-}
-
 export interface WalletConnectProviderProps {
   children: ReactNode;
   options: WalletConnectAdapterOptions;
-  autoLoadAccounts?: boolean;
+  autoRestoreSession?: boolean;
 }
 
-interface WalletConnectContextValue extends WalletConnectState {
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  refreshAccounts: () => Promise<void>;
-  signTransaction: (
-    transaction: Record<string, unknown>,
-    walletParams?: Record<string, unknown>,
-  ) => Promise<SignTransactionResult>;
-  signAndBroadcast: (options: {
-    client: QubicLiveClient;
-    transaction: Record<string, unknown>;
-    walletParams?: Record<string, unknown>;
-    broadcastParams?: Record<string, unknown>;
-  }) => Promise<unknown>;
-  signProcedureCall: (options: {
-    call: ProcedureCall;
-    transaction: ProcedureTransactionOverrides;
-    walletParams?: Record<string, unknown>;
-  }) => Promise<SignTransactionResult>;
-  signAndBroadcastProcedureCall: (options: {
-    call: ProcedureCall;
-    transaction: ProcedureTransactionOverrides;
-    walletParams?: Record<string, unknown>;
-    broadcastParams?: Record<string, unknown>;
-    client: QubicLiveClient;
-  }) => Promise<unknown>;
+interface WalletConnectContextValue {
+  adapter: WalletConnectAdapter | null;
+  accounts: WalletAccount[];
+  isConnected: boolean;
+  isReady: boolean;
+  error: Error | null;
 }
 
 const WalletConnectContext = createContext<
@@ -124,152 +96,57 @@ const WalletConnectContext = createContext<
 export function WalletConnectProvider({
   children,
   options,
-  autoLoadAccounts = true,
+  autoRestoreSession = true,
 }: WalletConnectProviderProps) {
-  const [state, setState] = useState<WalletConnectState>({
-    accounts: [],
-    isConnecting: false,
-    ready: false,
-  });
+  const [adapter, setAdapter] = useState<WalletConnectAdapter | null>(null);
+  const [accounts, setAccounts] = useState<WalletAccount[]>([]);
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    let disposed = false;
+    let mounted = true;
+
     WalletConnectAdapter.init(options)
-      .then((adapter) => {
-        if (disposed) return;
-        setState((prev) => ({ ...prev, adapter, ready: true }));
-        if (autoLoadAccounts) {
-          adapter
+      .then((wcAdapter) => {
+        if (!mounted) return;
+
+        setAdapter(wcAdapter);
+        setIsReady(true);
+
+        // Check for existing session and restore accounts
+        if (autoRestoreSession && wcAdapter.isConnected) {
+          wcAdapter
             .requestAccounts()
-            .then((accounts) => {
-              if (!disposed) {
-                setState((prev) => ({ ...prev, accounts }));
-              }
+            .then((accts) => {
+              if (mounted) setAccounts(accts);
             })
-            .catch(() => void 0);
+            .catch((err) => {
+              console.error("Failed to restore WalletConnect session:", err);
+            });
         }
       })
-      .catch((error) => {
-        console.error("Failed to initialize WalletConnectAdapter", error);
+      .catch((err) => {
+        if (mounted) {
+          setError(err);
+          setIsReady(true); // Mark as ready even if init failed
+          console.error("Failed to initialize WalletConnect:", err);
+        }
       });
 
     return () => {
-      disposed = true;
+      mounted = false;
     };
-  }, [options, autoLoadAccounts]);
-
-  const connect = useCallback(async () => {
-    if (!state.adapter) {
-      throw new WalletIntegrationError("WalletConnect adapter not ready");
-    }
-    setState((prev) => ({ ...prev, isConnecting: true }));
-    try {
-      const { uri, approve } = await state.adapter.connect();
-      setState((prev) => ({ ...prev, pairingUri: uri }));
-      const accounts = await approve();
-      setState((prev) => ({
-        ...prev,
-        accounts,
-        pairingUri: undefined,
-      }));
-    } finally {
-      setState((prev) => ({ ...prev, isConnecting: false }));
-    }
-  }, [state.adapter]);
-
-  const disconnect = useCallback(async () => {
-    if (!state.adapter) return;
-    await state.adapter.disconnect();
-    setState((prev) => ({ ...prev, accounts: [], pairingUri: undefined }));
-  }, [state.adapter]);
-
-  const refreshAccounts = useCallback(async () => {
-    if (!state.adapter) {
-      throw new WalletIntegrationError("WalletConnect adapter not ready");
-    }
-    const accounts = await state.adapter.requestAccounts();
-    setState((prev) => ({ ...prev, accounts }));
-  }, [state.adapter]);
-
-  const signTransaction = useCallback(
-    async (
-      transaction: Record<string, unknown>,
-      walletParams?: Record<string, unknown>,
-    ) => {
-      if (!state.adapter) {
-        throw new WalletIntegrationError("WalletConnect adapter not ready");
-      }
-      return state.adapter.signTransaction(transaction, walletParams);
-    },
-    [state.adapter],
-  );
-
-  const signAndBroadcast = useCallback(
-    async (options: {
-      client: QubicLiveClient;
-      transaction: Record<string, unknown>;
-      walletParams?: Record<string, unknown>;
-      broadcastParams?: Record<string, unknown>;
-    }) => {
-      if (!state.adapter) {
-        throw new WalletIntegrationError("WalletConnect adapter not ready");
-      }
-      return state.adapter.signAndBroadcast(options);
-    },
-    [state.adapter],
-  );
-
-  const signProcedureCall = useCallback(
-    async (options: {
-      call: ProcedureCall;
-      transaction: ProcedureTransactionOverrides;
-      walletParams?: Record<string, unknown>;
-    }) => {
-      if (!state.adapter) {
-        throw new WalletIntegrationError("WalletConnect adapter not ready");
-      }
-      return state.adapter.signProcedure(options);
-    },
-    [state.adapter],
-  );
-
-  const signAndBroadcastProcedureCall = useCallback(
-    async (options: {
-      call: ProcedureCall;
-      transaction: ProcedureTransactionOverrides;
-      walletParams?: Record<string, unknown>;
-      broadcastParams?: Record<string, unknown>;
-      client: QubicLiveClient;
-    }) => {
-      if (!state.adapter) {
-        throw new WalletIntegrationError("WalletConnect adapter not ready");
-      }
-      return state.adapter.signAndBroadcastProcedure(options);
-    },
-    [state.adapter],
-  );
+  }, [options.projectId, autoRestoreSession]);
 
   const value = useMemo<WalletConnectContextValue>(
     () => ({
-      ...state,
-      connect,
-      disconnect,
-      refreshAccounts,
-      signTransaction,
-      signAndBroadcast,
-      signProcedureCall,
-      signAndBroadcastProcedureCall,
+      adapter,
+      accounts,
+      isConnected: accounts.length > 0,
+      isReady,
+      error,
     }),
-    [
-      state,
-      connect,
-      disconnect,
-      refreshAccounts,
-      signTransaction,
-      signAndBroadcast,
-      signProcedureCall,
-      signAndBroadcastProcedureCall,
-    ],
+    [adapter, accounts, isReady, error],
   );
 
   return (
