@@ -1,12 +1,16 @@
 import { docs } from "@/.source";
 import { type InferPageType, loader } from "fumadocs-core/source";
 import { lucideIconsPlugin } from "fumadocs-core/source/lucide-icons";
+import { navigationTransformer } from "./navigation";
 
 // See https://fumadocs.dev/docs/headless/source-api for more info
 export const source = loader({
   baseUrl: "/",
   source: docs.toFumadocsSource(),
-  plugins: [lucideIconsPlugin()],
+  plugins: [lucideIconsPlugin({ defaultIcon: "BookOpen" })],
+  pageTree: {
+    transformers: [navigationTransformer],
+  },
 });
 
 export function getPageImage(page: InferPageType<typeof source>) {

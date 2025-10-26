@@ -19,7 +19,7 @@ export default async function Page(props: PageProps<"/[[...slug]]">) {
 
   return (
     <DocsPage toc={page.data.toc} full={page.data.full}>
-      <DocsTitle>QTS @ {page.data.title}</DocsTitle>
+      <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
         <MDX
@@ -46,7 +46,7 @@ export async function generateMetadata(
   if (!page) notFound();
 
   return {
-    title: page.data.title,
+    title: `QTS / ${page.data.title}`,
     description: page.data.description,
     openGraph: {
       images: getPageImage(page).url,
