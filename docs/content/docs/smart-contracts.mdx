@@ -476,28 +476,28 @@ import {
 
 async function getQXOrderBook() {
   const client = new QubicLiveClient();
-  
+
   try {
     // Build query
     const query = createQuery(QUBIC_CONTRACTS.QX, 5)
       .addInt32(0); // Asset pair ID
-    
+
     // Execute
     const response = await query.execute(client);
-    
+
     // Parse
     const parser = parseResponse(response.responseData);
-    
+
     // Check status
     const status = parser.readByte();
     if (status !== 0) {
       throw new Error(`Contract returned error: ${status}`);
     }
-    
+
     // Read order count
     const orderCount = parser.readInt32();
     console.log(`Found ${orderCount} orders`);
-    
+
     // Read each order
     const orders = [];
     for (let i = 0; i < orderCount; i++) {
@@ -507,9 +507,9 @@ async function getQXOrderBook() {
         creator: parser.readString(60)
       });
     }
-    
+
     return orders;
-    
+
   } catch (error) {
     console.error('Query failed:', error.message);
     throw error;
@@ -609,7 +609,7 @@ function serializeSwapRequest(params: SwapParams): string {
     .addString(params.recipient, 60)
     .addInt32(params.deadline)
     .addPadding(32);
-  
+
   return query.getRequestData();
 }
 ```
@@ -635,14 +635,14 @@ const cache = new Map<string, { data: any; tick: number }>();
 
 async function getCachedContractData(contractIndex: number, tick: number) {
   const key = `${contractIndex}-${tick}`;
-  
+
   if (cache.has(key)) {
     return cache.get(key)!.data;
   }
-  
+
   const response = await queryContract(contractIndex);
   cache.set(key, { data: response, tick });
-  
+
   return response;
 }
 ```

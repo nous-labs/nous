@@ -568,11 +568,11 @@ import { sliceHex, decodeInt32LE } from '@nvlabs/qts';
 
 function parseArray(hex: string): number[] {
   let offset = 0;
-  
+
   // Read count (first 4 bytes)
   const count = decodeInt32LE(sliceHex(hex, offset, offset + 4));
   offset += 4;
-  
+
   // Read each element
   const values: number[] = [];
   for (let i = 0; i < count; i++) {
@@ -580,7 +580,7 @@ function parseArray(hex: string): number[] {
     values.push(value);
     offset += 4;
   }
-  
+
   return values;
 }
 ```
@@ -660,13 +660,13 @@ const hex = 'fff';
 ## Next Steps
 
 <Cards>
-  <Card title="Smart Contracts" href="/docs/smart-contracts">
+  <Card title="Smart Contracts" href="/smart-contracts">
     Use these utilities in smart contract queries
   </Card>
-  <Card title="API Clients" href="/docs/api-clients">
+  <Card title="API Clients" href="/api-clients">
     Integrate with API client methods
   </Card>
-  <Card title="Examples" href="/docs/examples">
+  <Card title="Examples" href="/examples">
     See practical usage examples
   </Card>
 </Cards>
