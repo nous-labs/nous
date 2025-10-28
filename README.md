@@ -362,4 +362,4 @@ Special thanks to all contributors and the Qubic core team.
 ---
 
 **Nous Labs** - Intelligent tools for Qubic blockchain  
-[Website](https://nouslabs.dev) • [Documentation](https://github.com/nous-labs/sdk/tree/main/docs) • [CLI](https://github.com/nous-labs/cli)
+[Website](https://nous-labs.com) • [Documentation](https://github.com/nous-labs/sdk/tree/main/docs) • [CLI](https://github.com/nous-labs/cli)
