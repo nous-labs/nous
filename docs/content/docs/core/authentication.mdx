@@ -1,0 +1,1012 @@
+---
+title: Authentication
+description: Complete guide to authenticating users with MetaMask, Vault files, private seeds, and WalletConnect
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+
+# Authentication
+
+This guide will teach you how to authenticate users in your Qubic application. We'll start with the simplest method and progressively introduce more advanced options.
+
+## Overview
+
+The Qubic SDK supports four authentication methods:
+
+1. **Private Seed** - Direct seed input (simplest, best for learning)
+2. **Vault File** - Encrypted file with password protection
+3. **MetaMask Snap** - Browser extension with hardware wallet support
+4. **WalletConnect** - Mobile wallet connection via QR code
+
+All methods work through the same unified API, allowing users to choose their preferred authentication method.
+
+## Installation
+
+First, ensure you have the SDK installed:
+
+```bash
+npm install @nouslabs/sdk
+```
+
+For React applications:
+
+```tsx
+import { QubicAuthProvider, useQubicAuth } from "@nouslabs/sdk/react";
+```
+
+For vanilla JavaScript:
+
+```ts
+import { authenticate, createAccount } from "@nouslabs/sdk";
+```
+
+## Getting Started
+
+### Setup the Provider
+
+Wrap your application with the authentication provider:
+
+```tsx
+import { QubicAuthProvider } from "@nouslabs/sdk/react";
+
+function App() {
+  return (
+    <QubicAuthProvider persistSession={true}>
+      <YourApp />
+    </QubicAuthProvider>
+  );
+}
+```
+
+### Basic Usage
+
+```tsx
+import { useQubicAuth } from "@nouslabs/sdk/react";
+
+function LoginButton() {
+  const { connectWithSeed, isConnected, account } = useQubicAuth();
+
+  if (isConnected) {
+    return <p>Connected: {account.publicId}</p>;
+  }
+
+  return (
+    <button onClick={() => connectWithSeed("your-seed-here")}>
+      Connect
+    </button>
+  );
+}
+```
+
+## Method 1: Private Seed (Recommended for Learning)
+
+The private seed method is the simplest way to authenticate. It's perfect for:
+
+- Learning and development
+- Server-side applications
+- CLI tools
+- Advanced users who manage their own keys
+
+### Understanding Seeds
+
+A Qubic seed is a 55-character string containing only lowercase letters (a-z). This seed is your private key and must be kept secret.
+
+Example seed: `abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabc`
+
+### Connecting with a Seed
+
+```tsx
+import { useQubicAuth } from "@nouslabs/sdk/react";
+import { useState } from "react";
+
+function SeedLogin() {
+  const { connectWithSeed, isConnecting, error } = useQubicAuth();
+  const [seed, setSeed] = useState("");
+
+  const handleLogin = async () => {
+    try {
+      await connectWithSeed(seed, "My Account");
+      setSeed(""); // Clear seed after successful login
+    } catch (err) {
+      console.error("Login failed:", err);
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="password"
+        value={seed}
+        onChange={(e) => setSeed(e.target.value.toLowerCase())}
+        placeholder="Enter your 55-character seed"
+        minLength={55}
+      />
+      <button onClick={handleLogin} disabled={isConnecting || seed.length < 55}>
+        Login
+      </button>
+      {error && <p>Error: {error.message}</p>}
+    </div>
+  );
+}
+```
+
+### Vanilla JavaScript
+
+```ts
+import { createSeedSession } from "@nouslabs/sdk";
+
+const session = await createSeedSession({
+  seed: "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabc",
+  label: "My Account",
+});
+
+console.log("Public ID:", session.account.publicId);
+
+// Sign a transaction
+const signature = await session.signTransaction(transactionBytes, offset);
+```
+
+### Security Considerations
+
+<Callout type="warn">
+  **Important:** Never hardcode seeds in your source code or commit them to version control. Always:
+  - Use environment variables for development
+  - Prompt users to enter their seed
+  - Clear the seed from memory after authentication
+  - Store securely using OS keychain or secure key management
+</Callout>
+
+## Method 2: Vault Files
+
+Vault files provide encrypted storage for multiple seeds with password protection. This is the recommended method for desktop applications.
+
+### What is a Vault File?
+
+A vault file is a JSON file that contains:
+- Multiple encrypted seeds (accounts)
+- RSA-4096 and AES-256-GCM encryption
+- Password protection
+- Account labels and metadata
+
+### Connecting with a Vault
+
+```tsx
+import { useQubicAuth } from "@nouslabs/sdk/react";
+import { useState } from "react";
+
+function VaultLogin() {
+  const { connectWithVault, isConnecting } = useQubicAuth();
+  const [file, setFile] = useState<File | null>(null);
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async () => {
+    if (!file) return;
+
+    try {
+      await connectWithVault(file, password);
+      setPassword(""); // Clear password
+    } catch (err) {
+      console.error("Vault unlock failed:", err);
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="file"
+        accept=".qubic-vault,application/json"
+        onChange={(e) => setFile(e.target.files?.[0] || null)}
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Vault password"
+      />
+      <button onClick={handleLogin} disabled={isConnecting || !file}>
+        Unlock Vault
+      </button>
+    </div>
+  );
+}
+```
+
+### Listing Accounts in a Vault
+
+```ts
+import { getVaultAccounts } from "@nouslabs/sdk";
+
+const accounts = await getVaultAccounts({
+  file: vaultFile,
+  password: "my-password",
+});
+
+accounts.forEach((account) => {
+  console.log(`${account.label}: ${account.publicId}`);
+});
+```
+
+### Accessing Specific Account
+
+```ts
+import { createVaultSession } from "@nouslabs/sdk";
+
+const session = await createVaultSession(
+  {
+    file: vaultFile,
+    password: "my-password",
+  },
+  "SPECIFIC_PUBLIC_ID" // Optional: omit to use first account
+);
+
+// Get decrypted private key if needed
+const privateKey = await session.getPrivateKey();
+```
+
+### Vault File Structure
+
+The vault file is a JSON file with this structure:
+
+```json
+{
+  "cipher": "base64-encrypted-data",
+  "iv": "base64-initialization-vector",
+  "salt": "base64-salt"
+}
+```
+
+The decrypted content contains multiple accounts with their encrypted seeds.
+
+## Method 3: MetaMask Snap
+
+MetaMask integration provides browser-based key management with hardware wallet support.
+
+### Features
+
+- Secure key derivation using BIP44 (coin type 83293)
+- Hardware wallet support (Ledger, Trezor, etc.)
+- Multiple account management
+- Transaction confirmation UI
+- Auto-restore sessions
+
+### Prerequisites
+
+Users must have:
+1. MetaMask browser extension installed
+2. The Qubic Snap installed (auto-prompted if needed)
+
+### Connecting with MetaMask
+
+```tsx
+import { useQubicAuth } from "@nouslabs/sdk/react";
+
+function MetaMaskLogin() {
+  const { connectWithMetaMask, isConnecting } = useQubicAuth();
+  const [accountIndex, setAccountIndex] = useState(0);
+
+  const handleConnect = async () => {
+    try {
+      await connectWithMetaMask({
+        accountIdx: accountIndex,
+      });
+    } catch (err) {
+      console.error("MetaMask connection failed:", err);
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="number"
+        value={accountIndex}
+        onChange={(e) => setAccountIndex(Number(e.target.value))}
+        placeholder="Account index (0, 1, 2...)"
+        min="0"
+      />
+      <button onClick={handleConnect} disabled={isConnecting}>
+        Connect MetaMask
+      </button>
+    </div>
+  );
+}
+```
+
+### Checking MetaMask Availability
+
+```ts
+import { isMetaMaskAvailable, isSnapInstalled } from "@nouslabs/sdk";
+
+// Check if MetaMask is installed
+if (await isMetaMaskAvailable()) {
+  console.log("MetaMask detected");
+  
+  // Check if Qubic Snap is installed
+  if (!(await isSnapInstalled())) {
+    console.log("Qubic Snap needs to be installed");
+  }
+}
+```
+
+### Multiple Accounts
+
+MetaMask supports deriving multiple accounts from the same seed:
+
+```tsx
+function AccountSelector() {
+  const { connectWithMetaMask } = useQubicAuth();
+
+  return (
+    <div>
+      <button onClick={() => connectWithMetaMask({ accountIdx: 0 })}>
+        Account 0
+      </button>
+      <button onClick={() => connectWithMetaMask({ accountIdx: 1 })}>
+        Account 1
+      </button>
+      <button onClick={() => connectWithMetaMask({ accountIdx: 2 })}>
+        Account 2
+      </button>
+    </div>
+  );
+}
+```
+
+### Direct API Usage
+
+```ts
+import {
+  createMetaMaskSession,
+  getMetaMaskPublicId,
+  signTransactionWithMetaMask,
+} from "@nouslabs/sdk";
+
+// Get public ID without creating session
+const publicId = await getMetaMaskPublicId({ accountIdx: 0 });
+
+// Create full session
+const session = await createMetaMaskSession({ accountIdx: 0 });
+
+// Sign transaction
+const signature = await session.signTransaction(txBytes, 96);
+```
+
+## Method 4: WalletConnect
+
+WalletConnect enables mobile wallet connections through QR code scanning.
+
+### Features
+
+- Mobile wallet support
+- QR code connection flow
+- Session persistence
+- Deep linking support
+- Multi-platform compatibility
+
+### Prerequisites
+
+You need a WalletConnect Project ID:
+1. Visit [cloud.walletconnect.com](https://cloud.walletconnect.com/)
+2. Create a free account
+3. Create a new project
+4. Copy your Project ID
+
+### Connecting with WalletConnect
+
+```tsx
+import { useQubicAuth } from "@nouslabs/sdk/react";
+import { useState } from "react";
+
+function WalletConnectLogin() {
+  const { connectWithWalletConnect, isConnecting } = useQubicAuth();
+  const [uri, setUri] = useState("");
+  const [showQR, setShowQR] = useState(false);
+
+  const handleConnect = async () => {
+    try {
+      const connection = await connectWithWalletConnect({
+        projectId: "YOUR_PROJECT_ID",
+        metadata: {
+          name: "My Qubic App",
+          description: "Qubic Application",
+          url: "https://myapp.com",
+          icons: ["https://myapp.com/icon.png"],
+        },
+      });
+
+      setUri(connection.uri);
+      setShowQR(true);
+
+      // Wait for user to scan and approve
+      await connection.waitForApproval();
+      setShowQR(false);
+    } catch (err) {
+      console.error("WalletConnect failed:", err);
+      setShowQR(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handleConnect} disabled={isConnecting}>
+        Connect Mobile Wallet
+      </button>
+
+      {showQR && (
+        <div>
+          <p>Scan this QR code with your Qubic wallet:</p>
+          <QRCode value={uri} />
+          <p>URI: {uri}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Direct API Usage
+
+```ts
+import { connectWalletConnect } from "@nouslabs/sdk";
+
+const connection = await connectWalletConnect({
+  projectId: "YOUR_PROJECT_ID",
+  metadata: {
+    name: "My App",
+    description: "Qubic Application",
+    url: "https://myapp.com",
+    icons: ["https://myapp.com/icon.png"],
+  },
+});
+
+console.log("Display this URI:", connection.uri);
+
+// Wait for approval
+const session = await connection.waitForApproval();
+console.log("Connected:", session.account.publicId);
+```
+
+## Account Creation
+
+You can create new Qubic accounts programmatically with cryptographically secure random generation.
+
+### Creating a New Account
+
+```tsx
+import { useAccountCreation, useQubicAuth } from "@nouslabs/sdk/react";
+import { useState } from "react";
+
+function CreateAccount() {
+  const { createNewAccount, isCreating } = useAccountCreation();
+  const { connectWithSeed } = useQubicAuth();
+  const [account, setAccount] = useState(null);
+
+  const handleCreate = async () => {
+    try {
+      const newAccount = await createNewAccount(55);
+      setAccount(newAccount);
+      
+      console.log("Public ID:", newAccount.publicId);
+      console.log("Private Seed:", newAccount.seed);
+      
+      // Optionally connect immediately
+      await connectWithSeed(newAccount.seed, "New Account");
+    } catch (err) {
+      console.error("Account creation failed:", err);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={handleCreate} disabled={isCreating}>
+        Create New Account
+      </button>
+      
+      {account && (
+        <div>
+          <p>Public ID: {account.publicId}</p>
+          <p>Private Seed: {account.seed}</p>
+          <p className="warning">Save this seed securely!</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Direct API Usage
+
+```ts
+import { createAccount, generateSeed, isValidSeed } from "@nouslabs/sdk";
+
+// Create a new account
+const account = await createAccount({ length: 55 });
+console.log("Public ID:", account.publicId);
+console.log("Private Seed:", account.seed);
+
+// Generate just the seed
+const seed = generateSeed(55);
+
+// Validate a seed
+const isValid = isValidSeed(seed);
+
+// Create multiple accounts
+import { createAccounts } from "@nouslabs/sdk";
+const accounts = await createAccounts(5);
+```
+
+### Backing Up Created Accounts
+
+Always provide a way for users to backup their seeds:
+
+```tsx
+function AccountBackup({ seed }: { seed: string }) {
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(seed);
+  };
+
+  const downloadBackup = () => {
+    const blob = new Blob([seed], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "qubic-seed-backup.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div>
+      <button onClick={copyToClipboard}>Copy Seed</button>
+      <button onClick={downloadBackup}>Download Backup</button>
+    </div>
+  );
+}
+```
+
+## Transaction Signing
+
+All authentication methods support transaction signing with the same interface.
+
+### Basic Transaction Signing
+
+```tsx
+import { useQubicAuth } from "@nouslabs/sdk/react";
+
+function SendTransaction() {
+  const { signTransaction, isConnected } = useQubicAuth();
+
+  const handleSend = async () => {
+    if (!isConnected) return;
+
+    const transactionBytes = new Uint8Array([/* transaction data */]);
+    const signatureOffset = 96;
+
+    try {
+      const signature = await signTransaction(transactionBytes, signatureOffset);
+      console.log("Signed:", signature);
+      
+      // Broadcast to network
+      // await broadcast(signature);
+    } catch (err) {
+      console.error("Signing failed:", err);
+    }
+  };
+
+  return <button onClick={handleSend}>Send Transaction</button>;
+}
+```
+
+### Accessing Private Key
+
+Some methods allow direct access to the private key:
+
+```tsx
+const { getPrivateKey } = useQubicAuth();
+
+// Only available for seed and vault methods
+const privateKey = await getPrivateKey();
+console.log("Private key:", privateKey);
+```
+
+<Callout type="info">
+  MetaMask and WalletConnect do not expose the private key for security reasons. Transaction signing is handled by the wallet.
+</Callout>
+
+## Session Management
+
+### Session State
+
+Monitor the authentication state:
+
+```tsx
+const {
+  session,        // Current session object
+  account,        // Account information
+  isConnected,    // Boolean connection status
+  isConnecting,   // Loading state
+  error,          // Last error encountered
+} = useQubicAuth();
+```
+
+### Disconnecting
+
+```tsx
+const { disconnect } = useQubicAuth();
+
+const handleLogout = async () => {
+  await disconnect();
+};
+```
+
+### Session Persistence
+
+Only MetaMask sessions persist across page reloads:
+
+```tsx
+<QubicAuthProvider
+  persistSession={true}  // Enable persistence
+  storageKey="qubic-auth-session"  // localStorage key
+>
+  <App />
+</QubicAuthProvider>
+```
+
+<Callout type="info">
+  Vault and seed sessions require re-authentication for security. WalletConnect sessions persist through the WalletConnect protocol.
+</Callout>
+
+## React Hooks Reference
+
+### useQubicAuth()
+
+Main authentication hook providing full state and actions.
+
+```tsx
+const {
+  // State
+  session,
+  account,
+  isConnected,
+  isConnecting,
+  error,
+  availableMethods,
+
+  // Actions
+  connectWithMetaMask,
+  connectWithVault,
+  connectWithSeed,
+  connectWithWalletConnect,
+  disconnect,
+  clearError,
+  refreshAvailableMethods,
+
+  // Operations
+  signTransaction,
+  getPrivateKey,
+} = useQubicAuth();
+```
+
+### useQubicAccount()
+
+Get current account information:
+
+```tsx
+const account = useQubicAccount();
+
+if (account) {
+  console.log(account.publicId);
+  console.log(account.method);
+  console.log(account.label);
+}
+```
+
+### useIsAuthenticated()
+
+Check authentication status:
+
+```tsx
+const isAuthenticated = useIsAuthenticated();
+
+return isAuthenticated ? <Dashboard /> : <Login />;
+```
+
+### useAuthMethods()
+
+Check available authentication methods:
+
+```tsx
+const {
+  availableMethods,
+  hasMetaMask,
+  hasVault,
+  hasSeed,
+  hasWalletConnect,
+  refresh,
+} = useAuthMethods();
+```
+
+### useAccountCreation()
+
+Account creation utilities:
+
+```tsx
+const {
+  createNewAccount,
+  generateRandomSeed,
+  validateSeed,
+  isCreating,
+  error,
+  clearError,
+} = useAccountCreation();
+```
+
+## Error Handling
+
+All authentication methods throw typed errors with specific codes.
+
+### Error Codes
+
+| Code | Method | Description |
+|------|--------|-------------|
+| `SNAP_INSTALL_FAILED` | MetaMask | Failed to install Qubic Snap |
+| `DECRYPT_FAILED` | Vault | Incorrect password |
+| `INVALID_VAULT_FORMAT` | Vault | Corrupted or invalid vault file |
+| `INVALID_VAULT_STRUCTURE` | Vault | Missing required vault fields |
+| `SEED_NOT_FOUND` | Vault | Specified publicId not in vault |
+| `INVALID_SEED` | Seed | Invalid seed format |
+| `INVALID_SEED_FORMAT` | Seed | Seed contains invalid characters |
+| `NO_SESSION` | All | No active authentication session |
+| `NOT_CONNECTED` | WalletConnect | WalletConnect not connected |
+| `NO_ACCOUNTS` | WalletConnect | No accounts returned |
+| `MISSING_OPTIONS` | All | Required options not provided |
+
+### Handling Errors
+
+```tsx
+import { useQubicAuth, AuthError } from "@nouslabs/sdk/react";
+
+function Login() {
+  const { connectWithSeed, error } = useQubicAuth();
+
+  const handleLogin = async (seed: string) => {
+    try {
+      await connectWithSeed(seed);
+    } catch (err) {
+      if (err instanceof AuthError) {
+        switch (err.code) {
+          case "INVALID_SEED":
+            alert("Please enter a valid 55-character seed");
+            break;
+          case "NO_SESSION":
+            alert("Session expired, please login again");
+            break;
+          default:
+            alert(`Error: ${err.message}`);
+        }
+      }
+    }
+  };
+}
+```
+
+## Security Best Practices
+
+### General Guidelines
+
+1. **Never hardcode secrets** in source code
+2. **Clear sensitive data** from memory after use
+3. **Use HTTPS** for all network requests
+4. **Validate user input** before processing
+5. **Implement rate limiting** for authentication attempts
+
+### Method-Specific Security
+
+**Private Seeds:**
+- Store in environment variables for development
+- Use OS keychain for production storage
+- Implement seed input masking in UI
+- Clear from memory immediately after use
+
+**Vault Files:**
+- Require strong passwords (12+ characters)
+- Store vault files in encrypted storage
+- Never share vault files publicly
+- Maintain regular encrypted backups
+
+**MetaMask:**
+- Always verify snap ID before connecting
+- Review transaction details before signing
+- Use hardware wallets for high-value accounts
+- Keep MetaMask and snap versions updated
+
+**WalletConnect:**
+- Use official WalletConnect Project IDs
+- Implement connection timeout handling
+- Verify wallet app authenticity
+- Handle session expiration gracefully
+
+## Troubleshooting
+
+### MetaMask Issues
+
+**Problem:** MetaMask not detected
+
+```tsx
+import { isMetaMaskAvailable } from "@nouslabs/sdk";
+
+if (!(await isMetaMaskAvailable())) {
+  window.open("https://metamask.io/download/", "_blank");
+}
+```
+
+**Problem:** Snap installation fails
+- Update MetaMask to the latest version
+- Disable conflicting browser extensions
+- Check browser console for errors
+- Try in incognito mode
+
+### Vault Issues
+
+**Problem:** Cannot unlock vault
+- Verify password is correct
+- Check file is not corrupted
+- Ensure file is valid JSON format
+- Try re-uploading the file
+
+### Seed Issues
+
+**Problem:** Invalid seed error
+- Check seed is exactly 55+ characters
+- Ensure only lowercase letters (a-z)
+- Remove any spaces or special characters
+- Verify seed wasn't corrupted during copy/paste
+
+### WalletConnect Issues
+
+**Problem:** QR code won't scan
+- Ensure Project ID is valid
+- Check network connectivity
+- Verify wallet app supports Qubic
+- Try regenerating the QR code
+
+**Problem:** Connection timeout
+- Increase timeout in provider config
+- Check mobile wallet is online
+- Verify network allows WebSocket connections
+
+## Complete Example
+
+Here's a complete authentication component supporting all methods:
+
+```tsx
+import { QubicAuthProvider, useQubicAuth } from "@nouslabs/sdk/react";
+import { useState } from "react";
+
+function App() {
+  return (
+    <QubicAuthProvider persistSession={true}>
+      <AuthenticationDemo />
+    </QubicAuthProvider>
+  );
+}
+
+function AuthenticationDemo() {
+  const {
+    account,
+    isConnected,
+    isConnecting,
+    error,
+    connectWithMetaMask,
+    connectWithVault,
+    connectWithSeed,
+    connectWithWalletConnect,
+    disconnect,
+  } = useQubicAuth();
+
+  const [method, setMethod] = useState<"seed" | "vault" | "metamask" | "wc">("seed");
+  const [seed, setSeed] = useState("");
+  const [vaultFile, setVaultFile] = useState<File | null>(null);
+  const [password, setPassword] = useState("");
+
+  if (isConnected && account) {
+    return (
+      <div>
+        <h2>Connected</h2>
+        <p>Public ID: {account.publicId}</p>
+        <p>Method: {account.method}</p>
+        {account.label && <p>Label: {account.label}</p>}
+        <button onClick={disconnect}>Disconnect</button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2>Login to Qubic</h2>
+      
+      {error && <div className="error">Error: {error.message}</div>}
+
+      <select value={method} onChange={(e) => setMethod(e.target.value as any)}>
+        <option value="seed">Private Seed</option>
+        <option value="vault">Vault File</option>
+        <option value="metamask">MetaMask</option>
+        <option value="wc">WalletConnect</option>
+      </select>
+
+      {method === "seed" && (
+        <div>
+          <input
+            type="password"
+            value={seed}
+            onChange={(e) => setSeed(e.target.value)}
+            placeholder="55-character seed"
+          />
+          <button
+            onClick={() => connectWithSeed(seed)}
+            disabled={isConnecting || seed.length < 55}
+          >
+            Connect
+          </button>
+        </div>
+      )}
+
+      {method === "vault" && (
+        <div>
+          <input
+            type="file"
+            onChange={(e) => setVaultFile(e.target.files?.[0] || null)}
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+          />
+          <button
+            onClick={() => vaultFile && connectWithVault(vaultFile, password)}
+            disabled={isConnecting || !vaultFile}
+          >
+            Unlock
+          </button>
+        </div>
+      )}
+
+      {method === "metamask" && (
+        <button
+          onClick={() => connectWithMetaMask({ accountIdx: 0 })}
+          disabled={isConnecting}
+        >
+          Connect MetaMask
+        </button>
+      )}
+
+      {method === "wc" && (
+        <button
+          onClick={async () => {
+            const conn = await connectWithWalletConnect({
+              projectId: "YOUR_PROJECT_ID",
+            });
+            alert(`Scan QR: ${conn.uri}`);
+            await conn.waitForApproval();
+          }}
+          disabled={isConnecting}
+        >
+          Connect WalletConnect
+        </button>
+      )}
+    </div>
+  );
+}
+
+export default App;
+```
+
+## Next Steps
+
+Now that you understand authentication, learn about:
+
+- [Transactions](/docs/core/transactions) - Create and sign transactions
+- [Smart Contracts](/docs/core/smart-contracts) - Interact with Qubic smart contracts
+- [Querying Data](/docs/core/querying-data) - Query blockchain data
+- [React Integration](/docs/advanced/react) - Advanced React patterns

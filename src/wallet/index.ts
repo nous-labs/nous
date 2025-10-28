@@ -1,5 +1,7 @@
 // Wallet integration helpers for browser-injected providers
 
+export * from "./auth.ts";
+
 import type { QubicLiveClient } from "../clients/qubic-live-client.ts";
 import { bytesToHex, hexToBase64 } from "../utils/encoding.ts";
 

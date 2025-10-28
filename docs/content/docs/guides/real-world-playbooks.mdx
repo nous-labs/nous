@@ -25,7 +25,7 @@ Goal: render a board that shows the **best bid/ask** for a list of issuer/asset 
   <Tab value="Implementation">
 
 ```ts
-import { QubicLiveClient, qx, identityToBytes } from '@nvlabs/qts';
+import { QubicLiveClient, qx, identityToBytes } from '@nouslabs/sdk';
 
 const client = new QubicLiveClient();
 
@@ -102,7 +102,7 @@ approved, or banned addresses present).
 4. Emit both human-readable strings and structured JSON (for SIEM ingestion).
 
 ```ts
-import { qvault, QubicLiveClient } from '@nvlabs/qts';
+import { qvault, QubicLiveClient } from '@nouslabs/sdk';
 
 const POLICY = {
   auth: new Set([
@@ -154,7 +154,7 @@ Many Qubic projects use a **two-step** interaction model:
 This playbook covers the read-path side and surfaces proposals that require attention.
 
 ```ts
-import { ccf, QubicLiveClient } from '@nvlabs/qts';
+import { ccf, QubicLiveClient } from '@nouslabs/sdk';
 
 const client = new QubicLiveClient();
 

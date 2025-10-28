@@ -20,22 +20,22 @@ This guide shows you how to integrate WalletConnect into your Next.js applicatio
 <Tabs items={['npm', 'yarn', 'bun', 'pnpm']}>
   <Tab value="npm">
     ```bash
-    npm install @nvlabs/qts @walletconnect/sign-client @walletconnect/types
+    npm install @nouslabs/sdk @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
   <Tab value="yarn">
     ```bash
-    yarn add @nvlabs/qts @walletconnect/sign-client @walletconnect/types
+    yarn add @nouslabs/sdk @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
   <Tab value="bun">
     ```bash
-    bun add @nvlabs/qts @walletconnect/sign-client @walletconnect/types
+    bun add @nouslabs/sdk @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
   <Tab value="pnpm">
     ```bash
-    pnpm add @nvlabs/qts @walletconnect/sign-client @walletconnect/types
+    pnpm add @nouslabs/sdk @walletconnect/sign-client @walletconnect/types
     ```
   </Tab>
 </Tabs>
@@ -51,7 +51,7 @@ The SDK includes a built-in `WalletConnectProvider` - no need to create it manua
 Import and use the provider in `app/layout.tsx`:
 
 ```tsx title="app/layout.tsx"
-import { WalletConnectProvider } from '@nvlabs/qts/react';
+import { WalletConnectProvider } from '@nouslabs/sdk/react';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -88,7 +88,7 @@ Use the hook in your components:
 'use client';
 
 import { useState } from 'react';
-import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWalletConnect } from '@nouslabs/sdk/react';
 
 export function ConnectButton() {
   const { connect, disconnect, isReady, isConnected, accounts } = useWalletConnect();
@@ -217,7 +217,7 @@ const { accounts, isConnected } = useWalletConnect();
 In rare cases where you need to manually sync accounts (e.g., user switches accounts in wallet):
 
 ```tsx
-import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWalletConnect } from '@nouslabs/sdk/react';
 
 export function AccountRefresher() {
   const { refreshAccounts, isConnected } = useWalletConnect();
@@ -255,8 +255,8 @@ export function AccountRefresher() {
 'use client';
 
 import { useState } from 'react';
-import { useWalletConnect } from '@nvlabs/qts/react';
-import { createQubicClient } from '@nvlabs/qts';
+import { useWalletConnect } from '@nouslabs/sdk/react';
+import { createQubicClient } from '@nouslabs/sdk';
 
 const qubic = createQubicClient();
 
@@ -339,7 +339,7 @@ import type {
   WalletConnectConnection,
   WalletAccount,
   SignTransactionResult,
-} from '@nvlabs/qts';
+} from '@nouslabs/sdk';
 
 // adapter.connect() returns WalletConnectConnection
 const connection: WalletConnectConnection = await adapter.connect();
@@ -456,7 +456,7 @@ Here's a complete page component:
 
 import { WalletButton } from '@/components/wallet-button';
 import { SendTransaction } from '@/components/send-transaction';
-import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWalletConnect } from '@nouslabs/sdk/react';
 
 export default function HomePage() {
   const { isConnected, accounts } = useWalletConnect();
@@ -500,7 +500,7 @@ Add both providers to your layout:
 ```tsx title="app/layout.tsx"
 'use client';
 
-import { QubicQueryProvider, WalletConnectProvider } from '@nvlabs/qts/react';
+import { QubicQueryProvider, WalletConnectProvider } from '@nouslabs/sdk/react';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -539,8 +539,8 @@ The SDK provides ready-made hooks that combine WalletConnect with React Query:
 'use client';
 
 import { useState } from 'react';
-import { useWalletConnect } from '@nvlabs/qts/react';
-import { useWCSignAndBroadcast, useBalance } from '@nvlabs/qts/react/query';
+import { useWalletConnect } from '@nouslabs/sdk/react';
+import { useWCSignAndBroadcast, useBalance } from '@nouslabs/sdk/react/query';
 
 export function TransactionForm() {
   const { accounts, isConnected } = useWalletConnect();
@@ -633,11 +633,11 @@ Execute smart contract procedures with automatic cache management:
 ```tsx title="components/contract-interaction.tsx"
 'use client';
 
-import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWalletConnect } from '@nouslabs/sdk/react';
 import { 
   useWCSignAndBroadcastProcedure,
   useCurrentTick 
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 export function ContractInteraction() {
   const { accounts, isConnected } = useWalletConnect();
@@ -697,12 +697,12 @@ Combine queries and mutations for real-time UI updates:
 ```tsx title="components/wallet-dashboard.tsx"
 'use client';
 
-import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWalletConnect } from '@nouslabs/sdk/react';
 import { 
   useBalance,
   useTransactionsForIdentity,
   useCurrentTick 
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 export function WalletDashboard() {
   const { accounts, isConnected } = useWalletConnect();
@@ -755,7 +755,7 @@ export function WalletDashboard() {
 Show instant feedback before transaction confirmation:
 
 ```tsx
-import { useWCSignAndBroadcast } from '@nvlabs/qts/react/query';
+import { useWCSignAndBroadcast } from '@nouslabs/sdk/react/query';
 import { useQueryClient } from '@tanstack/react-query';
 
 export function OptimisticTransfer() {
@@ -798,7 +798,7 @@ export function OptimisticTransfer() {
 Use both providers together if you need both React Query and basic client access:
 
 ```tsx title="app/layout.tsx"
-import { QubicProvider, QubicQueryProvider, WalletConnectProvider } from '@nvlabs/qts/react';
+import { QubicProvider, QubicQueryProvider, WalletConnectProvider } from '@nouslabs/sdk/react';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -830,8 +830,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 Then use all hooks:
 
 ```tsx
-import { useQubic, useWalletConnect } from '@nvlabs/qts/react';
-import { useBalance } from '@nvlabs/qts/react/query';
+import { useQubic, useWalletConnect } from '@nouslabs/sdk/react';
+import { useBalance } from '@nouslabs/sdk/react/query';
 
 export function Dashboard() {
   const { live } = useQubic();              // Direct client access
@@ -880,12 +880,12 @@ Here's a full Next.js page with WalletConnect + React Query:
 'use client';
 
 import { useState } from 'react';
-import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWalletConnect } from '@nouslabs/sdk/react';
 import { 
   useBalance, 
   useCurrentTick,
   useWCSignAndBroadcast 
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 export default function HomePage() {
   const { connect, disconnect, accounts, isConnected, isReady } = useWalletConnect();

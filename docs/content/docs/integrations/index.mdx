@@ -16,7 +16,7 @@ Complete React integration for Qubic blockchain with context providers, React Qu
 Use the simple `QubicProvider` for direct API access:
 
 ```tsx
-import { QubicProvider, useQubic } from '@nvlabs/qts/react';
+import { QubicProvider, useQubic } from '@nouslabs/sdk/react';
 
 function App() {
   return (
@@ -41,7 +41,7 @@ function Component() {
 Use React Query hooks for automatic caching, background refetching, and optimized data fetching:
 
 ```tsx
-import { QubicQueryProvider, useCurrentTick, useBalance } from '@nvlabs/qts/react/query';
+import { QubicQueryProvider, useCurrentTick, useBalance } from '@nouslabs/sdk/react/query';
 
 function App() {
   return (
@@ -68,7 +68,7 @@ function Dashboard({ address }) {
 Ready-made hooks for all Qubic smart contracts (QX, Qswap, Qearn, etc.):
 
 ```tsx
-import { useQXFees, useQswapPoolBasicState } from '@nvlabs/qts/react/query';
+import { useQXFees, useQswapPoolBasicState } from '@nouslabs/sdk/react/query';
 
 function TradingDashboard() {
   const { data: qxFees } = useQXFees();
@@ -105,7 +105,7 @@ function TradingDashboard() {
 Simple integration for wallet connections:
 
 ```tsx
-import { WalletConnectProvider, useWalletConnect } from '@nvlabs/qts/react';
+import { WalletConnectProvider, useWalletConnect } from '@nouslabs/sdk/react';
 
 function WalletButton() {
   const { connect, disconnect, isConnected, accounts } = useWalletConnect();
@@ -207,7 +207,7 @@ function App() {
 All React integrations are included in the main package:
 
 ```bash
-npm install @nvlabs/qts
+npm install @nouslabs/sdk
 
 # For React Query integration, also install:
 npm install @tanstack/react-query
@@ -218,8 +218,8 @@ npm install @tanstack/react-query
 Both approaches have full TypeScript support with automatic type inference:
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
-import { useBalance } from '@nvlabs/qts/react/query';
+import { useQubic } from '@nouslabs/sdk/react';
+import { useBalance } from '@nouslabs/sdk/react/query';
 
 // Types are automatically inferred
 function Component() {

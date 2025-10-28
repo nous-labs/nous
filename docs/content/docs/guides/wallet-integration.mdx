@@ -20,14 +20,14 @@ QTS ships with a tiny abstraction over browser-injected wallets so you can:
 - Sign messages or transactions as hex strings.
 - Forward signed payloads to `QubicLiveClient.broadcast()` without re-implementing encoding.
 
-The module lives in `@nvlabs/qts/wallet` and is tree-shakeable.
+The module lives in `@nouslabs/sdk/wallet` and is tree-shakeable.
 
 ```ts
 import {
   WalletAdapter,
   detectWalletProviders,
   waitForWalletProvider,
-} from '@nvlabs/qts/wallet';
+} from '@nouslabs/sdk/wallet';
 ```
 
 ## Detection strategies
@@ -97,7 +97,7 @@ Use `signAndBroadcast` to forward the signed payload to a `QubicLiveClient`. The
 hex into base64 before calling `client.broadcast()` and lets you pass extra arguments if you need to hit custom RPC hosts.
 
 ```ts
-import { QubicLiveClient } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
 
 const client = new QubicLiveClient();
 await wallet.signAndBroadcast({
@@ -125,8 +125,8 @@ For mobile wallets (or desktop apps that only expose WalletConnect) use the dedi
 `@walletconnect/sign-client`.
 
 ```ts
-import { WalletConnectAdapter } from '@nvlabs/qts';
-import { QubicLiveClient } from '@nvlabs/qts';
+import { WalletConnectAdapter } from '@nouslabs/sdk';
+import { QubicLiveClient } from '@nouslabs/sdk';
 
 const wallet = await WalletConnectAdapter.init({
   projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID!,
@@ -168,7 +168,7 @@ await wallet.signAndBroadcast({
 The SDK also exports React-specific helpers so you can initialise clients and WalletConnect just once:
 
 ```tsx
-import { QubicProvider, useQubic, WalletConnectProvider, useWalletConnect } from '@nvlabs/qts/react';
+import { QubicProvider, useQubic, WalletConnectProvider, useWalletConnect } from '@nouslabs/sdk/react';
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (

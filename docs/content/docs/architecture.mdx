@@ -42,10 +42,10 @@ Tree-shakeable exports - import only what you need.
 
 ```typescript
 // Import specific clients
-import { QubicLiveClient } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
 
 // Import utilities
-import { encodeInt64LE, hexToBase64 } from '@nvlabs/qts';
+import { encodeInt64LE, hexToBase64 } from '@nouslabs/sdk';
 ```
 
 ### 5. Error Resilience
@@ -514,10 +514,10 @@ const client = new QubicLiveClient({ timeout: 60000 });
 
 ```typescript
 // ✅ Good - imports only what's needed
-import { QubicLiveClient } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
 
 // ❌ Less optimal - imports everything
-import * as qts from '@nvlabs/qts';
+import * as qts from '@nouslabs/sdk';
 ```
 
 ## Extension Points

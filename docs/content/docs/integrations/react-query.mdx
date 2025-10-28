@@ -21,22 +21,22 @@ Install both the SDK and React Query:
 <Tabs items={['npm', 'yarn', 'bun', 'pnpm']}>
   <Tab value="npm">
     ```bash
-    npm install @nvlabs/qts @tanstack/react-query react
+    npm install @nouslabs/sdk @tanstack/react-query react
     ```
   </Tab>
   <Tab value="yarn">
     ```bash
-    yarn add @nvlabs/qts @tanstack/react-query react
+    yarn add @nouslabs/sdk @tanstack/react-query react
     ```
   </Tab>
   <Tab value="bun">
     ```bash
-    bun add @nvlabs/qts @tanstack/react-query react
+    bun add @nouslabs/sdk @tanstack/react-query react
     ```
   </Tab>
   <Tab value="pnpm">
     ```bash
-    pnpm add @nvlabs/qts @tanstack/react-query react
+    pnpm add @nouslabs/sdk @tanstack/react-query react
     ```
   </Tab>
 </Tabs>
@@ -50,7 +50,7 @@ Wrap your application with `QubicQueryProvider` to enable all hooks:
 ```tsx
 'use client';
 
-import { QubicQueryProvider } from '@nvlabs/qts/react/query';
+import { QubicQueryProvider } from '@nouslabs/sdk/react/query';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -70,7 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 Import and use any hook in your components:
 
 ```tsx
-import { useCurrentTick, useBalance } from '@nvlabs/qts/react/query';
+import { useCurrentTick, useBalance } from '@nouslabs/sdk/react/query';
 
 export function Dashboard({ address }: { address: string }) {
   const { data: tick, isLoading } = useCurrentTick();
@@ -101,7 +101,7 @@ import {
   useTransaction,      // Transaction details
   useComputorList,     // Active computors
   useHealthCheck,      // Network health status
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 ```
 
 #### Example: Real-time Tick Monitor
@@ -151,7 +151,7 @@ Access historical and aggregated data:
 import {
   useEntity,                      // Entity information and stats
   useTransactionsForIdentity,     // Transaction history
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 ```
 
 #### Example: Transaction History
@@ -180,7 +180,7 @@ Query archived blockchain data:
 import {
   useArchivedTick,         // Historical tick data
   useArchivedTransaction,  // Historical transaction
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 ```
 
 ### Mutation Hooks
@@ -188,7 +188,7 @@ import {
 Broadcast transactions to the network:
 
 ```tsx
-import { useBroadcastTransaction } from '@nvlabs/qts/react/query';
+import { useBroadcastTransaction } from '@nouslabs/sdk/react/query';
 
 function SendTransaction({ signedTx }: { signedTx: string }) {
   const { mutate, isLoading, isSuccess, error } = useBroadcastTransaction({
@@ -216,7 +216,7 @@ function SendTransaction({ signedTx }: { signedTx: string }) {
 Convenient hooks for real-time updates:
 
 ```tsx
-import { useTickPoller, useBalancePoller } from '@nvlabs/qts/react/query';
+import { useTickPoller, useBalancePoller } from '@nouslabs/sdk/react/query';
 
 function LiveDashboard({ userAddress }: { userAddress: string }) {
   // Poll tick every 1 second
@@ -245,7 +245,7 @@ function LiveDashboard({ userAddress }: { userAddress: string }) {
 Fine-tune React Query behavior:
 
 ```tsx
-import { QubicQueryProvider } from '@nvlabs/qts/react/query';
+import { QubicQueryProvider } from '@nouslabs/sdk/react/query';
 
 export default function App({ children }: { children: React.ReactNode }) {
   return (
@@ -278,8 +278,8 @@ export default function App({ children }: { children: React.ReactNode }) {
 Use `QubicReactQueryProvider` when you already have `QubicProvider` in your tree:
 
 ```tsx
-import { QubicProvider } from '@nvlabs/qts/react';
-import { QubicReactQueryProvider } from '@nvlabs/qts/react/query';
+import { QubicProvider } from '@nouslabs/sdk/react';
+import { QubicReactQueryProvider } from '@nouslabs/sdk/react/query';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -297,7 +297,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 Standardized query keys for manual cache management:
 
 ```tsx
-import { qubicQueryKeys } from '@nvlabs/qts/react/query';
+import { qubicQueryKeys } from '@nouslabs/sdk/react/query';
 import { useQueryClient } from '@tanstack/react-query';
 
 function CacheControls() {
@@ -348,7 +348,7 @@ qubicQueryKeys.archivedTick(12345)      // ['qubic', 'archive', 'tick', 12345]
 Update the cache immediately before the server confirms:
 
 ```tsx
-import { useBroadcastTransaction, qubicQueryKeys } from '@nvlabs/qts/react/query';
+import { useBroadcastTransaction, qubicQueryKeys } from '@nouslabs/sdk/react/query';
 import { useQueryClient } from '@tanstack/react-query';
 
 function SendWithOptimisticUpdate({ userAddress }: { userAddress: string }) {
@@ -450,7 +450,7 @@ Enable DevTools for debugging in development:
 
 ```tsx
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { QubicQueryProvider } from '@nvlabs/qts/react/query';
+import { QubicQueryProvider } from '@nouslabs/sdk/react/query';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -519,7 +519,7 @@ function TickWithDetails({ tickNumber }: { tickNumber: number }) {
 ```tsx
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { qubicQueryKeys } from '@nvlabs/qts/react/query';
+import { qubicQueryKeys } from '@nouslabs/sdk/react/query';
 
 function TickSubscription() {
   const queryClient = useQueryClient();
@@ -543,7 +543,7 @@ function TickSubscription() {
 
 ```tsx
 import { useEffect, useState } from 'react';
-import { createQubicClient } from '@nvlabs/qts';
+import { createQubicClient } from '@nouslabs/sdk';
 
 function Balance({ address }: { address: string }) {
   const [balance, setBalance] = useState<string>();
@@ -568,7 +568,7 @@ function Balance({ address }: { address: string }) {
 ### After (React Query)
 
 ```tsx
-import { useBalance } from '@nvlabs/qts/react/query';
+import { useBalance } from '@nouslabs/sdk/react/query';
 
 function Balance({ address }: { address: string }) {
   const { data, isLoading, error } = useBalance(address);
@@ -647,7 +647,7 @@ import type {
   GetTickInfoResponse,
   GetBalanceResponse,
   GetTransactionResponse,
-} from '@nvlabs/qts';
+} from '@nouslabs/sdk';
 
 function TypedComponent() {
   // data is typed as GetTickInfoResponse | undefined

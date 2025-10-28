@@ -1,324 +1,358 @@
 ---
-title: Getting Started
-description: Quick start guide for the Qubic TypeScript SDK
+title: Introduction
+description: @nouslabs/sdk (forget what you know) - TypeScript SDK for Qubic blockchain
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
-import { BookOpen, Code, FileCode, FileType } from 'lucide-react';
 
-# Getting Started with Qubic TypeScript SDK
+# @nouslabs/sdk
 
-The Qubic TypeScript SDK (QTS) is a comprehensive library for integrating with the Qubic blockchain. It provides type-safe, modern APIs for querying blockchain data, interacting with smart contracts, and managing transactions.
+> forget what you know
 
-<Callout type="info">
-  **Universal Support**: Works in browsers, Node.js, Bun, and Deno with full TypeScript support.
-</Callout>
+Welcome to @nouslabs/sdk documentation. This guide will teach you everything you need to build applications on the Qubic blockchain, starting from the absolute basics.
 
-## Installation
+## What is This?
 
-Install the SDK using your preferred package manager:
+@nouslabs/sdk is a TypeScript SDK for building applications on Qubic. Whether you're building a wallet, a trading dashboard, or integrating Qubic into your existing application, this SDK provides everything you need.
 
-<Tabs items={['npm', 'yarn', 'bun', 'pnpm']}>
-  <Tab value="npm">
-    ```bash
-    npm install @nvlabs/qts
-    ```
-  </Tab>
-  <Tab value="yarn">
-    ```bash
-    yarn add @nvlabs/qts
-    ```
-  </Tab>
-  <Tab value="bun">
-    ```bash
-    bun add @nvlabs/qts
-    ```
-  </Tab>
-  <Tab value="pnpm">
-    ```bash
-    pnpm add @nvlabs/qts
-    ```
-  </Tab>
-</Tabs>
+**What you can do with this SDK:**
 
-## Quick Start
+- Query blockchain data (balances, transactions, network status)
+- Authenticate users (multiple wallet types supported)
+- Send transactions and interact with smart contracts
+- Build real-time applications that respond to blockchain events
+- Create and manage Qubic identities
 
-<Callout type="info" title="Need real-world context?">
-  The new <strong><a href="/guides">Advanced Guides</a></strong> section walks through price boards, vault monitors,
-  and other production workflows step by step.
-</Callout>
+**Where it works:**
 
-### Create a Client
+- Modern browsers (Chrome, Firefox, Safari, Edge)
+- Node.js applications (version 18+)
+- Bun and Deno runtimes
+- React, Vue, Angular, and other frameworks
 
-The simplest way to get started is using the unified client that provides access to all services:
+## Documentation Structure
 
-```typescript
-import { createQubicClient } from '@nvlabs/qts';
+### Getting Started
 
-const qubic = createQubicClient();
+Start here to install and set up @nouslabs/sdk:
+
+- **[Installation](/docs/getting-started/installation)** - Install the SDK and verify it works
+
+### Core Features
+
+Learn the main features:
+
+- **[Authentication](/docs/core/authentication)** - Connect wallets (MetaMask, Vault, Seed, WalletConnect)
+
+### API Reference
+
+Complete API documentation:
+
+- **[API Clients](/docs/api-clients)** - QubicLiveClient, QueryClient, ArchiveClient
+- **[Smart Contracts](/docs/smart-contracts)** - Query and interact with contracts
+- **[Easy Contracts](/docs/easy-contracts)** - Simplified contract helpers
+- **[Utilities](/docs/utilities)** - Encoding, validation, and helper functions
+- **[Architecture](/docs/architecture)** - SDK design and structure
+
+### Guides & Integrations
+
+Advanced topics and framework integration:
+
+- **[Guides](/docs/guides)** - Real-world playbooks and patterns
+- **[Integrations](/docs/integrations)** - React, Next.js, and more
+
+### Community
+
+- **[Examples](/docs/examples)** - Code examples and recipes
+- **[Contributing](/docs/contributing)** - Help improve @nouslabs/sdk
+- **[Donations](/docs/donations)** - Support the project
+- **[Changelog](/docs/changelog)** - Version history
+
+## Quick Start (5 Minutes)
+
+If you want to see it working immediately, here's a complete example:
+
+### 1. Install
+
+```bash
+npm install @nouslabs/sdk
 ```
 
-### Get Current Tick
-
-Retrieve the current network tick information:
+### 2. Query the Blockchain
 
 ```typescript
+import { createQubicClient } from '@nouslabs/sdk';
+
+// Create client
+const qubic = createQubicClient();
+
+// Get current network tick
 const { tickInfo } = await qubic.live.getTickInfo();
 console.log(`Current tick: ${tickInfo.tick}`);
-console.log(`Epoch: ${tickInfo.epoch}`);
-```
 
-### Check Account Balance
-
-Query the balance of any Qubic identity:
-
-```typescript
+// Get an account balance
 const identity = 'BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA';
 const { balance } = await qubic.live.getBalance(identity);
 console.log(`Balance: ${balance.balance} QUBIC`);
 ```
 
-### Get Transaction History
+### 3. What Just Happened?
 
-Retrieve transaction history with pagination and filters:
+- `createQubicClient()` - Creates a client connected to Qubic mainnet
+- `qubic.live` - Accesses the real-time API client
+- `getTickInfo()` - Queries the current blockchain state
+- `getBalance()` - Checks how much QUBIC an address holds
+
+## Choose Your Path
+
+Depending on what you're building, start with the section most relevant to you:
+
+### Building a Wallet?
+
+1. Start with [Authentication](/core/authentication)
+2. Learn [Transactions](/core/transactions)
+3. Implement [Balance Checking](/core/querying-data)
+4. Add [Security Best Practices](/production/security)
+
+### Building a Trading Dashboard?
+
+1. Learn [Querying Data](/core/querying-data)
+2. Understand [Smart Contracts](/core/smart-contracts)
+3. Implement [Real-time Updates](/advanced/realtime)
+4. Add [Batch Operations](/advanced/batch-operations)
+
+### Integrating Qubic Payments?
+
+1. Start with [Authentication](/core/authentication)
+2. Learn [Transactions](/core/transactions)
+3. Implement [Transaction Monitoring](/core/querying-data)
+4. Add [Error Handling](/getting-started/errors)
+
+### Building a DApp?
+
+1. Learn [Smart Contracts](/core/smart-contracts)
+2. Add [Authentication](/core/authentication)
+3. Implement [Transactions](/core/transactions)
+4. Use [React Integration](/advanced/react)
+
+## SDK Architecture
+
+The SDK is organized into three main clients, each serving a specific purpose:
 
 ```typescript
-const { transactions } = await qubic.query.getTransactionsForIdentity(
-  identity,
-  {
-    pagination: { offset: 0, size: 10 }
-  }
-);
+const qubic = createQubicClient();
 
+// Three specialized clients
+qubic.live      // Real-time data and broadcasting
+qubic.query     // Historical data and analytics
+qubic.archive   // Legacy archive access
+```
+
+**QubicLiveClient** (`qubic.live`)
+- Get current network status
+- Query balances and assets
+- Broadcast transactions
+- Interact with smart contracts
+
+**QueryClient** (`qubic.query`)
+- Search transaction history
+- Filter and paginate results
+- Query tick archives
+- Get computor information
+
+**ArchiveClient** (`qubic.archive`)
+- Access legacy archive data
+- Historical blockchain queries
+- Some methods deprecated (use QueryClient instead)
+
+## Key Concepts
+
+Before diving in, understand these core concepts:
+
+### Identity
+
+A Qubic identity is a 60-character uppercase string representing an account:
+
+```typescript
+const identity = 'BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA';
+```
+
+### Tick
+
+Qubic uses "ticks" instead of blocks. A tick is created approximately every second:
+
+```typescript
+const { tickInfo } = await qubic.live.getTickInfo();
+console.log(`Tick ${tickInfo.tick} in epoch ${tickInfo.epoch}`);
+```
+
+### Transaction
+
+Transactions transfer QUBIC or invoke smart contract functions:
+
+```typescript
+const { transactions } = await qubic.query.getTransactionsForIdentity(identity);
 transactions.forEach(tx => {
-  console.log(`${tx.source} → ${tx.destination}: ${tx.amount}`);
+  console.log(`${tx.source} -> ${tx.destination}: ${tx.amount} QUBIC`);
 });
 ```
 
-## Key Features
+### Smart Contract
 
-### Type Safety
-
-Full TypeScript definitions with strict mode support:
+Smart contracts are on-chain programs you can interact with:
 
 ```typescript
-import type { Transaction, Balance, TickInfo } from '@nvlabs/qts';
+import { queryQX } from '@nouslabs/sdk';
 
+// Query the QX exchange contract
+const result = await queryQX(qubic.live, 1, { entityId: 123 });
+```
+
+## TypeScript Support
+
+The SDK is written in TypeScript and provides full type safety:
+
+```typescript
+import type { Transaction, Balance, TickInfo } from '@nouslabs/sdk';
+
+// All types are exported and documented
 const processTransaction = (tx: Transaction) => {
-  console.log(`From: ${tx.source}`);
-  console.log(`To: ${tx.destination}`);
-  console.log(`Amount: ${tx.amount}`);
+  // TypeScript knows all available properties
+  console.log(tx.source);       // string
+  console.log(tx.destination);  // string
+  console.log(tx.amount);       // number
+  console.log(tx.status);       // TransactionStatus
 };
 ```
 
-### Tree-Shakeable
+Enable strict mode in your `tsconfig.json` for the best experience:
 
-Import only what you need to keep your bundle size small:
-
-```typescript
-// Import specific clients
-import { QubicLiveClient, QueryClient } from '@nvlabs/qts';
-
-// Import utilities
-import { encodeInt64LE, hexToBase64 } from '@nvlabs/qts';
-
-// Import contract helpers
-import { createQuery, parseResponse } from '@nvlabs/qts';
-```
-
-### Universal Compatibility
-
-Works seamlessly across all JavaScript environments:
-
-- **Browsers**: Chrome, Firefox, Safari, Edge
-- **Node.js**: Version 18+
-- **Bun**: Version 1.0+
-- **Deno**: Latest version
-
-### Smart Contract Support
-
-Simplified smart contract querying with automatic serialization:
-
-```typescript
-import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
-
-const query = createQuery(QUBIC_CONTRACTS.QX, 1)
-  .addInt32(100)
-  .addInt64(1000n);
-
-const response = await query.execute(qubic.live);
-const parser = parseResponse(response.responseData);
-const result = parser.readInt64();
-```
-
-## Core Concepts
-
-### Three API Clients
-
-QTS provides three specialized clients for different use cases:
-
-1. **QubicLiveClient** (`qubic.live`)
-   - Real-time network data
-   - Current tick information
-   - Balance queries
-   - Smart contract interactions
-   - Transaction broadcasting
-
-2. **QueryClient** (`qubic.query`)
-   - Historical transaction data
-   - Advanced filtering and pagination
-   - Tick data archives
-   - Computor information
-
-3. **ArchiveClient** (`qubic.archive`)
-   - Legacy archive API
-   - Historical data access
-   - *Note: Some methods deprecated in favor of QueryClient*
-
-### Error Handling
-
-All API calls can throw `QubicApiError` with detailed information:
-
-```typescript
-try {
-  const balance = await qubic.live.getBalance(identity);
-  console.log('Balance:', balance.balance.balance);
-} catch (error) {
-  if (error.status === 404) {
-    console.log('Identity not found');
-  } else if (error.status === 408) {
-    console.log('Request timeout - try again');
-  } else {
-    console.error('Error:', error.message);
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "moduleResolution": "bundler",
+    "target": "ES2022"
   }
 }
 ```
 
-### Configuration
+## Runtime Compatibility
 
-Customize client behavior with configuration options:
+The SDK works in all modern JavaScript runtimes:
+
+<Tabs items={['Node.js', 'Bun', 'Deno', 'Browser']}>
+<Tab value="Node.js">
 
 ```typescript
-const qubic = createQubicClient({
-  // Custom timeouts
-  timeout: 60000, // 60 seconds
+// Node.js 18+ with ESM
+import { createQubicClient } from '@nouslabs/sdk';
 
-  // Custom API endpoints
-  liveUrl: 'https://custom-rpc.qubic.org',
-  queryUrl: 'https://custom-api.qubic.org',
-
-  // Custom headers
-  headers: {
-    'X-API-Key': 'your-api-key'
-  }
-});
+const qubic = createQubicClient();
+const { tickInfo } = await qubic.live.getTickInfo();
 ```
+
+</Tab>
+<Tab value="Bun">
+
+```typescript
+// Bun 1.0+
+import { createQubicClient } from '@nouslabs/sdk';
+
+const qubic = createQubicClient();
+const { tickInfo } = await qubic.live.getTickInfo();
+```
+
+</Tab>
+<Tab value="Deno">
+
+```typescript
+// Deno with npm specifier
+import { createQubicClient } from 'npm:@nouslabs/sdk';
+
+const qubic = createQubicClient();
+const { tickInfo } = await qubic.live.getTickInfo();
+```
+
+</Tab>
+<Tab value="Browser">
+
+```typescript
+// Modern browsers (via bundler)
+import { createQubicClient } from '@nouslabs/sdk';
+
+const qubic = createQubicClient();
+const { tickInfo } = await qubic.live.getTickInfo();
+```
+
+</Tab>
+</Tabs>
+
+## Framework Integration
+
+Use the SDK with your favorite framework:
+
+- **React** - First-class support with hooks and providers
+- **Vue** - Works with Composition API and Options API
+- **Angular** - Use as injectable service
+- **Svelte** - Works with stores and reactive statements
+- **Vanilla JS** - No framework required
+
+See [React Integration](/advanced/react) for framework-specific examples.
+
+## Examples
+
+Browse complete examples for common use cases:
+
+- [Check Balance](/examples/check-balance)
+- [Send Transaction](/examples/send-transaction)
+- [Monitor Ticks](/examples/monitor-ticks)
+- [Query Smart Contract](/examples/query-contract)
+- [Authenticate User](/examples/authenticate)
+
+## Getting Help
+
+If you get stuck or find issues:
+
+- **GitHub Issues** - [Report bugs or request features](https://github.com/nvlabs/qts/issues)
+- **GitHub Discussions** - [Ask questions and share ideas](https://github.com/nvlabs/qts/discussions)
+- **Discord** - [Join the Qubic community](https://discord.gg/qubic)
+
+<Callout type="info">
+  This documentation follows a linear path. If you're new to Qubic, start with [Installation](/getting-started/installation) and work through each section in order.
+</Callout>
+
+## What's Different About Qubic?
+
+If you're coming from other blockchains, here are key differences:
+
+**Ticks vs Blocks**
+- Qubic uses "ticks" (approximately 1 per second)
+- No mining or proof-of-work
+- Deterministic consensus
+
+**Identity Format**
+- 60-character uppercase strings
+- No checksums (built into protocol)
+- Derived from 55-character lowercase seeds
+
+**Smart Contracts**
+- Called "smart contracts" or "SCs"
+- Different contract invocation pattern
+- Query-based interaction model
+
+**No Gas Fees**
+- Transactions are free
+- Limited by tick capacity
+- Priority based on proof-of-work
 
 ## Next Steps
 
-<Cards>
-  <Card title="API Reference" href="/api-clients">
-    Explore the complete API documentation for all clients and methods
-  </Card>
-  <Card title="Smart Contracts" href="/smart-contracts">
-    Learn how Qubic contracts are built and how to query them safely
-  </Card>
-  <Card title="Examples" href="/examples">
-    Browse practical examples for common use cases
-  </Card>
-  <Card title="Advanced Guides" href="/guides">
-    Deep dives, playbooks, and operational checklists for production workloads
-  </Card>
-  <Card title="Framework Integrations" href="/integrations">
-    Drop QTS into React, Vue, Angular, Node.js, Hono, or Elysia with ready-made snippets
-  </Card>
-</Cards>
+Start with installation:
 
-## Common Patterns
+**[Install @nouslabs/sdk →](/docs/getting-started/installation)**
 
-### Monitor New Ticks
+Then explore authentication to connect user wallets:
 
-Watch for new ticks in real-time:
-
-```typescript
-let lastTick = 0;
-
-setInterval(async () => {
-  const { tickInfo } = await qubic.live.getTickInfo();
-  if (tickInfo.tick > lastTick) {
-    console.log(`New tick: ${tickInfo.tick}`);
-    lastTick = tickInfo.tick;
-  }
-}, 1000);
-```
-
-### Paginate Through Transactions
-
-Fetch all transactions with pagination:
-
-```typescript
-async function getAllTransactions(identity: string) {
-  const transactions = [];
-  let offset = 0;
-  const pageSize = 100;
-
-  while (true) {
-    const result = await qubic.query.getTransactionsForIdentity(
-      identity,
-      { pagination: { offset, size: pageSize } }
-    );
-
-    transactions.push(...result.transactions);
-
-    if (result.transactions.length < pageSize) break;
-    offset += pageSize;
-  }
-
-  return transactions;
-}
-```
-
-### Query Multiple Assets
-
-Fetch all asset types for an identity:
-
-```typescript
-const identity = 'YOUR_IDENTITY_HERE';
-
-const [issued, owned, possessed] = await Promise.all([
-  qubic.live.getIssuedAssets(identity),
-  qubic.live.getOwnedAssets(identity),
-  qubic.live.getPossessedAssets(identity)
-]);
-
-console.log('Total assets:', {
-  issued: issued.issuedAssets.length,
-  owned: owned.ownedAssets.length,
-  possessed: possessed.possessedAssets.length
-});
-```
-
-## Need Help?
-
-<Callout type="info">
-  Start with the <a href="/guides">Advanced Guides</a> for hands-on playbooks. If something is missing or broken,
-  open an issue on <a href="https://github.com/nvlabs/qts/issues">GitHub</a> and we will expand the docs.
-</Callout>
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/nvlabs/qts/issues)
-- **Discussions**: [Ask questions and share ideas](https://github.com/nvlabs/qts/discussions)
-- **Discord**: [Join the Qubic community](https://discord.gg/sWX3BakE)
-- **Donations**: [Support the project](/donations) 💝
-
-## What's Next?
-
-Now that you've learned the basics, dive deeper into specific topics:
-
-- **[API Clients](/api-clients)**: Detailed documentation for each client
-- **[Smart Contracts](/smart-contracts)**: Query contracts like QX, Qearn, and more
-- **[Utilities](/utilities)**: Encoding, parsing, and helper functions
-- **[Advanced Guides](/guides)**: Real-world workflows and smart contract deep dives
-- **[Examples](/examples)**: Ready-to-run snippets for frequent tasks
-
-Happy building on Qubic!
+**[Authentication →](/docs/core/authentication)**

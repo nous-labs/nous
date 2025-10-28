@@ -19,7 +19,7 @@ Use these snippets as starting points when wiring the SDK into bots, dashboards,
 ### Simple balance check
 
 ```typescript
-import { QubicLiveClient } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
 
 async function getBalance(identity: string) {
   const client = new QubicLiveClient();
@@ -41,7 +41,7 @@ await getBalance('BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA')
 ### Network status ticker
 
 ```typescript
-import { QubicLiveClient } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
 
 const client = new QubicLiveClient();
 
@@ -60,7 +60,7 @@ setInterval(logTick, 1_000);
 ### Fetch recent transactions with pagination
 
 ```typescript
-import { QueryClient } from '@nvlabs/qts';
+import { QueryClient } from '@nouslabs/sdk';
 
 const query = new QueryClient();
 
@@ -92,7 +92,7 @@ console.log('Fetched', txs.length, 'transactions');
 ### Tick-scoped transaction feed
 
 ```typescript
-import { QueryClient } from '@nvlabs/qts';
+import { QueryClient } from '@nouslabs/sdk';
 
 const query = new QueryClient();
 
@@ -108,8 +108,8 @@ async function streamTick(tickNumber: number) {
 ### GARTH order book snapshot (QX)
 
 ```typescript
-import { QubicLiveClient, stringToUint64 } from '@nvlabs/qts';
-import { qx } from '@nvlabs/qts/utils';
+import { QubicLiveClient, stringToUint64 } from '@nouslabs/sdk';
+import { qx } from '@nouslabs/sdk/utils';
 
 const GARTH_ISSUER = 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF';
 const GARTH_ASSET = stringToUint64('GARTH');
@@ -137,8 +137,8 @@ console.log(await getGarthQuote());
 ### Poll scoreboard (QUtil)
 
 ```typescript
-import { QubicLiveClient } from '@nvlabs/qts';
-import { qutil } from '@nvlabs/qts/utils';
+import { QubicLiveClient } from '@nouslabs/sdk';
+import { qutil } from '@nouslabs/sdk/utils';
 
 async function renderPoll(pollId: bigint) {
   const client = new QubicLiveClient();
@@ -158,8 +158,8 @@ await renderPoll(42n);
 ### WalletConnect sign and broadcast
 
 ```typescript
-import { QubicLiveClient } from '@nvlabs/qts';
-import { WalletConnectAdapter } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
+import { WalletConnectAdapter } from '@nouslabs/sdk';
 
 const GARTH_ISSUER = 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF';
 
@@ -195,8 +195,8 @@ await adapter.signAndBroadcast({
 ### Manual broadcast after signing
 
 ```typescript
-import { QubicLiveClient, hexToBase64 } from '@nvlabs/qts';
-import { WalletAdapter } from '@nvlabs/qts';
+import { QubicLiveClient, hexToBase64 } from '@nouslabs/sdk';
+import { WalletAdapter } from '@nouslabs/sdk';
 
 const provider = window.qubicWallet;
 const wallet = new WalletAdapter(provider);

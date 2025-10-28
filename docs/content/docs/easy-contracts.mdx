@@ -19,11 +19,11 @@ in `src/utils/contracts-easy.ts` and mirrors the function indices from `qubic/co
 
 ## Importing the helpers
 
-All helpers are exported through the `@nvlabs/qts/utils` entrypoint:
+All helpers are exported through the `@nouslabs/sdk/utils` entrypoint:
 
 ```typescript
-import { qx, qutil, quottery, qearn, qswap, qvault, ccf } from '@nvlabs/qts/utils';
-import { QubicLiveClient, stringToUint64 } from '@nvlabs/qts';
+import { qx, qutil, quottery, qearn, qswap, qvault, ccf } from '@nouslabs/sdk/utils';
+import { QubicLiveClient, stringToUint64 } from '@nouslabs/sdk';
 
 const client = new QubicLiveClient();
 const assetName = stringToUint64('GARTH');
@@ -67,8 +67,8 @@ The most requested snippet: fetch the live order book for the GARTH issuer
 (`GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF`, asset name `GARTH`).
 
 ```typescript
-import { QubicLiveClient, stringToUint64 } from '@nvlabs/qts';
-import { qx } from '@nvlabs/qts/utils';
+import { QubicLiveClient, stringToUint64 } from '@nouslabs/sdk';
+import { qx } from '@nouslabs/sdk/utils';
 
 const GARTH_ISSUER = 'GARTHFANXMPXMDPEZFQPWFPYMHOAWTKILINCTRMVLFFVATKVJRKEDYXGHJBF';
 const GARTH_ASSET = stringToUint64('GARTH');
@@ -232,7 +232,7 @@ const requestedAmount = parser.readInt64();
 When the helper set does not yet support a function you need, fall back to `query` or `simpleQuery`:
 
 ```typescript
-import { query, QUBIC_CONTRACTS } from '@nvlabs/qts/utils';
+import { query, QUBIC_CONTRACTS } from '@nouslabs/sdk/utils';
 
 const response = await query(
   client,
@@ -253,8 +253,8 @@ const response = await query(
 Because each helper only requires a `QubicLiveClient`, you can stitch them together quickly:
 
 ```typescript
-import { QubicLiveClient } from '@nvlabs/qts';
-import { qx, qswap, qearn, qutil, qvault } from '@nvlabs/qts/utils';
+import { QubicLiveClient } from '@nouslabs/sdk';
+import { qx, qswap, qearn, qutil, qvault } from '@nouslabs/sdk/utils';
 
 async function buildOverview(identity: string, assetIssuer: string, assetName: bigint | number) {
   const client = new QubicLiveClient();
@@ -283,12 +283,12 @@ async function buildOverview(identity: string, assetIssuer: string, assetName: b
 ## Error handling and validation
 
 - Every helper throws `QubicApiError` when the underlying RPC fails. Catch it to display actionable messages.
-- Identities are expected to be uppercase base32 strings; use the validation helpers in `@nvlabs/qts/utils`.
+- Identities are expected to be uppercase base32 strings; use the validation helpers in `@nouslabs/sdk/utils`.
 - All asset names are encoded as ASCII into `uint64`. Use `stringToUint64` (from the encoding module) and keep the raw
   `bigint` around so you do not lose precision.
 
 ```typescript
-import type { QubicApiError } from '@nvlabs/qts';
+import type { QubicApiError } from '@nouslabs/sdk';
 
 try {
   await qx.getAssetBidOrders(client, issuer, assetName);

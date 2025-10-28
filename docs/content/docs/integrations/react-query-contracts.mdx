@@ -27,7 +27,7 @@ All hooks follow consistent patterns:
 ### Get Exchange Fees
 
 ```tsx
-import { useQXFees } from '@nvlabs/qts/react/query';
+import { useQXFees } from '@nouslabs/sdk/react/query';
 
 function ExchangeFees() {
   const { data, isLoading } = useQXFees();
@@ -47,8 +47,8 @@ function ExchangeFees() {
 ### Get Asset Orders
 
 ```tsx
-import { useQXAssetAskOrders, useQXAssetBidOrders } from '@nvlabs/qts/react/query';
-import { stringToUint64 } from '@nvlabs/qts';
+import { useQXAssetAskOrders, useQXAssetBidOrders } from '@nouslabs/sdk/react/query';
+import { stringToUint64 } from '@nouslabs/sdk';
 
 function AssetOrderBook({ issuer }: { issuer: string }) {
   const assetName = stringToUint64('CFB');
@@ -79,7 +79,7 @@ function AssetOrderBook({ issuer }: { issuer: string }) {
 ### Get Entity Orders
 
 ```tsx
-import { useQXEntityAskOrders, useQXEntityBidOrders } from '@nvlabs/qts/react/query';
+import { useQXEntityAskOrders, useQXEntityBidOrders } from '@nouslabs/sdk/react/query';
 
 function MyOrders({ userAddress }: { userAddress: string }) {
   const { data: myAsks } = useQXEntityAskOrders(userAddress);
@@ -99,8 +99,8 @@ function MyOrders({ userAddress }: { userAddress: string }) {
 ### Get Asset Information
 
 ```tsx
-import { useQutilTotalAssetShares } from '@nvlabs/qts/react/query';
-import { stringToUint64 } from '@nvlabs/qts';
+import { useQutilTotalAssetShares } from '@nouslabs/sdk/react/query';
+import { stringToUint64 } from '@nouslabs/sdk';
 
 function AssetStats({ issuer }: { issuer: string }) {
   const assetName = stringToUint64('CFB');
@@ -117,7 +117,7 @@ import {
   useQutilCurrentPollId,
   useQutilPollInfo,
   useQutilPollsByCreator,
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 function PollViewer() {
   const { data: currentPoll } = useQutilCurrentPollId();
@@ -171,7 +171,7 @@ function CreatorPolls({ creator }: { creator: string }) {
 ### Get Basic Info
 
 ```tsx
-import { useQuotteryBasicInfo } from '@nvlabs/qts/react/query';
+import { useQuotteryBasicInfo } from '@nouslabs/sdk/react/query';
 
 function QuotteryStats() {
   const { data } = useQuotteryBasicInfo();
@@ -192,7 +192,7 @@ import {
   useQuotteryBetInfo,
   useQuotteryBetOptionDetail,
   useQuotteryActiveBet,
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 function ActiveBet() {
   const { data } = useQuotteryActiveBet();
@@ -228,7 +228,7 @@ function BetOption({ betId, optionId }: { betId: number; optionId: number }) {
 import {
   useQearnUserLockedInfo,
   useQearnUserLockStatus,
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 function UserStaking({ user }: { user: string }) {
   const { data: lockedInfo } = useQearnUserLockedInfo(user);
@@ -251,7 +251,7 @@ import {
   useQearnStateOfRound,
   useQearnStatsPerEpoch,
   useQearnEndedStatus,
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 function EpochStats({ epoch }: { epoch: number }) {
   const { data: lockInfo } = useQearnLockInfoPerEpoch(epoch);
@@ -274,7 +274,7 @@ function EpochStats({ epoch }: { epoch: number }) {
 import {
   useQearnBurnedAndBoostedStats,
   useQearnBurnedAndBoostedStatsPerEpoch,
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 function BurnStats() {
   const { data: overall } = useQearnBurnedAndBoostedStats();
@@ -301,8 +301,8 @@ import {
   useQswapPoolBasicState,
   useQswapLiquidityOf,
   useQswapFees,
-} from '@nvlabs/qts/react/query';
-import { stringToUint64 } from '@nvlabs/qts';
+} from '@nouslabs/sdk/react/query';
+import { stringToUint64 } from '@nouslabs/sdk';
 
 function PoolInfo({ issuer }: { issuer: string }) {
   const assetName = stringToUint64('QX');
@@ -334,8 +334,8 @@ import {
   useQswapQuoteExactQuOutput,
   useQswapQuoteExactAssetInput,
   useQswapQuoteExactAssetOutput,
-} from '@nvlabs/qts/react/query';
-import { stringToUint64 } from '@nvlabs/qts';
+} from '@nouslabs/sdk/react/query';
+import { stringToUint64 } from '@nouslabs/sdk';
 import { useState } from 'react';
 
 function SwapQuote({ issuer }: { issuer: string }) {
@@ -371,7 +371,7 @@ function SwapQuote({ issuer }: { issuer: string }) {
 ### Get Vault Data
 
 ```tsx
-import { useQvaultData } from '@nvlabs/qts/react/query';
+import { useQvaultData } from '@nouslabs/sdk/react/query';
 
 function VaultInfo({ identity }: { identity: string }) {
   const { data, isLoading } = useQvaultData(identity);
@@ -397,7 +397,7 @@ import {
   useCCFProposal,
   useCCFVotingResults,
   useCCFProposalFee,
-} from '@nvlabs/qts/react/query';
+} from '@nouslabs/sdk/react/query';
 
 function ProposalList() {
   const { data: indices } = useCCFProposalIndices();
@@ -435,7 +435,7 @@ function ProposalItem({ proposalIndex }: { proposalIndex: number }) {
 ### Voting
 
 ```tsx
-import { useCCFVote, useCCFLatestTransfers } from '@nvlabs/qts/react/query';
+import { useCCFVote, useCCFLatestTransfers } from '@nouslabs/sdk/react/query';
 
 function VoteDetails({ proposalIndex }: { proposalIndex: number }) {
   const { data } = useCCFVote(proposalIndex);
@@ -465,7 +465,7 @@ function LatestTransfers() {
 ### Combining Multiple Contracts
 
 ```tsx
-import { useQXFees, useQswapFees, useCurrentTick } from '@nvlabs/qts/react/query';
+import { useQXFees, useQswapFees, useCurrentTick } from '@nouslabs/sdk/react/query';
 
 function PlatformFees() {
   const { data: qxFees } = useQXFees();
@@ -492,8 +492,8 @@ function PlatformFees() {
 ### Real-time Price Monitor
 
 ```tsx
-import { useQswapQuoteExactQuInput } from '@nvlabs/qts/react/query';
-import { stringToUint64 } from '@nvlabs/qts';
+import { useQswapQuoteExactQuInput } from '@nouslabs/sdk/react/query';
+import { stringToUint64 } from '@nouslabs/sdk';
 
 function PriceMonitor({ issuer }: { issuer: string }) {
   const assetName = stringToUint64('QX');
@@ -520,7 +520,7 @@ function PriceMonitor({ issuer }: { issuer: string }) {
 ### Conditional Data Loading
 
 ```tsx
-import { useQearnUserLockedInfo, useCurrentTick } from '@nvlabs/qts/react/query';
+import { useQearnUserLockedInfo, useCurrentTick } from '@nouslabs/sdk/react/query';
 
 function ConditionalStakingInfo({ user }: { user: string }) {
   const { data: tick } = useCurrentTick();
@@ -544,7 +544,7 @@ function ConditionalStakingInfo({ user }: { user: string }) {
 All easy contract hooks export their query keys for manual cache operations:
 
 ```tsx
-import { easyContractQueryKeys } from '@nvlabs/qts/react/query';
+import { easyContractQueryKeys } from '@nouslabs/sdk/react/query';
 import { useQueryClient } from '@tanstack/react-query';
 
 function CacheControls() {
@@ -637,7 +637,7 @@ return <PoolDisplay pool={data} />;
 ### 4. Use Asset Name Conversion
 
 ```tsx
-import { stringToUint64 } from '@nvlabs/qts';
+import { stringToUint64 } from '@nouslabs/sdk';
 
 // ✅ Good: Convert once and reuse
 const assetName = useMemo(() => stringToUint64('CFB'), []);
@@ -673,7 +673,7 @@ All hooks return properly typed responses:
 
 ```tsx
 import type { Awaited } from '@tanstack/react-query';
-import { qx } from '@nvlabs/qts/utils/contracts-easy';
+import { qx } from '@nouslabs/sdk/utils/contracts-easy';
 
 type QXFeesResponse = Awaited<ReturnType<typeof qx.getFees>>;
 type AssetOrdersResponse = Awaited<ReturnType<typeof qx.getAssetAskOrders>>;

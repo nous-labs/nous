@@ -1,7 +1,7 @@
 {
-  "name": "@nvlabs/qts",
-  "version": "1.3.3",
-  "description": "TypeScript SDK for Qubic blockchain - Complete integration library for frontend and backend applications",
+  "name": "@nouslabs/sdk",
+  "version": "1.4.0",
+  "description": "@nouslabs/sdk (forget what you know) - TypeScript SDK for Qubic blockchain",
   "main": "./index.ts",
   "module": "./index.ts",
   "types": "./index.ts",
@@ -55,18 +55,18 @@
     "dlt",
     "distributed-ledger",
     "navia",
-    "nvlabs"
+    "qubic"
   ],
-  "author": "nvlabs",
+  "author": "Nous Labs",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nvlabs/qts.git"
+    "url": "https://github.com/nous-labs/sdk.git"
   },
   "bugs": {
-    "url": "https://github.com/nvlabs/qts/issues"
+    "url": "https://github.com/nous-labs/sdk/issues"
   },
-  "homepage": "https://github.com/nvlabs/qts#readme",
+  "homepage": "https://github.com/nous-labs/sdk#readme",
   "dependencies": {
     "@noble/hashes": "^1.4.0",
     "@tanstack/react-query": "^5.90.5",

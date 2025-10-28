@@ -43,11 +43,11 @@ Each smart contract has:
 > The `core/contracts` directory (checked into this repo under `core/`) mirrors the upstream `qubic/core` repository, so
 > you can inspect struct layouts and `REGISTER_USER_FUNCTION` indices directly whenever you need to decode obscure fields.
 
-All contract addresses are exported via `QUBIC_CONTRACT_ADDRESSES` from `@nvlabs/qts` in case you need to build raw transactions.
+All contract addresses are exported via `QUBIC_CONTRACT_ADDRESSES` from `@nouslabs/sdk` in case you need to build raw transactions.
 
 ## Helper shortcuts
 
-Every entry in `QUBIC_CONTRACTS` has a matching `query*` helper exported from `@nvlabs/qts` to keep call sites terse:
+Every entry in `QUBIC_CONTRACTS` has a matching `query*` helper exported from `@nouslabs/sdk` to keep call sites terse:
 
 ```ts
 import {
@@ -68,7 +68,7 @@ import {
   queryQdraw,
   queryRandomLottery,
   queryQbond,
-} from '@nvlabs/qts';
+} from '@nouslabs/sdk';
 ```
 
 Each helper simply fills in the `contractIndex` for you. When an "easy contract" wrapper exists (see the [Easy Contracts](/docs/easy-contracts)
@@ -86,7 +86,7 @@ import {
   defineProcedure,
   procedureCallToTransaction,
   QUBIC_CONTRACTS,
-} from '@nvlabs/qts';
+} from '@nouslabs/sdk';
 
 // Ad-hoc builder
 const builder = createProcedure(QUBIC_CONTRACTS.QX, 9)
@@ -150,7 +150,7 @@ typed procedure definitions → signed transactions without hand-rolling hex str
 The query builder provides a fluent API for constructing contract queries:
 
 ```typescript
-import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
+import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nouslabs/sdk';
 
 const query = createQuery(QUBIC_CONTRACTS.QX, 1)
   .addByte(0x01)
@@ -167,7 +167,7 @@ const result = parser.readInt64();
 Pre-built helpers for common contracts:
 
 ```typescript
-import { queryQX, queryQearn, parseResponse } from '@nvlabs/qts';
+import { queryQX, queryQearn, parseResponse } from '@nouslabs/sdk';
 
 const qxResponse = await queryQX(client, 1, requestData);
 const qearnResponse = await queryQearn(client, 1, requestData);
@@ -193,7 +193,7 @@ const response = await client.querySmartContract({
 The query builder provides methods for all data types:
 
 ```typescript
-import { createQuery } from '@nvlabs/qts';
+import { createQuery } from '@nouslabs/sdk';
 
 const query = createQuery(contractIndex, inputType)
   .addByte(0xFF)                    // Single byte
@@ -255,7 +255,7 @@ const query = createQuery(QUBIC_CONTRACTS.QSWAP, 3)
 Parse contract responses with type-safe methods:
 
 ```typescript
-import { parseResponse } from '@nvlabs/qts';
+import { parseResponse } from '@nouslabs/sdk';
 
 const parser = parseResponse(response.responseData);
 
@@ -315,7 +315,7 @@ const result = {
 The QX contract is Qubic's decentralized exchange for trading assets.
 
 ```typescript
-import { QUBIC_CONTRACTS, createQuery } from '@nvlabs/qts';
+import { QUBIC_CONTRACTS, createQuery } from '@nouslabs/sdk';
 
 // Query order book
 const query = createQuery(QUBIC_CONTRACTS.QX, 5)
@@ -353,7 +353,7 @@ for (let i = 0; i < orderCount; i++) {
 QUtil provides utility operations like batch transfers.
 
 ```typescript
-import { QUBIC_CONTRACTS, createQuery } from '@nvlabs/qts';
+import { QUBIC_CONTRACTS, createQuery } from '@nouslabs/sdk';
 
 // SendToMany - batch transfer
 const query = createQuery(QUBIC_CONTRACTS.QUTIL, 1);
@@ -385,7 +385,7 @@ const response = await query.execute(client);
 Qearn allows users to stake QUBIC and earn rewards.
 
 ```typescript
-import { queryQearn, parseResponse } from '@nvlabs/qts';
+import { queryQearn, parseResponse } from '@nouslabs/sdk';
 
 // Get staking information
 const response = await queryQearn(client, 1, identityData);
@@ -414,7 +414,7 @@ console.log(`Unlocks at tick: ${stakingInfo.lockEndTick}`);
 Qswap enables token swapping with liquidity pools.
 
 ```typescript
-import { QUBIC_CONTRACTS, createQuery } from '@nvlabs/qts';
+import { QUBIC_CONTRACTS, createQuery } from '@nouslabs/sdk';
 
 // Get swap quote
 const query = createQuery(QUBIC_CONTRACTS.QSWAP, 1)
@@ -436,7 +436,7 @@ const priceImpact = parser.readInt32();
 Secure random number generation for the network.
 
 ```typescript
-import { queryRandom, parseResponse } from '@nvlabs/qts';
+import { queryRandom, parseResponse } from '@nouslabs/sdk';
 
 const response = await queryRandom(client, 1, '');
 const parser = parseResponse(response.responseData);
@@ -452,7 +452,7 @@ console.log(`Random: ${randomNumber}`);
 Fund controlled by computors for ecosystem development.
 
 ```typescript
-import { queryCCF, parseResponse } from '@nvlabs/qts';
+import { queryCCF, parseResponse } from '@nouslabs/sdk';
 
 // Query fund balance
 const response = await queryCCF(client, 1, '');
@@ -472,7 +472,7 @@ import {
   QUBIC_CONTRACTS,
   createQuery,
   parseResponse
-} from '@nvlabs/qts';
+} from '@nouslabs/sdk';
 
 async function getQXOrderBook() {
   const client = new QubicLiveClient();
@@ -575,7 +575,7 @@ const client = new QubicLiveClient({ timeout: 60000 });
 
 ```typescript
 // ✅ Use provided constants
-import { QUBIC_CONTRACTS } from '@nvlabs/qts';
+import { QUBIC_CONTRACTS } from '@nouslabs/sdk';
 const query = createQuery(QUBIC_CONTRACTS.QX, 1);
 
 // ❌ Don't hardcode indices
@@ -661,7 +661,7 @@ import {
   queryQswap,        // Qswap exchange
   queryQvault,       // Qvault storage
   queryCCF,          // Computor Controlled Fund
-} from '@nvlabs/qts';
+} from '@nouslabs/sdk';
 ```
 
 ## Troubleshooting

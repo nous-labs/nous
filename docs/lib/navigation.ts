@@ -26,78 +26,99 @@ type SectionConfig = CategorySection | ExistingFolderSection;
 const SECTION_CONFIG: SectionConfig[] = [
   {
     type: "category",
-    title: "Start Here",
-    icon: "Compass",
-    description: "Install the SDK and understand its architecture.",
+    title: "Getting Started",
+    icon: "Rocket",
+    description: "Installation and basic setup",
     defaultOpen: true,
-    entries: ["index", "architecture"],
+    entries: ["index"],
   },
   {
-    type: "category",
-    title: "Core SDK",
+    type: "folder",
+    slug: "getting-started",
+    icon: "BookOpen",
+    defaultOpen: false,
+  },
+  {
+    type: "folder",
+    slug: "core",
     icon: "Layers",
-    description: "Primary clients, contract helpers, and utilities.",
-    defaultOpen: true,
-    entries: ["api-clients", "easy-contracts", "smart-contracts", "utilities"],
+    defaultOpen: false,
   },
   {
     type: "category",
-    title: "Use Cases & Recipes",
-    icon: "Sparkles",
-    entries: ["examples"],
+    title: "Reference",
+    icon: "FileCode",
+    description: "API documentation and utilities",
+    defaultOpen: false,
+    entries: [
+      "api-clients",
+      "smart-contracts",
+      "easy-contracts",
+      "utilities",
+      "architecture",
+    ],
   },
   {
     type: "folder",
     slug: "guides",
-    title: "Advanced Guides",
-    icon: "MapPinned",
-    description: "Operational playbooks and real-world automations.",
+    title: "Guides",
+    icon: "Map",
+    description: "Advanced guides and patterns",
     defaultOpen: false,
   },
   {
     type: "folder",
     slug: "integrations",
-    title: "Framework Integrations",
+    title: "Integrations",
     icon: "Puzzle",
-    description: "React providers, React Query hooks, and WalletConnect.",
+    description: "Framework integrations",
     defaultOpen: false,
   },
   {
     type: "category",
-    title: "Community & Support",
-    icon: "HeartHandshake",
-    entries: ["contributing", "donations"],
-  },
-  {
-    type: "category",
-    title: "Release Notes",
-    icon: "History",
-    entries: ["changelog"],
+    title: "More",
+    icon: "MoreHorizontal",
+    entries: ["examples", "contributing", "donations", "changelog"],
   },
 ];
 
 const ICON_MAP: Record<string, string> = {
-  index: "Compass",
-  architecture: "Component",
-  "api-clients": "Link2",
-  "easy-contracts": "Sparkles",
+  // Root pages
+  index: "Home",
+  architecture: "GitBranch",
+  changelog: "Clock",
+  contributing: "Heart",
+  donations: "DollarSign",
+  examples: "Code2",
+
+  // Getting Started folder
+  "getting-started": "BookOpen",
+  "getting-started/installation": "Download",
+
+  // Core folder
+  core: "Layers",
+  "core/authentication": "Key",
+
+  // API Reference
+  "api-clients": "Plug",
   "smart-contracts": "ScrollText",
+  "easy-contracts": "Sparkles",
   utilities: "Wrench",
-  examples: "NotebookPen",
-  donations: "HandCoins",
-  contributing: "HeartHandshake",
-  changelog: "History",
-  guides: "MapPinned",
-  "guides/index": "MapPinned",
-  "guides/real-world-playbooks": "Workflow",
-  "guides/smart-contract-lifecycle": "ServerCog",
+
+  // Guides
+  guides: "Map",
+  "guides/index": "Map",
+  "guides/real-world-playbooks": "BookMarked",
+  "guides/smart-contract-lifecycle": "Workflow",
   "guides/wallet-integration": "Wallet",
+
+  // Integrations
   integrations: "Puzzle",
   "integrations/index": "Puzzle",
   "integrations/react-simple": "Component",
-  "integrations/react-query": "Network",
-  "integrations/react-query-contracts": "Workflow",
-  "integrations/nextjs-walletconnect": "Link2",
+  "integrations/react-query": "RefreshCw",
+  "integrations/react-query-contracts": "GitMerge",
+  "integrations/nextjs-walletconnect": "Link",
 };
 
 export const navigationTransformer: PageTreeTransformer = {
@@ -114,6 +135,7 @@ function transformRoot(root: Root) {
   const slugMap = new Map<string, Node>();
   collectNodes(root.children, slugMap);
 
+  // Apply icons to all nodes
   for (const [slug, node] of slugMap) {
     const icon = ICON_MAP[slug];
     if (icon) {
@@ -152,7 +174,7 @@ function transformRoot(root: Root) {
         name: section.title,
         description: section.description,
         icon: iconForName(section.icon),
-        defaultOpen: section.defaultOpen,
+        defaultOpen: section.defaultOpen ?? false,
         children,
       };
 
@@ -173,6 +195,7 @@ function transformRoot(root: Root) {
     structuredChildren.push(folderNode);
   }
 
+  // Add any leftover nodes at the end
   const leftovers = root.children.filter(
     (child) => !usedRootChildren.has(child),
   );

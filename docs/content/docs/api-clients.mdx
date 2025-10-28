@@ -29,7 +29,7 @@ Access real-time network data and current blockchain state.
 ### Initialization
 
 ```typescript
-import { QubicLiveClient } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
 
 const client = new QubicLiveClient({
   baseUrl: 'https://rpc.qubic.org', // optional
@@ -251,7 +251,7 @@ Advanced historical data querying with filtering and pagination.
 ### Initialization
 
 ```typescript
-import { QueryClient } from '@nvlabs/qts';
+import { QueryClient } from '@nouslabs/sdk';
 
 const query = new QueryClient({
   baseUrl: 'https://api.qubic.org',
@@ -460,7 +460,7 @@ Legacy archive API client (some methods deprecated).
 ### Initialization
 
 ```typescript
-import { ArchiveClient } from '@nvlabs/qts';
+import { ArchiveClient } from '@nouslabs/sdk';
 
 const archive = new ArchiveClient({
   baseUrl: 'https://rpc.qubic.org'
@@ -508,7 +508,7 @@ const { transaction } = await queryClient.getTransactionByHash(txId);
 For convenience, use `createQubicClient()` to get all clients in one object.
 
 ```typescript
-import { createQubicClient } from '@nvlabs/qts';
+import { createQubicClient } from '@nouslabs/sdk';
 
 const qubic = createQubicClient({
   timeout: 30000,
@@ -527,7 +527,7 @@ const transactions = await qubic.query.getTransactionsForIdentity(identity);
 All clients throw `QubicApiError` for failed requests:
 
 ```typescript
-import type { QubicApiError } from '@nvlabs/qts';
+import type { QubicApiError } from '@nouslabs/sdk';
 
 try {
   const balance = await client.getBalance(identity);

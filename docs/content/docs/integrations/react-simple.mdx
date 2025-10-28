@@ -17,7 +17,7 @@ Use React context providers for direct access to Qubic clients. Perfect for simp
 ## Installation
 
 ```bash
-npm install @nvlabs/qts react
+npm install @nouslabs/sdk react
 ```
 
 ## QubicProvider
@@ -27,7 +27,7 @@ Wrap your app with `QubicProvider` to access Qubic clients anywhere in your comp
 ### Basic Setup
 
 ```tsx
-import { QubicProvider } from '@nvlabs/qts/react';
+import { QubicProvider } from '@nouslabs/sdk/react';
 
 export default function App() {
   return (
@@ -41,7 +41,7 @@ export default function App() {
 ### With Custom Configuration
 
 ```tsx
-import { QubicProvider } from '@nvlabs/qts/react';
+import { QubicProvider } from '@nouslabs/sdk/react';
 
 export default function App() {
   return (
@@ -63,8 +63,8 @@ export default function App() {
 ### With Custom Clients
 
 ```tsx
-import { QubicProvider } from '@nvlabs/qts/react';
-import { createQubicClient } from '@nvlabs/qts';
+import { QubicProvider } from '@nouslabs/sdk/react';
+import { createQubicClient } from '@nouslabs/sdk';
 
 const clients = createQubicClient({
   timeout: 30000,
@@ -85,7 +85,7 @@ export default function App() {
 Access Qubic clients from any component:
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 
 function Component() {
   const { live, query, archive } = useQubic();
@@ -101,7 +101,7 @@ function Component() {
 ### Example: Get Current Tick
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 import { useEffect, useState } from 'react';
 
 function CurrentTick() {
@@ -124,7 +124,7 @@ function CurrentTick() {
 ### Example: Get Balance
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 import { useEffect, useState } from 'react';
 
 function Balance({ address }: { address: string }) {
@@ -154,7 +154,7 @@ function Balance({ address }: { address: string }) {
 ### Example: Transaction History
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 import { useEffect, useState } from 'react';
 
 function TransactionHistory({ identity }: { identity: string }) {
@@ -191,8 +191,8 @@ function TransactionHistory({ identity }: { identity: string }) {
 ### Setup
 
 ```tsx
-import { QubicProvider } from '@nvlabs/qts/react';
-import { WalletConnectProvider } from '@nvlabs/qts/react';
+import { QubicProvider } from '@nouslabs/sdk/react';
+import { WalletConnectProvider } from '@nouslabs/sdk/react';
 
 export default function App() {
   return (
@@ -218,7 +218,7 @@ export default function App() {
 ### useWalletConnect Hook
 
 ```tsx
-import { useWalletConnect } from '@nvlabs/qts/react';
+import { useWalletConnect } from '@nouslabs/sdk/react';
 
 function WalletButton() {
   const {
@@ -260,7 +260,7 @@ function WalletButton() {
 ### Sign and Broadcast Transaction
 
 ```tsx
-import { useWalletConnect, useQubic } from '@nvlabs/qts/react';
+import { useWalletConnect, useQubic } from '@nouslabs/sdk/react';
 import { useState } from 'react';
 
 function SendTransaction({ to, amount }: { to: string; amount: string }) {
@@ -301,7 +301,7 @@ function SendTransaction({ to, amount }: { to: string; amount: string }) {
 ### Polling for Updates
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 import { useEffect, useState } from 'react';
 
 function LiveTicker() {
@@ -332,7 +332,7 @@ function LiveTicker() {
 ### Fetching on User Action
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 import { useState } from 'react';
 
 function BalanceChecker() {
@@ -375,8 +375,8 @@ function BalanceChecker() {
 ### Smart Contract Query
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
-import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
+import { useQubic } from '@nouslabs/sdk/react';
+import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nouslabs/sdk';
 import { useEffect, useState } from 'react';
 
 function ContractQuery() {
@@ -417,7 +417,7 @@ function ContractQuery() {
 ### Basic Error Handling
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 import { useEffect, useState } from 'react';
 
 function SafeComponent({ address }: { address: string }) {
@@ -581,7 +581,7 @@ If you need better data management, you can easily migrate to React Query:
 ### Before (Basic Provider)
 
 ```tsx
-import { useQubic } from '@nvlabs/qts/react';
+import { useQubic } from '@nouslabs/sdk/react';
 import { useEffect, useState } from 'react';
 
 function Balance({ address }: { address: string }) {
@@ -603,7 +603,7 @@ function Balance({ address }: { address: string }) {
 ### After (React Query)
 
 ```tsx
-import { useBalance } from '@nvlabs/qts/react/query';
+import { useBalance } from '@nouslabs/sdk/react/query';
 
 function Balance({ address }: { address: string }) {
   const { data, isLoading } = useBalance(address);

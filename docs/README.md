@@ -1,6 +1,8 @@
-# Qubic TypeScript SDK Documentation
+# @nouslabs/sdk Documentation
 
-This directory contains the documentation website for the Qubic TypeScript SDK, built with [Fumadocs](https://fumadocs.dev) and [Next.js](https://nextjs.org).
+> forget what you know
+
+This directory contains the documentation website for @nouslabs/sdk, built with [Fumadocs](https://fumadocs.dev) and [Next.js](https://nextjs.org).
 
 ## Documentation Structure
 
@@ -8,38 +10,22 @@ This directory contains the documentation website for the Qubic TypeScript SDK, 
 docs/
 ├── content/
 │   └── docs/
-│       ├── index.mdx              # Getting Started
-│       ├── api-clients.mdx        # API Clients Reference
-│       ├── smart-contracts.mdx    # Smart Contracts Guide
-│       ├── utilities.mdx          # Utilities & Encoding
-│       ├── architecture.mdx       # Architecture & Design
-│       ├── contributing.mdx       # Contributing Guide
-│       └── changelog.mdx          # Version History
-├── app/                           # Next.js app directory
-├── lib/                           # Documentation utilities
-└── public/                        # Static assets
-```
-
-```
-docs/
-├─ content/
-│  └─ docs/
-│     ├─ index.mdx                       # Getting Started
-│     ├─ api-clients.mdx                 # API Clients Reference
-│     ├─ smart-contracts.mdx             # Smart Contracts Guide
-│     ├─ utilities.mdx                   # Utilities & Encoding
-│     ├─ architecture.mdx                # Architecture & Design
-│     ├─ contributing.mdx                # Contributing Guide
-│     ├─ changelog.mdx                   # Version History
-│     └─ guides/
-│        ├─ index.mdx                    # Advanced Guides overview
-│        ├─ real-world-playbooks.mdx     # Production playbooks
-│        ├─ smart-contract-lifecycle.mdx # Contract lifecycle deep dive
-│        ├─ wallet-integration.mdx       # Wallet provider helpers
-│        └─ framework-integrations.mdx   # React/Vue/Angular + backend samples
-├─ app/
-├─ lib/
-└─ public/
+│       ├── index.mdx                    # Introduction
+│       ├── getting-started/             # Installation and basics
+│       ├── core/                        # Core functionality
+│       ├── advanced/                    # Advanced topics
+│       ├── production/                  # Production guides
+│       ├── examples/                    # Code examples
+│       ├── api-clients.mdx              # API reference
+│       ├── smart-contracts.mdx          # Smart contracts
+│       ├── utilities.mdx                # Utilities
+│       ├── guides/                      # Advanced guides
+│       ├── integrations/                # Framework integrations
+│       ├── contributing.mdx             # Contributing guide
+│       └── changelog.mdx                # Version history
+├── app/                                 # Next.js app directory
+├── lib/                                 # Documentation utilities
+└── public/                              # Static assets
 ```
 
 ## Quick Start
@@ -80,79 +66,79 @@ Start the production server:
 bun run start
 ```
 
-## 📖 Documentation Pages
+## Documentation Pages
 
-### Getting Started (`index.mdx`)
+### Introduction (`index.mdx`)
+- What is @nouslabs/sdk
 - Installation instructions
 - Quick start guide
-- Basic examples
-- Key features overview
+- Learning path overview
 
-### API Clients (`api-clients.mdx`)
-- QubicLiveClient reference
-- QueryClient reference
-- ArchiveClient reference
-- Complete method documentation
-- Error handling guide
+### Getting Started
+- Installation and setup
+- First query examples
+- Understanding clients
+- Error handling basics
 
-### Smart Contracts (`smart-contracts.mdx`)
-- Contract overview
-- Query building
-- Response parsing
-- Contract-specific guides
-- Examples for all major contracts
+### Core Functionality
+- Querying blockchain data
+- User authentication (4 methods)
+- Transaction building and signing
+- Smart contract interaction
 
-### Utilities (`utilities.mdx`)
-- Encoding/decoding functions
-- Format conversions
-- Integer serialization
-- Hex manipulation
-- Validation utilities
+### Advanced Topics
+- React integration with hooks
+- Real-time updates
+- Batch operations and optimization
+- Testing strategies
 
-### Architecture (`architecture.mdx`)
-- Design principles
-- Project structure
-- Design patterns
-- Data flow
-- Performance considerations
+### Production
+- Best practices
+- Security guidelines
+- Monitoring and logging
+- Deployment strategies
 
-### Contributing (`contributing.mdx`)
-- Code of conduct
-- Development setup
-- Pull request process
-- Coding standards
-- Testing guidelines
+### Examples
+- Practical code examples
+- Common use cases
+- Copy-paste solutions
 
-### Changelog (`changelog.mdx`)
-- Version history
-- Migration guides
-- Deprecation notices
-- Roadmap
+### API Reference
+- QubicLiveClient
+- QueryClient
+- ArchiveClient
+- Type definitions
+- Utilities
 
-### Advanced Guides (`guides/*.mdx`)
-- Opinionated playbooks for price boards, vault monitors, and governance bots
-- Smart contract lifecycle deep dives with QPI restrictions explained
-- Wallet integration helpers for detecting providers and forwarding signed transactions
-- Framework recipes for React, Vue, Angular on the front-end and Node/Hono/Elysia on the back-end
-- Operational checklists for monitoring, retries, and observability
+### Guides
+- Real-world playbooks
+- Smart contract lifecycle
+- Wallet integration
+- Framework recipes
 
-## ✍️ Writing Documentation
+### Integrations
+- React simple setup
+- React Query hooks
+- Next.js with WalletConnect
+- Backend frameworks
+
+## Writing Documentation
 
 ### Adding New Pages
 
-1. Create a new `.mdx` file in `content/docs/`
+1. Create a new `.mdx` file in the appropriate directory
 2. Add frontmatter:
 
 ```mdx
 ---
 title: Page Title
-description: Page description for SEO
+description: Brief description for SEO
 ---
 
 # Your Content Here
 ```
 
-3. The page will be automatically added to the documentation
+3. Update `meta.json` in the directory to add to navigation
 
 ### Using Components
 
@@ -169,7 +155,7 @@ import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 <Tabs items={['npm', 'yarn', 'bun']}>
   <Tab value="npm">
     ```bash
-    npm install
+    npm install @nouslabs/sdk
     ```
   </Tab>
 </Tabs>
@@ -181,20 +167,27 @@ Use syntax highlighting with language tags:
 
 ````mdx
 ```typescript
-import { createQubicClient } from '@nvlabs/qts';
+import { createQubicClient } from '@nouslabs/sdk';
 const qubic = createQubicClient();
 ```
 ````
 
-## 🎨 Customization
+## Customization
+
+### Navigation
+
+Edit `lib/navigation.ts` to customize:
+- Section categories
+- Icons for each page
+- Default open/closed state
+- Page ordering
 
 ### Configuration
 
 Edit `source.config.ts` to customize:
 - Documentation structure
-- Navigation
+- MDX processing
 - Search behavior
-- Theme settings
 
 ### Styling
 
@@ -204,11 +197,12 @@ Tailwind CSS is used for styling. Customize in:
 
 ## Dependencies
 
-- **fumadocs-core** - Documentation framework core
+- **fumadocs-core** - Documentation framework
 - **fumadocs-mdx** - MDX processing
 - **fumadocs-ui** - UI components
 - **Next.js** - React framework
 - **Tailwind CSS** - Styling
+- **Lucide React** - Icons
 
 ## Maintenance
 
@@ -228,19 +222,20 @@ Add code examples directly in MDX files:
 
 ```typescript
 // Your example code
-const example = 'value';
+const example = await client.getBalance(identity);
+console.log(example.balance.balance);
 ```
 ```
 
-### Links
+### Internal Links
 
 Use relative links for internal pages:
 
 ```mdx
-See the [API Reference](/docs/api-clients) for more details.
+See the [Authentication](/docs/core/authentication) guide for details.
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Build Errors
 
@@ -258,6 +253,7 @@ bun run build
 - Check frontmatter syntax
 - Ensure proper component imports
 - Validate code block syntax
+- Check for unclosed tags
 
 ### Hot Reload Issues
 
@@ -270,29 +266,25 @@ bun run dev
 
 ## Best Practices
 
-1. **Keep examples simple** - Focus on one concept at a time
-2. **Use callouts** - Highlight important information
-3. **Add code comments** - Explain complex examples
-4. **Test all code** - Ensure examples work
-5. **Update changelog** - Document significant changes
-6. **Cross-link pages** - Help users find related content
-7. **Mobile-friendly** - Test on different screen sizes
+1. **Keep it simple** - Focus on clarity over complexity
+2. **Working examples** - All code should be runnable
+3. **Progressive disclosure** - Start simple, add complexity gradually
+4. **Clear navigation** - Users should always know where they are
+5. **No jargon** - Explain technical terms
+6. **Mobile-friendly** - Test on different screen sizes
+7. **Update changelog** - Document significant changes
 
-## Contributing to Docs
+## Contributing
 
 We welcome documentation improvements! To contribute:
 
 1. Fork the repository
-2. Create a branch (`docs/improve-examples`)
+2. Create a branch (`docs/improve-auth`)
 3. Make your changes
 4. Test locally (`bun run dev`)
 5. Submit a pull request
 
 See [Contributing Guide](../CONTRIBUTING.md) for more details.
-
-## License
-
-Same as the main project - MIT License.
 
 ## Resources
 
@@ -300,7 +292,12 @@ Same as the main project - MIT License.
 - [Next.js Documentation](https://nextjs.org/docs)
 - [MDX Documentation](https://mdxjs.com/)
 - [Tailwind CSS](https://tailwindcss.com/)
+- [Lucide Icons](https://lucide.dev/)
+
+## License
+
+MIT License - Same as the main project
 
 ---
 
-**Built with love for the Qubic community**
+Built for the Qubic community

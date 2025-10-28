@@ -1,0 +1,468 @@
+---
+title: Installation
+description: Install and configure @nouslabs/sdk in your project
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
+
+# Installation
+
+This guide will walk you through installing @nouslabs/sdk and verifying it's working correctly.
+
+## Prerequisites
+
+Before installing the SDK, ensure you have:
+
+**Node.js 18 or higher**
+
+Check your version:
+
+```bash
+node --version
+```
+
+If you need to install or update Node.js, visit [nodejs.org](https://nodejs.org/).
+
+**A Package Manager**
+
+You need one of these:
+- npm (comes with Node.js)
+- yarn
+- pnpm
+- bun
+
+## Installation Steps
+
+### Step 1: Create a New Project
+
+If you're starting from scratch, create a new directory:
+
+```bash
+mkdir my-qubic-app
+cd my-qubic-app
+npm init -y
+```
+
+### Step 2: Install the SDK
+
+Choose your preferred package manager:
+
+<Tabs items={['npm', 'yarn', 'pnpm', 'bun']}>
+<Tab value="npm">
+
+```bash
+npm install @nouslabs/sdk
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn add @nouslabs/sdk
+```
+
+</Tab>
+<Tab value="pnpm">
+
+```bash
+pnpm add @nouslabs/sdk
+```
+
+</Tab>
+<Tab value="bun">
+
+```bash
+bun add @nouslabs/sdk
+```
+
+</Tab>
+</Tabs>
+
+### Step 3: Configure TypeScript (Optional but Recommended)
+
+If you're using TypeScript, create or update your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true
+  }
+}
+```
+
+Install TypeScript if you haven't already:
+
+```bash
+npm install -D typescript
+```
+
+## Verify Installation
+
+Create a test file to verify everything works:
+
+**JavaScript (test.js):**
+
+```javascript
+import { createQubicClient } from '@nouslabs/sdk';
+
+async function test() {
+  const qubic = createQubicClient();
+  const { tickInfo } = await qubic.live.getTickInfo();
+  console.log('Current tick:', tickInfo.tick);
+  console.log('Installation successful!');
+}
+
+test().catch(console.error);
+```
+
+**TypeScript (test.ts):**
+
+```typescript
+import { createQubicClient } from '@nouslabs/sdk';
+
+async function test(): Promise<void> {
+  const qubic = createQubicClient();
+  const { tickInfo } = await qubic.live.getTickInfo();
+  console.log('Current tick:', tickInfo.tick);
+  console.log('Installation successful!');
+}
+
+test().catch(console.error);
+```
+
+Run the test:
+
+```bash
+node test.js
+```
+
+Or with TypeScript:
+
+```bash
+npx tsx test.ts
+```
+
+If you see the current tick number, installation was successful!
+
+## Package Configuration
+
+### Using ES Modules
+
+The SDK uses ES modules. Ensure your `package.json` includes:
+
+```json
+{
+  "type": "module"
+}
+```
+
+### Using CommonJS
+
+If you must use CommonJS, you'll need a bundler or use dynamic imports:
+
+```javascript
+// CommonJS
+async function loadQubic() {
+  const { createQubicClient } = await import('@nouslabs/sdk');
+  return createQubicClient();
+}
+```
+
+<Callout type="warn">
+  We recommend using ES modules for the best experience. CommonJS support requires additional setup.
+</Callout>
+
+## Framework-Specific Setup
+
+### React
+
+For React applications, no additional setup is needed:
+
+```bash
+npm install @nouslabs/sdk react
+```
+
+@nouslabs/sdk provides React hooks out of the box. See [React Integration](/docs/advanced/react) for details.
+
+### Next.js
+
+In Next.js 13+ with App Router:
+
+```bash
+npm install @nouslabs/sdk
+```
+
+Mark components that use the SDK as client components:
+
+```tsx
+'use client';
+
+import { createQubicClient } from '@nouslabs/sdk';
+
+export default function MyComponent() {
+  // Your code here
+}
+```
+
+### Vue
+
+Vue applications work without additional configuration:
+
+```bash
+npm install @nouslabs/sdk
+```
+
+### Angular
+
+For Angular, install the SDK normally:
+
+```bash
+npm install @nouslabs/sdk
+```
+
+You may need to add type definitions in `tsconfig.app.json`:
+
+```json
+{
+  "compilerOptions": {
+    "types": ["node"]
+  }
+}
+```
+
+## Browser Setup
+
+### With a Bundler
+
+Most modern frameworks (Vite, Webpack, Parcel) work without configuration:
+
+```typescript
+import { createQubicClient } from '@nouslabs/sdk';
+
+const qubic = createQubicClient();
+```
+
+### Without a Bundler (CDN)
+
+For quick prototyping, use a CDN:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>@nouslabs/sdk Test</title>
+</head>
+<body>
+  <script type="module">
+    import { createQubicClient } from 'https://esm.sh/@nouslabs/sdk';
+    
+    const qubic = createQubicClient();
+    const { tickInfo } = await qubic.live.getTickInfo();
+    console.log('Current tick:', tickInfo.tick);
+  </script>
+</body>
+</html>
+```
+
+<Callout type="info">
+  CDN usage is only recommended for prototyping. Use a bundler for production applications.
+</Callout>
+
+## Configuration Options
+
+@nouslabs/sdk works with default settings, but you can customize behavior:
+
+```typescript
+import { createQubicClient } from '@nouslabs/sdk';
+
+const qubic = createQubicClient({
+  // Custom API endpoints
+  liveUrl: 'https://rpc.qubic.org',
+  queryUrl: 'https://api.qubic.org',
+  
+  // Request timeout (milliseconds)
+  timeout: 30000,
+  
+  // Custom headers
+  headers: {
+    'User-Agent': 'MyApp/1.0'
+  }
+});
+```
+
+### Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `liveUrl` | `string` | `https://rpc.qubic.org` | Live API endpoint |
+| `queryUrl` | `string` | `https://api.qubic.org` | Query API endpoint |
+| `archiveUrl` | `string` | `https://archive.qubic.org` | Archive API endpoint |
+| `timeout` | `number` | `30000` | Request timeout in ms |
+| `headers` | `Record<string, string>` | `{}` | Custom HTTP headers |
+
+## Environment Variables
+
+You can configure @nouslabs/sdk using environment variables:
+
+```bash
+# .env file
+QUBIC_LIVE_URL=https://custom-rpc.qubic.org
+QUBIC_QUERY_URL=https://custom-api.qubic.org
+QUBIC_TIMEOUT=60000
+```
+
+Then in your code:
+
+```typescript
+const qubic = createQubicClient({
+  liveUrl: process.env.QUBIC_LIVE_URL,
+  queryUrl: process.env.QUBIC_QUERY_URL,
+  timeout: parseInt(process.env.QUBIC_TIMEOUT || '30000')
+});
+```
+
+## Updating the SDK
+
+To update to the latest version:
+
+<Tabs items={['npm', 'yarn', 'pnpm', 'bun']}>
+<Tab value="npm">
+
+```bash
+npm update @nouslabs/sdk
+```
+
+</Tab>
+<Tab value="yarn">
+
+```bash
+yarn upgrade @nouslabs/sdk
+```
+
+</Tab>
+<Tab value="pnpm">
+
+```bash
+pnpm update @nouslabs/sdk
+```
+
+</Tab>
+<Tab value="bun">
+
+```bash
+bun update @nouslabs/sdk
+```
+
+</Tab>
+</Tabs>
+
+Check the current version:
+
+```bash
+npm list @nouslabs/sdk
+```
+
+## Troubleshooting
+
+### Module Not Found Error
+
+If you see `Cannot find module '@nouslabs/sdk'`:
+
+1. Verify installation: `npm list @nouslabs/sdk`
+2. Delete `node_modules` and reinstall:
+   ```bash
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+3. Clear your bundler cache (if using one)
+
+### Type Errors
+
+If TypeScript can't find types:
+
+1. Ensure TypeScript is installed: `npm install -D typescript`
+2. Check `tsconfig.json` includes `"moduleResolution": "bundler"`
+3. Restart your IDE/editor
+
+### Network Errors
+
+If API requests fail:
+
+1. Check your internet connection
+2. Verify the default endpoints are accessible
+3. Try custom endpoints if the defaults are down
+4. Increase timeout if requests are slow
+
+### Build Errors
+
+If your bundler fails:
+
+1. Ensure you're using ES modules (`"type": "module"` in `package.json`)
+2. Check your bundler supports ESM
+3. Update your bundler to the latest version
+
+### Browser Compatibility
+
+@nouslabs/sdk requires modern browser features:
+- ES2022 support
+- Fetch API
+- Promise
+- BigInt
+
+Minimum browser versions:
+- Chrome 90+
+- Firefox 90+
+- Safari 15+
+- Edge 90+
+
+## Development vs Production
+
+### Development Setup
+
+For development, install dev dependencies:
+
+```bash
+npm install -D typescript tsx @types/node
+```
+
+Create a dev script in `package.json`:
+
+```json
+{
+  "scripts": {
+    "dev": "tsx watch src/index.ts"
+  }
+}
+```
+
+### Production Setup
+
+For production builds:
+
+1. Enable tree-shaking in your bundler
+2. Use environment variables for configuration
+3. Implement error handling
+4. Add request retry logic
+5. Monitor API usage
+
+See [Production Best Practices](/docs/production/best-practices) for details.
+
+## Next Steps
+
+Now that the SDK is installed, learn how to make your first query:
+
+**[First Query →](/docs/getting-started/first-query)**
+
+Or explore specific topics:
+
+- [Understanding Clients](/docs/getting-started/clients) - Learn about the three API clients
+- [Error Handling](/docs/getting-started/errors) - Handle failures gracefully
+- [Configuration](/docs/getting-started/configuration) - Advanced setup options

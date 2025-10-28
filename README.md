@@ -1,32 +1,46 @@
-# Qubic TypeScript SDK (QTS)
+# Nous SDK
 
-[![npm version](https://img.shields.io/npm/v/@nvlabs/qts.svg)](https://www.npmjs.com/package/@nvlabs/qts)
+> νοῦς (nous) - mind, intellect, reason
+
+[![npm version](https://img.shields.io/npm/v/@nouslabs/sdk.svg)](https://www.npmjs.com/package/@nouslabs/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
-A comprehensive TypeScript/JavaScript SDK for the Qubic blockchain. Build powerful applications with full type safety, modern async/await patterns, and universal compatibility.
+Intelligent tools for the Qubic blockchain. Build powerful applications with full type safety, modern async/await patterns, and universal compatibility.
+
+**Developed by [Nous Labs](https://github.com/nous-labs)**
+
+## What's New in v1.4.0
+
+- **Unified Authentication System** - MetaMask Snap, Vault files, private seeds, and WalletConnect
+- **React Hooks** - Complete authentication state management with `useQubicAuth()`
+- **Account Creation** - Cryptographically secure account generation
+- **Improved Documentation** - Clear, linear learning path
 
 ## Features
 
+- **Four Authentication Methods** - MetaMask, Vault files, private seeds, WalletConnect
 - **Full TypeScript Support** - Complete type definitions with strict mode
-- **Universal** - Works in browsers, Node.js, Bun, and Deno
-- **Tree-shakeable** - Import only what you need
+- **Universal Compatibility** - Works in browsers, Node.js, Bun, and Deno
+- **Tree-Shakeable** - Import only what you need
 - **Smart Contract Support** - Simplified querying with encoding/decoding utilities
-- **Wallet Integrations** - Helpers for injected wallets and WalletConnect (Sign v2)
+- **React Integration** - First-class React support with hooks and providers
 - **Modern APIs** - Clean async/await interfaces
-- **Error Handling** - Comprehensive error types and messages
-- **Well Documented** - Extensive docs with examples
+- **Comprehensive Error Handling** - Typed errors with detailed messages
+- **Well Documented** - Extensive documentation with working examples
 
 ## Installation
 
 ```bash
-npm install @nvlabs/qts
+npm install @nouslabs/sdk
 ```
 
 ## Quick Start
 
+### Query the Blockchain
+
 ```typescript
-import { createQubicClient } from '@nvlabs/qts';
+import { createQubicClient } from '@nouslabs/sdk';
 
 // Create client
 const qubic = createQubicClient();
@@ -36,149 +50,316 @@ const { tickInfo } = await qubic.live.getTickInfo();
 console.log(`Current tick: ${tickInfo.tick}`);
 
 // Check balance
-const { balance } = await qubic.live.getBalance('YOUR_IDENTITY_HERE');
-console.log(`Balance: ${balance.balance}`);
+const identity = 'BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA';
+const { balance } = await qubic.live.getBalance(identity);
+console.log(`Balance: ${balance.balance} QUBIC`);
 
 // Get transaction history
 const { transactions } = await qubic.query.getTransactionsForIdentity(
-  'YOUR_IDENTITY_HERE',
+  identity,
   { pagination: { offset: 0, size: 10 } }
 );
 ```
 
-### Smart Contract Querying
+### Authenticate Users
 
 ```typescript
-import { createQuery, parseResponse, QUBIC_CONTRACTS } from '@nvlabs/qts';
+import { QubicAuthProvider, useQubicAuth } from '@nouslabs/sdk/react';
 
-// Build query
+function App() {
+  return (
+    <QubicAuthProvider persistSession={true}>
+      <Dashboard />
+    </QubicAuthProvider>
+  );
+}
+
+function Dashboard() {
+  const {
+    connectWithMetaMask,
+    connectWithSeed,
+    isConnected,
+    account
+  } = useQubicAuth();
+
+  if (isConnected) {
+    return <p>Connected: {account.publicId}</p>;
+  }
+
+  return (
+    <div>
+      <button onClick={() => connectWithMetaMask()}>
+        Connect MetaMask
+      </button>
+      <button onClick={() => connectWithSeed('your-seed')}>
+        Connect with Seed
+      </button>
+    </div>
+  );
+}
+```
+
+### Query Smart Contracts
+
+```typescript
+import { queryQX, QUBIC_CONTRACTS } from '@nouslabs/sdk';
+
+// Query QX exchange
+const result = await queryQX(qubic.live, 1, {
+  entityId: 123
+});
+
+// Or use the generic contract query
+import { createQuery } from '@nouslabs/sdk';
+
 const query = createQuery(QUBIC_CONTRACTS.QX, 1)
-  .addInt32(100)
+  .addInt32(123)
   .addInt64(1000n);
 
-// Execute and parse
 const response = await query.execute(qubic.live);
-const parser = parseResponse(response.responseData);
-const result = parser.readInt64();
 ```
+
+## CLI Tool
+
+For command-line usage, check out our CLI:
+
+```bash
+npm install -g @nouslabs/cli
+
+nous auth login
+nous balance <identity>
+nous send <to> <amount>
+```
+
+See [@nouslabs/cli documentation](https://github.com/nous-labs/cli) for more details.
 
 ## Documentation
 
-Comprehensive documentation is available at [/docs](./docs):
+Comprehensive documentation is available at our documentation site:
 
-- **[Getting Started](./docs/content/docs/index.mdx)** - Installation and basic usage
-- **[API Clients](./docs/content/docs/api-clients.mdx)** - Complete API reference
-- **[Smart Contracts](./docs/content/docs/smart-contracts.mdx)** - Contract querying guide
-- **[Architecture](./docs/content/docs/architecture.mdx)** - Design patterns and internals
+- [Getting Started](https://github.com/nous-labs/sdk/tree/main/docs)
+- [Authentication Guide](https://github.com/nous-labs/sdk/tree/main/docs#authentication)
+- [API Reference](https://github.com/nous-labs/sdk/tree/main/docs#api-reference)
+- [Examples](https://github.com/nous-labs/sdk/tree/main/docs#examples)
 
-## Key Concepts
+## Authentication Methods
 
-### Three API Clients
+The SDK supports four authentication methods:
 
-- **QubicLiveClient** - Real-time network data, balances, smart contracts
-- **QueryClient** - Historical transactions, analytics, advanced queries
-- **ArchiveClient** - Legacy archive access (deprecated methods)
+### 1. Private Seed
+Direct seed input - simplest method for development and CLI tools.
 
-### Smart Contract Support
+```typescript
+import { createSeedSession } from '@nouslabs/sdk';
 
-All major Qubic contracts supported:
-- QX (Exchange)
-- Qearn (Staking)
-- Qswap (Token Swap)
-- QUtil (Utilities)
-- And more...
+const session = await createSeedSession({
+  seed: 'your-55-character-seed-here',
+  label: 'My Account'
+});
+```
+
+### 2. Vault File
+Encrypted JSON files with password protection - recommended for desktop applications.
+
+```typescript
+import { createVaultSession } from '@nouslabs/sdk';
+
+const session = await createVaultSession({
+  file: vaultFile,
+  password: 'secure-password'
+});
+```
+
+### 3. MetaMask Snap
+Browser extension with BIP44 key derivation and hardware wallet support.
+
+```typescript
+import { createMetaMaskSession } from '@nouslabs/sdk';
+
+const session = await createMetaMaskSession({
+  accountIdx: 0
+});
+```
+
+### 4. WalletConnect
+Mobile wallet connection via QR code.
+
+```typescript
+import { connectWalletConnect } from '@nouslabs/sdk';
+
+const connection = await connectWalletConnect({
+  projectId: 'YOUR_PROJECT_ID',
+  metadata: {
+    name: 'My Qubic App',
+    description: 'Qubic Application',
+    url: 'https://myapp.com',
+    icons: ['https://myapp.com/icon.png']
+  }
+});
+
+const session = await connection.waitForApproval();
+```
+
+## React Hooks
+
+Complete React integration with hooks and providers:
+
+```typescript
+import {
+  QubicAuthProvider,
+  useQubicAuth,
+  useQubicAccount,
+  useIsAuthenticated,
+  useAuthMethods,
+  useAccountCreation
+} from '@nouslabs/sdk/react';
+
+// Main auth hook
+const {
+  connectWithMetaMask,
+  connectWithVault,
+  connectWithSeed,
+  connectWithWalletConnect,
+  disconnect,
+  signTransaction,
+  isConnected,
+  account
+} = useQubicAuth();
+
+// Convenience hooks
+const account = useQubicAccount();
+const isAuthenticated = useIsAuthenticated();
+const { hasMetaMask, hasVault } = useAuthMethods();
+const { createNewAccount } = useAccountCreation();
+```
+
+## API Clients
+
+Three specialized clients for different use cases:
+
+### QubicLiveClient
+Real-time network data and transaction broadcasting.
+
+```typescript
+const { live } = qubic;
+
+await live.getTickInfo();
+await live.getBalance(identity);
+await live.broadcast(signedTransaction);
+```
+
+### QueryClient
+Historical data with advanced filtering and pagination.
+
+```typescript
+const { query } = qubic;
+
+await query.getTransactionsForIdentity(identity, options);
+await query.getTickData(tickNumber);
+```
+
+### ArchiveClient
+Legacy archive API access.
+
+```typescript
+const { archive } = qubic;
+
+await archive.getLatestTick();
+await archive.getTransaction(txId);
+```
+
+## TypeScript Support
+
+Full TypeScript definitions with strict mode support:
+
+```typescript
+import type {
+  Transaction,
+  Balance,
+  TickInfo,
+  AuthSession,
+  AuthAccount
+} from '@nouslabs/sdk';
+
+const processTransaction = (tx: Transaction) => {
+  console.log(tx.source);       // string
+  console.log(tx.destination);  // string
+  console.log(tx.amount);       // number
+  console.log(tx.status);       // TransactionStatus
+};
+```
 
 ## Examples
 
-### Monitor Ticks
+Check out our [examples repository](https://github.com/nous-labs/examples) for complete working examples:
 
-```typescript
-let lastTick = 0;
-setInterval(async () => {
-  const { tickInfo } = await qubic.live.getTickInfo();
-  if (tickInfo.tick > lastTick) {
-    console.log(`New tick: ${tickInfo.tick}`);
-    lastTick = tickInfo.tick;
-  }
-}, 1000);
-```
+- Balance checker
+- Transaction sender
+- Smart contract interaction
+- React authentication demo
+- Next.js application
+- Real-time tick monitor
 
-### Query Assets
+## Browser Compatibility
 
-```typescript
-const [issued, owned, possessed] = await Promise.all([
-  qubic.live.getIssuedAssets(identity),
-  qubic.live.getOwnedAssets(identity),
-  qubic.live.getPossessedAssets(identity)
-]);
-```
+- Chrome 90+
+- Firefox 90+
+- Safari 15+
+- Edge 90+
 
-## Development
+Requires ES2022, Fetch API, Web Crypto API, and BigInt support.
+
+## Node.js Compatibility
+
+- Node.js 18+
+- Bun 1.0+
+- Deno (with npm: specifier)
+
+## Migration from fwyk
+
+If you're upgrading from `fwyk`, see our [Migration Guide](MIGRATION.md).
+
+Quick migration:
 
 ```bash
-# Install dependencies
-bun install
+npm uninstall fwyk
+npm install @nouslabs/sdk
+```
 
-# Run tests
-bun test
+Update imports:
+```typescript
+// Before
+import { createQubicClient } from 'fwyk';
 
-# Type checking
-bun run typecheck
-
-# Build
-bun run build
+// After
+import { createQubicClient } from '@nouslabs/sdk';
 ```
 
 ## Contributing
 
-We welcome contributions! Please see our [Contributing Guide](./CONTRIBUTING.md) for details.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-### Quick Contribution Steps
+- Report bugs via [GitHub Issues](https://github.com/nous-labs/sdk/issues)
+- Discuss ideas in [GitHub Discussions](https://github.com/nous-labs/sdk/discussions)
+- Submit pull requests for improvements
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit your changes using [conventional commits](https://www.conventionalcommits.org/)
-4. Push to your branch
-5. Open a Pull Request
+## Community
 
-## Support the Project
-
-If you find this SDK valuable, consider supporting its development! Donations help us maintain the project, add new features, and improve documentation.
-
-**Donation Address:**
-```
-TXTDKTULWFCOGGNTKBCZEHAVDTYBOLGQVCLRBVWUIBLZWEFZXSBBFZGEBLUJ
-```
-
-Every contribution, no matter the size, helps us dedicate more time to making the Qubic ecosystem better for everyone. [Learn more about supporting the project →](https://github.com/nvlabs/qts/tree/main/docs/content/docs/donations.mdx)
+- **GitHub**: [nous-labs/sdk](https://github.com/nous-labs/sdk)
+- **Discord**: [Join Qubic community](https://discord.gg/qubic)
+- **Twitter**: [@nous_labs](https://twitter.com/nous_labs)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
-## Community & Support
+## Acknowledgments
 
-- **GitHub Issues** - [Report bugs or request features](https://github.com/nvlabs/qts/issues)
-- **GitHub Discussions** - [Ask questions and share ideas](https://github.com/nvlabs/qts/discussions)
-- **Discord** - [Join the Qubic community](https://discord.gg/sWX3BakE)
-- **Donations** - [Support the project](https://github.com/nvlabs/qts/tree/main/docs/content/docs/donations.mdx) 💝
+Built for the Qubic blockchain community.
 
-## Resources
-
-- [Qubic Website](https://qubic.org/)
-- [Qubic Documentation](https://docs.qubic.org/)
-- [Qubic Core Repository](https://github.com/qubic/core)
-- [npm Package](https://www.npmjs.com/package/@nvlabs/qts)
-
-## Project Stats
-
-- **Version**: 1.0.0
-- **Package**: @nvlabs/qts
-- **Author**: nvlabs
-- **Node**: >=18.0.0
+Special thanks to all contributors and the Qubic core team.
 
 ---
 
-**Built with love by the Qubic community**
-
-[Get Started](./docs/content/docs/index.mdx) • [API Reference](./docs/content/docs/api-clients.mdx) • [Examples](./examples) • [Report Issue](https://github.com/nvlabs/qts/issues)
+**Nous Labs** - Intelligent tools for Qubic blockchain  
+[Website](https://nouslabs.dev) • [Documentation](https://github.com/nous-labs/sdk/tree/main/docs) • [CLI](https://github.com/nous-labs/cli)

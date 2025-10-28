@@ -22,6 +22,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2025-10-28
+
+### Added
+- **Unified Authentication System**: Complete authentication solution supporting four methods
+  - Private Seed authentication (direct seed input)
+  - Vault File authentication (encrypted files with password protection)
+  - MetaMask Snap integration (BIP44 key derivation, hardware wallet support)
+  - WalletConnect integration (mobile wallet connection via QR code)
+- **React Authentication Hooks**: New hooks for managing user authentication
+  - `useQubicAuth()`: Main authentication hook with full state management
+  - `useQubicAccount()`: Get current account information
+  - `useIsAuthenticated()`: Check authentication status
+  - `useAuthMethods()`: Query available authentication methods
+  - `useAccountCreation()`: Account creation utilities
+- **QubicAuthProvider**: React context provider for authentication state
+  - Session persistence (MetaMask and WalletConnect)
+  - Automatic session restoration
+  - Error handling and recovery
+  - Configurable storage keys
+- **Account Creation**: Cryptographically secure account generation
+  - `createAccount()`: Generate new Qubic accounts
+  - `generateSeed()`: Generate random base26 seeds
+  - `isValidSeed()`: Validate seed format
+  - `createAccounts()`: Batch account creation
+  - Custom entropy support
+- **Authentication Utilities**:
+  - `authenticate()`: Unified authentication interface
+  - `detectAvailableAuthMethods()`: Check available auth methods
+  - MetaMask detection and snap installation
+  - Base26 encoding/decoding utilities
+  - Vault file encryption/decryption
+- **Transaction Signing**: Unified signing interface across all auth methods
+  - Sign transactions with any authentication method
+  - Access private keys (when supported by method)
+  - Session-based signing operations
+
+### Changed
+- Authentication is now method-agnostic with unified API
+- All authentication methods share the same `AuthSession` interface
+- Session management consolidated into single provider
+- Error handling standardized across all auth methods
+
+### Documentation
+- **New Authentication Guide**: Comprehensive linear learning approach
+  - Step-by-step guide starting with simplest method (seed)
+  - Progressive introduction of advanced methods
+  - Security best practices for each method
+  - Complete code examples for React and vanilla JS
+- Added troubleshooting section for common authentication issues
+- Included comparison table for choosing authentication methods
+- Added security guidelines specific to each auth method
+- Created example authentication component with all four methods
+
+### Security
+- Implement secure seed generation using crypto.getRandomValues
+- Clear sensitive data from memory after use
+- Vault files use AES-256-GCM and RSA-4096 encryption
+- Only persist MetaMask sessions (vault/seed require re-auth)
+- Proper error codes for security-related failures
+
+---
+
 ## [1.3.3] - 2025-10-25
 
 ### Changed
@@ -106,7 +168,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Built-in WalletConnectProvider**: SDK now exports `WalletConnectProvider` and `useWalletConnect` hook
   - No need to manually create provider in each project
-  - Import directly from `@nvlabs/qts/react`
+  - Import directly from `@nouslabs/sdk/react`
   - Full TypeScript support with automatic type inference
   - Automatic session restoration on mount
 - **Simplified Provider API**: Cleaner context that exposes adapter directly
@@ -227,7 +289,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.0.0] - 2024
+## [1.0.0] - 2025-10-20
 
 ### Added
 
@@ -335,7 +397,7 @@ if (!response.ok) {
 
 **After:**
 ```typescript
-import { QubicLiveClient } from '@nvlabs/qts';
+import { QubicLiveClient } from '@nouslabs/sdk';
 const client = new QubicLiveClient();
 const { tickInfo } = await client.getTickInfo();
 ```
