@@ -1,0 +1,84 @@
+{
+    "name": "@nouslabs/react",
+    "version": "1.0.1",
+    "description": "React hooks and providers for Qubic blockchain",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "type": "module",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./hooks": {
+            "import": "./dist/hooks.js",
+            "types": "./dist/hooks.d.ts"
+        },
+        "./providers": {
+            "import": "./dist/providers.js",
+            "types": "./dist/providers.d.ts"
+        },
+        "./query": {
+            "import": "./dist/query/index.js",
+            "types": "./dist/query/index.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch",
+        "test": "bun test",
+        "test:coverage": "bun test --coverage",
+        "typecheck": "tsc --noEmit",
+        "lint": "tsc --noEmit",
+        "clean": "rm -rf dist"
+    },
+    "keywords": [
+        "qubic",
+        "blockchain",
+        "react",
+        "hooks",
+        "react-query",
+        "tanstack"
+    ],
+    "author": "Nous Labs",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/nous-labs/sdk.git",
+        "directory": "packages/react"
+    },
+    "bugs": {
+        "url": "https://github.com/nous-labs/sdk/issues"
+    },
+    "homepage": "https://nous-labs.com",
+    "dependencies": {
+        "@nouslabs/core": "1.0.1",
+        "@nouslabs/sdk": "1.5.2",
+        "@walletconnect/sign-client": "^2.22.4"
+    },
+    "peerDependencies": {
+        "react": ">=18.0.0",
+        "@tanstack/react-query": ">=5.0.0"
+    },
+    "devDependencies": {
+        "@tanstack/react-query": "^5.90.5",
+        "@testing-library/react": "^16.3.0",
+        "@testing-library/react-hooks": "^8.0.1",
+        "@types/react": "^18.3.0",
+        "react": "^18.3.0",
+        "typescript": "^5.9.3"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    }
+}
