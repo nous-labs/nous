@@ -37,3 +37,13 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 NPM_PUBLISHING.md
 MIGRATION_TO_NOUSLABS.md
 REBRAND_SUMMARY.md
+
+# Public documentation (for public repo)
+BRAND_MESSAGING.md
+LOGO_PROMPTS.md
+BRAND_MESSAGING.md
+
+# Monorepo
+MONOREPO.md
+RESTRUCTURE_COMPLETE.md
+proposal.md

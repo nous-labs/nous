@@ -1,23 +1,54 @@
-# Nous SDK
+# Nous Labs
 
 > νοῦς (nous) - mind, intellect, reason
 
-[![npm version](https://img.shields.io/npm/v/@nouslabs/sdk.svg)](https://www.npmjs.com/package/@nouslabs/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
-Intelligent tools for the Qubic blockchain. Build powerful applications with full type safety, modern async/await patterns, and universal compatibility.
+Developer tools for the Qubic blockchain. Build powerful applications with full type safety, modern async/await patterns, and universal compatibility.
 
-**Developed by [Nous Labs](https://github.com/nous-labs)**
+**Monorepo for [Nous Labs](https://nous-labs.com)** developer tools.
 
-## What's New in v1.4.0
+## Packages
 
-- **Unified Authentication System** - MetaMask Snap, Vault files, private seeds, and WalletConnect
-- **React Hooks** - Complete authentication state management with `useQubicAuth()`
-- **Account Creation** - Cryptographically secure account generation
-- **Improved Documentation** - Clear, linear learning path
+This monorepo contains:
+
+- **[@nouslabs/sdk](./packages/sdk)** - TypeScript SDK for Qubic blockchain
+- **[@nouslabs/cli](./packages/cli)** - Command-line tools for Qubic
+
+## Repository Structure
+
+```
+packages/
+├── sdk/      - TypeScript SDK (@nouslabs/sdk)
+├── cli/      - Command-line tools (@nouslabs/cli)
+docs/         - Documentation site
+examples/     - Example applications
+```
+
+## Quick Start
+
+### Install SDK
+
+```bash
+npm install @nouslabs/sdk
+```
+
+### Install CLI
+
+```bash
+npm install -g @nouslabs/cli
+```
+
+Or use with npx:
+
+```bash
+npx @nouslabs/cli info
+```
 
 ## Features
+
+### SDK (@nouslabs/sdk)
 
 - **Four Authentication Methods** - MetaMask, Vault files, private seeds, WalletConnect
 - **Full TypeScript Support** - Complete type definitions with strict mode
@@ -27,13 +58,13 @@ Intelligent tools for the Qubic blockchain. Build powerful applications with ful
 - **React Integration** - First-class React support with hooks and providers
 - **Modern APIs** - Clean async/await interfaces
 - **Comprehensive Error Handling** - Typed errors with detailed messages
-- **Well Documented** - Extensive documentation with working examples
 
-## Installation
+### CLI (@nouslabs/cli)
 
-```bash
-npm install @nouslabs/sdk
-```
+- **Network Info** - Get current tick and network status
+- **Balance Checking** - Query account balances
+- **Transaction History** - View recent transactions
+- **Authentication** - Manage MetaMask, WalletConnect, and Vault (coming soon)
 
 ## Quick Start
 
@@ -119,28 +150,27 @@ const query = createQuery(QUBIC_CONTRACTS.QX, 1)
 const response = await query.execute(qubic.live);
 ```
 
-## CLI Tool
-
-For command-line usage, check out our CLI:
+## CLI Usage
 
 ```bash
-npm install -g @nouslabs/cli
+# Get network info
+nous info
 
-nous auth login
+# Check balance
 nous balance <identity>
-nous send <to> <amount>
+
+# View transactions
+nous tx <identity> --limit 10
 ```
 
-See [@nouslabs/cli documentation](https://github.com/nous-labs/cli) for more details.
+See [CLI documentation](./packages/cli) for more details.
 
 ## Documentation
 
-Comprehensive documentation is available at our documentation site:
-
-- [Getting Started](https://github.com/nous-labs/sdk/tree/main/docs)
-- [Authentication Guide](https://github.com/nous-labs/sdk/tree/main/docs#authentication)
-- [API Reference](https://github.com/nous-labs/sdk/tree/main/docs#api-reference)
-- [Examples](https://github.com/nous-labs/sdk/tree/main/docs#examples)
+- [SDK Documentation](./packages/sdk) - Complete SDK reference
+- [CLI Documentation](./packages/cli) - Command-line tools guide
+- [Examples](./examples) - Working example applications
+- [Full Docs Site](./docs) - Comprehensive documentation
 
 ## Authentication Methods
 
@@ -315,24 +345,39 @@ Requires ES2022, Fetch API, Web Crypto API, and BigInt support.
 - Bun 1.0+
 - Deno (with npm: specifier)
 
-## Migration from fwyk
+## Development
 
-If you're upgrading from `fwyk`, see our [Migration Guide](MIGRATION.md).
+This is a monorepo managed with Bun workspaces.
 
-Quick migration:
+### Install Dependencies
 
 ```bash
-npm uninstall fwyk
-npm install @nouslabs/sdk
+bun install
 ```
 
-Update imports:
-```typescript
-// Before
-import { createQubicClient } from 'fwyk';
+### Run Tests
 
-// After
-import { createQubicClient } from '@nouslabs/sdk';
+```bash
+bun test
+```
+
+### Build All Packages
+
+```bash
+bun run build
+```
+
+### Type Check
+
+```bash
+bun run typecheck
+```
+
+### Run CLI in Development
+
+```bash
+cd packages/cli
+bun run dev
 ```
 
 ## Contributing
@@ -361,5 +406,5 @@ Special thanks to all contributors and the Qubic core team.
 
 ---
 
-**Nous Labs** - Intelligent tools for Qubic blockchain  
-[Website](https://nous-labs.com) • [Documentation](https://github.com/nous-labs/sdk/tree/main/docs) • [CLI](https://github.com/nous-labs/cli)
+**Nous Labs** - Developer tools for Qubic blockchain  
+[Website](https://nous-labs.com) • [SDK](./packages/sdk) • [CLI](./packages/cli) • [Documentation](./docs)
