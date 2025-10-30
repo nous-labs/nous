@@ -1,6 +1,6 @@
 import type { PageTreeTransformer } from "fumadocs-core/source";
 import type { Folder, Item, Node, Root } from "fumadocs-core/page-tree";
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 import { icons } from "lucide-react";
 
 type PackageSection = {
@@ -394,9 +394,9 @@ function slugFromUrl(url: string | undefined): string | null {
   return url.replace(/^\/+/, "").replace(/^docs\//, "");
 }
 
-function iconForName(name?: string) {
+function iconForName(name?: string): ReactNode {
   if (!name) return undefined;
   const Icon = icons[name as keyof typeof icons];
   if (!Icon) return undefined;
-  return createElement(Icon, { "aria-hidden": true });
+  return createElement(Icon as React.ComponentType<any>, { "aria-hidden": true });
 }
