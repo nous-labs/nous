@@ -398,5 +398,6 @@ function iconForName(name?: string): ReactNode {
   if (!name) return undefined;
   const Icon = icons[name as keyof typeof icons];
   if (!Icon) return undefined;
-  return createElement(Icon as React.ComponentType<any>, { "aria-hidden": true });
+  // Cast to any to avoid React types mismatch across environments (CI vs local)
+  return createElement(Icon as any, { "aria-hidden": true });
 }
