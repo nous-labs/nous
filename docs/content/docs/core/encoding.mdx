@@ -1,0 +1,52 @@
+---
+title: Encoding helpers
+description: Convert between hex, base64, bytes, and little-endian integers with @nouslabs/core.
+---
+
+# Encoding helpers
+
+`@nouslabs/core/encoding` centralises binary conversions so every package serialises data identically.
+
+## Hex ↔ base64
+
+```ts
+import { hexToBase64, base64ToHex } from "@nouslabs/core/encoding";
+
+const base64 = hexToBase64("deadbeef");
+const hex = base64ToHex(base64);
+```
+
+## Bytes ↔ string
+
+```ts
+import { stringToHex, hexToString } from "@nouslabs/core/encoding";
+
+const payload = stringToHex("Hello, Qubic!");
+const text = hexToString(payload);
+```
+
+## Bytes ↔ base64
+
+```ts
+import { bytesToBase64, base64ToBytes } from "@nouslabs/core/encoding";
+
+const bytes = base64ToBytes(base64);
+const again = bytesToBase64(bytes);
+```
+
+## Little-endian integers
+
+```ts
+import {
+  encodeInt64LE,
+  decodeInt64LE,
+  encodeInt32LE,
+  decodeInt32LE,
+  encodeInt16LE,
+} from "@nouslabs/core/encoding";
+
+const hex = encodeInt64LE(1000n);
+const value = decodeInt64LE(hex);
+```
+
+These helpers mirror wagmi’s `encodeAbiParameters` style utilities—use them to build smart-contract payloads or parse binary responses.

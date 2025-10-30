@@ -1,0 +1,48 @@
+---
+title: SDK changelog
+description: Major releases and highlights for @nouslabs/sdk.
+---
+
+# @nouslabs/sdk changelog
+
+This is a human-readable companion to the repository-wide [CHANGELOG](../changelog). It focuses on SDK capabilities that most impact application developers.
+
+## 1.4.0 · 2025-01-26
+
+### Breaking
+
+- Package renamed from `@nvlabs/qts` to `@nouslabs/sdk` with updated imports and documentation.
+
+### Added
+
+- Unified authentication system covering private seeds, vault files, MetaMask Snap, and WalletConnect.
+- React authentication helpers (`useQubicAuth`, `useQubicAccount`, etc.) with context provider support.
+- Account creation utilities (`createAccount`, `generateSeed`, `isValidSeed`, `createAccounts`).
+- Base26 encoding helpers for MetaMask BIP44 integration.
+
+### Changed
+
+- Documentation and navigation refreshed to match the Nous Labs branding.
+- Import paths and GitHub URLs updated throughout the codebase.
+
+### Fixed
+
+- Sidebar duplication issues and missing docs in the site navigation.
+- Meta.json consistency and introduction placement.
+
+## 1.3.x · 2025-10-25
+
+- Improved WalletConnect integration with reduced polling and a manual `refreshAccounts()` escape hatch.
+- Hardened wallet connection flows with better session management and race-condition fixes.
+- Expanded React Query helpers and WalletConnect v2 support to streamline contract calls.
+- Strengthened TypeScript strict-mode coverage and error messaging.
+
+## 1.2.x · 2025-10-25
+
+- Introduced `QueryClient` for historical data with advanced filtering, pagination, and computor queries.
+- Added smart-contract helpers, batch utilities, and transaction builders.
+- Split API clients into specialized interfaces and refreshed documentation structure.
+
+## 1.0.0 · 2024
+
+- Initial release featuring QubicLiveClient, ArchiveClient, smart-contract tooling, encoding utilities, and React integrations.

@@ -1,0 +1,29 @@
+---
+title: Core primitives overview
+description: Fundamentals that power every Nous Labs package, including identity, cryptography, and data utilities.
+---
+
+# @nouslabs/core
+
+The `@nouslabs/core` package exposes the foundational utilities that keep the Qubic TypeScript ecosystem consistent across clients, SDKs, and integrations. Everything from identity encoding to low-level cryptography originates here.
+
+## When to use it
+
+- Build custom tooling on top of Qubic primitives.
+- Audit or extend the helpers that higher level packages consume.
+- Share consistent serialization logic between browser, server, and Node runtimes.
+
+## What's inside
+
+- Identity helpers for converting between base26, bytes, and checksum-safe strings.
+- Keccak and KangarooTwelve hashing utilities optimised for Qubic payloads.
+- Deterministic seed derivation helpers used by the SDK, CLI, and React integrations.
+- Strict input validation schemas for transactions, smart-contract payloads, and configuration.
+
+## Related packages
+
+- [`@nouslabs/sdk`](/docs) consumes these primitives to build rich client utilities.
+- [`@nouslabs/react`](/docs/integrations) wraps the core logic with React hooks and providers.
+- [`@nouslabs/cli`](/docs/cli) relies on shared serialization and validation for secure workflows.
+
+Explore the topics in the sidebar to see how the core package is organised.

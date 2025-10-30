@@ -1,0 +1,86 @@
+---
+title: Wallet helpers
+description: Seed, vault, MetaMask, and WalletConnect helpers plus how to extend them.
+---
+
+# Wallet helpers
+
+`@nouslabs/sdk/wallet` provides the primitives that power the CLI and React bindings. They mirror wagmi connectors and can be used in vanilla TypeScript projects.
+
+## Seed session
+
+```ts
+import { createSeedSession } from "@nouslabs/sdk/wallet";
+
+const session = await createSeedSession({
+  seed: process.env.SEED!,
+  label: "Ops wallet",
+});
+
+console.log(session.account.publicId); // derived identity (requires qubic-core-lite integration)
+```
+
+> **Note**: Low-level signing with seeds currently relies on the cryptographic primitives from [qubic-core-lite](https://github.com/hackerby888/qubic-core-lite). See the Next.js scaffolding guide for wiring both packages together.
+
+## Vault session
+
+Use vault helpers to decrypt `.qubic-vault` files in the browser or Node.
+
+```ts
+import { createVaultSession } from "@nouslabs/sdk/wallet";
+
+const vaultFile = await fetch("/secrets/team.qubic-vault").then((res) =>
+  res.arrayBuffer(),
+);
+
+const session = await createVaultSession({
+  file: new File([vaultFile], "team.qubic-vault"),
+  password: process.env.VAULT_PASSWORD!,
+});
+```
+
+## WalletConnect
+
+```ts
+import {
+  connectWalletConnect,
+  createWalletConnectSession,
+} from "@nouslabs/sdk/wallet";
+
+const connection = await connectWalletConnect({
+  projectId: process.env.WALLETCONNECT_PROJECT_ID!,
+  metadata: {
+    name: "QTS Playground",
+    description: "Build with Qubic",
+    url: "https://localhost:3000",
+    icons: ["https://localhost:3000/icon.png"],
+  },
+});
+
+// Present connection.uri in your QR modal of choice
+const session = await connection.waitForApproval();
+
+// Later, resume a signed session
+const restored = await createWalletConnectSession({
+  projectId: process.env.WALLETCONNECT_PROJECT_ID!,
+});
+```
+
+## MetaMask Snap
+
+Call `authenticate("metamask")` from the React bindings or use the lower-level helpers to talk to a Qubic Snap. The wallet module exposes `detectWalletProviders()` to locate injected providers.
+
+```ts
+import { detectWalletProviders, WalletAdapter } from "@nouslabs/sdk/wallet";
+
+const [provider] = detectWalletProviders();
+const adapter = new WalletAdapter(provider.provider);
+
+const accounts = await adapter.connect();
+```
+
+## Extending with qubic-core-lite
+
+For smart-contract execution and Schnorr signing, clone [qubic-core-lite](https://github.com/hackerby888/qubic-core-lite) alongside your app (for example under `contracts/qubic-core-lite`). Build the native tooling, then call its utilities to derive identities and sign payloads before broadcasting them with `qubic.live.broadcast`.
+
+See the Next.js scaffolding guide for a full integration that compiles contracts and triggers transactions end-to-end.

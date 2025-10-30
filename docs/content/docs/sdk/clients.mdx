@@ -1,0 +1,55 @@
+---
+title: Clients overview
+description: Choose the right client for live data, historical queries, or legacy archives.
+---
+
+# Clients
+
+`@nouslabs/sdk` ships three main clients. Pick the one that matches your use case; all three are returned by `createQubicClient()`.
+
+| Client | Use it for | Typical base URL |
+| --- | --- | --- |
+| `QubicLiveClient` | Current tick, balances, broadcasting, contract read helpers | `https://rpc.qubic.org` |
+| `QueryClient` | Historical transactions, pagination, archives | `https://api.qubic.org` |
+| `ArchiveClient` | Legacy archive access (prefer `QueryClient` when possible) | `https://rpc.qubic.org` |
+
+## createQubicClient
+
+```ts
+import { createQubicClient } from "@nouslabs/sdk";
+
+const qubic = createQubicClient({
+  liveUrl: "https://rpc.qubic.org",
+  queryUrl: "https://api.qubic.org",
+  timeout: 30_000,
+});
+
+const { tickInfo } = await qubic.live.getTickInfo();
+const { transactions } = await qubic.query.getTransactionsForIdentity(identity);
+```
+
+Pass custom fetch implementations or headers via the config object.
+
+## Using clients directly
+
+```ts
+import { QubicLiveClient } from "@nouslabs/sdk";
+
+const live = new QubicLiveClient({ baseUrl: "https://rpc.qubic.org" });
+const { balance } = await live.getBalance(identity);
+```
+
+See the full API reference in the **API Clients** page for every method signature.
+
+## Error handling
+
+All clients throw `QubicApiError`. Inspect `status`, `statusText`, and `url` when catching:
+
+```ts
+try {
+  await live.getBalance(identity);
+} catch (error) {
+  const apiError = error as QubicApiError;
+  console.error(apiError.status, apiError.message);
+}
+```

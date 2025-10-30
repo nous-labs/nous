@@ -1,0 +1,50 @@
+---
+title: Monitoring workflows
+description: Live dashboards and status commands available with nous monitor.
+---
+
+# Monitoring workflows
+
+The CLI ships with a `monitor` command group for quick network visibility. Use these commands while building dashboards or when you just want a heads-up display in the terminal.
+
+## Network status
+
+```bash
+nous monitor status
+```
+
+Displays the latest tick, epoch, tick duration, and computor summary. Add `--json` to emit structured JSON. Use `--epoch <n>` to inspect computor data for a specific epoch.
+
+## Tick stream
+
+```bash
+nous monitor ticks --interval 1000 --count 10
+```
+
+Streams tick updates at the chosen interval (milliseconds).
+
+Options:
+
+- `--interval <ms>`: Polling interval (default `1000`).
+- `--count <n>`: Stop after *n* updates.
+- `--duration <seconds>`: Stop after *n* seconds.
+- `--json`: Emit newline-delimited JSON summaries.
+
+Press `Ctrl+C` to exit at any time.
+
+## Computor lists
+
+```bash
+nous monitor computors --epoch 134 --limit 5
+```
+
+Fetches the computor lists for an epoch. Useful for verifying quorum membership or inspecting individual identities.
+
+Options:
+
+- `--epoch <number>`: Epoch to inspect (defaults to the current epoch).
+- `--list <index>`: Show one specific list (1-based).
+- `--limit <n>`: Limit identities printed per list (default `10`).
+- `--json`: Output the raw JSON response from the query API.
+
+Combine these commands with `--json` and your favourite scripting tools to build custom dashboards.

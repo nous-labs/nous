@@ -1,0 +1,52 @@
+---
+title: Configuration
+description: Manage CLI configuration, vault storage, and environment overrides.
+---
+
+# Configuration
+
+The CLI stores state in the user’s config directory (`~/.config/nouslabs-cli-nodejs` on Linux, `%AppData%` on Windows). Use these commands to inspect and tweak settings.
+
+## Inspect config
+
+```bash
+nous config show
+```
+
+Outputs:
+
+- Config file path.
+- Current identity (if any).
+- Active RPC endpoint and default network.
+- Count of encrypted seeds.
+- Optional password hint.
+
+## Set values
+
+```bash
+nous config set rpcEndpoint https://rpc.qubic.org
+nous config set defaultNetwork mainnet
+```
+
+Only `rpcEndpoint` and `defaultNetwork` are currently supported.
+
+## Reset everything
+
+```bash
+nous config reset
+```
+
+Prompts for confirmation, clears the config file, and wipes in-memory seed caches. Use when rotating machines or rotating the vault password.
+
+## Environment overrides
+
+Set `NOUS_CONFIG_DIR` to pin the configuration to a specific folder (useful for CI/CD or multiple identities on the same machine).
+
+```bash
+export NOUS_CONFIG_DIR=$PWD/.nouslabs-cli
+nous auth login
+```
+
+## Vault backups
+
+The encrypted vault lives inside the config directory. Back it up along with its password hint, and rotate the password periodically using the `account remove` + `account import` flow.

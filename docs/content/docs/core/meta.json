@@ -1,4 +1,4 @@
 {
   "title": "Core Functionality",
-  "pages": ["authentication"]
+  "pages": ["index", "authentication", "identity", "encoding", "validation", "changelog"]
 }

@@ -1,0 +1,16 @@
+{
+  "title": "CLI Toolkit",
+  "description": "Command-line workflows for accounts, transactions, and configuration.",
+  "pages": [
+    "accounts",
+    "changelog",
+    "commands",
+    "configuration",
+    "getting-started",
+    "index",
+    "monitoring",
+    "scaffold",
+    "security",
+    "transactions"
+  ]
+}

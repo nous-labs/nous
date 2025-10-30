@@ -1,0 +1,28 @@
+{
+  "title": "React Query",
+  "description": "Hooks, providers, and contract guides for React Query consumers.",
+  "pages": [
+    "index",
+    "query/index",
+    "query/hooks",
+    "query/contracts",
+    "query/contracts/qx",
+    "query/contracts/qutil",
+    "query/contracts/quottery",
+    "query/contracts/random",
+    "query/contracts/qearn",
+    "query/contracts/qswap",
+    "query/contracts/qvault",
+    "query/contracts/ccf",
+    "query/contracts/mylastmatch",
+    "query/contracts/gqmp",
+    "query/contracts/supplywatcher",
+    "query/contracts/msvault",
+    "query/contracts/qbay",
+    "query/contracts/nostromo",
+    "query/contracts/qdraw",
+    "query/contracts/randomlottery",
+    "query/contracts/qbond",
+    "changelog"
+  ]
+}

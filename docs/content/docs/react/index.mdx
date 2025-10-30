@@ -1,0 +1,31 @@
+---
+title: React integration overview
+description: How @nouslabs/react exposes providers and React Query hooks.
+---
+
+# @nouslabs/react
+
+`@nouslabs/react` packages the SDK into ergonomic hooks and context providers. It also exposes a full React Query integration (`@nouslabs/react/query`) with ready-made hooks for live data and smart contracts.
+
+## Building blocks
+
+- `QubicProvider` — exposes the live/query/archive clients via React context.
+- `QubicAuthProvider` — optional layer for seed/vault/WalletConnect workflows.
+- React Query helpers — documented throughout this section, including per-contract guides.
+
+```tsx
+import { QubicProvider } from "@nouslabs/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
+export function App({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <QubicProvider>{children}</QubicProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+Browse the React Query section for hook references, or open the changelog to see what changed recently.

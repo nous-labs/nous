@@ -1,0 +1,44 @@
+---
+title: Validation schemas
+description: Runtime validation with Zod schemas for identities, amounts, and contract payloads.
+---
+
+# Validation schemas
+
+`@nouslabs/core/validation` exports Zod schemas that enforce Qubic rules at runtime, mirroring wagmi’s strict typing utilities.
+
+## Basic primitives
+
+```ts
+import {
+  QubicIdentitySchema,
+  Uint64Schema,
+  AmountSchema,
+  TickNumberSchema,
+} from "@nouslabs/core/validation";
+
+const identity = QubicIdentitySchema.parse(
+  "BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA",
+);
+const amount = AmountSchema.parse(10n);
+const tick = TickNumberSchema.parse(123456);
+```
+
+## Contract inputs
+
+Leverage the prebuilt schemas for popular contracts (example: QUtil send-to-many):
+
+```ts
+import { QUtilSendToManyV1InputSchema } from "@nouslabs/core/validation";
+
+QUtilSendToManyV1InputSchema.parse({
+  destinations: Array(25).fill(identity),
+  amounts: Array(25).fill(1n),
+});
+```
+
+## Why it matters
+
+- Enforce constraints in both Node and browser environments.
+- Reuse the same validation logic inside CLI prompts, React forms, and API routes.
+- Infer TypeScript types from the schemas when building higher level abstractions.

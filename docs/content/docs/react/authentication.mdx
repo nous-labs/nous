@@ -1,0 +1,117 @@
+---
+title: Authentication flows
+description: Seed, vault, MetaMask Snap, and WalletConnect flows in React components.
+---
+
+# Authentication flows
+
+Authentication mirrors wagmi connectors: choose a method, call `authenticate`, handle UI state.
+
+## Seed authentication
+
+```tsx
+import { useQubicAuth } from "@nouslabs/react";
+
+export function SeedForm() {
+  const { authenticate, status, error } = useQubicAuth();
+  const [seed, setSeed] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    await authenticate("seed", { seed, label: "Primary account" });
+    setSeed("");
+  }
+
+  return (
+    <form onSubmit={submit}>
+      <input
+        value={seed}
+        onChange={(event) => setSeed(event.target.value.toLowerCase())}
+        minLength={55}
+        placeholder="55 character seed"
+      />
+      <button type="submit" disabled={status === "connecting"}>
+        {status === "connecting" ? "Unlocking…" : "Connect seed"}
+      </button>
+      {error && <p className="error">{error.message}</p>}
+    </form>
+  );
+}
+```
+
+## Vault authentication
+
+```tsx
+export function VaultLogin() {
+  const { authenticate } = useQubicAuth();
+  const [file, setFile] = useState<File | null>(null);
+  const [password, setPassword] = useState("");
+
+  return (
+    <div>
+      <input
+        type="file"
+        accept=".qubic-vault,application/json"
+        onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+      />
+      <button
+        disabled={!file || password.length === 0}
+        onClick={() => authenticate("vault", { file: file!, password })}
+      >
+        Unlock vault
+      </button>
+    </div>
+  );
+}
+```
+
+## WalletConnect
+
+```tsx
+import { useWalletConnect } from "@nouslabs/react";
+
+export function WalletConnectFlow() {
+  const { connect, disconnect, isConnected, accounts } = useWalletConnect();
+
+  if (isConnected) {
+    return (
+      <button onClick={disconnect}>
+        Disconnect {accounts[0]?.label ?? "Wallet"}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={async () => {
+        const { uri, waitForApproval } = await connect();
+        // TODO: open your favourite QR modal with `uri`
+        await waitForApproval();
+      }}
+    >
+      Connect Wallet
+    </button>
+  );
+}
+```
+
+When approval resolves, `useQubicAuth` automatically receives the WalletConnect session.
+
+## MetaMask Snap
+
+MetaMask Snap support reuses the `"metamask"` authenticate target. Prompt the user to install the Snap if required:
+
+```tsx
+const { authenticate, status } = useQubicAuth();
+
+async function connectMetaMask() {
+  await authenticate("metamask", { snapId: "npm:@nouslabs/snap" });
+}
+```
+
+Refer to the CLI security guide for best practices on handling seeds and vaults.

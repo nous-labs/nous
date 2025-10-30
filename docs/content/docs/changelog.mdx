@@ -12,6 +12,25 @@ All notable changes to the Qubic TypeScript SDK will be documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-10-29
+
+### Changed
+- SDK: Fixed TypeScript dynamic import paths for WalletConnect adapter (no `.ts` extension) to support strict TS configs.
+- CLI: Type check now succeeds without pulling React/DOM types from SDK thanks to tsconfig updates.
+- Docs: Reorganised sections to mirror wagmi's structure with detailed pages per package.
+
+### Added
+- Tooling: Added `npm run scaffold:next` for generating the Next.js starter (with optional dependency installation flags).
+- CLI: Added monitoring commands (`nous monitor status`, `nous monitor ticks`, `nous monitor computors`).
+- Docs: Next.js scaffolding tutorial including `qubic-core-lite` integration for contract development.
+- Docs: Expanded CLI, SDK, Core, and React subsections with focused guides (accounts, transactions, providers, hooks, utilities).
+- Security notes: Reinforced vault-first guidance and offline signing patterns.
+
+### Notes
+- MetaMask and WalletConnect integrations remain in the SDK/React packages, not in the CLI.
+
+---
+
 ## [Unreleased]
 
 ### Planned
@@ -521,3 +540,10 @@ Special thanks to all contributors who have helped make this project possible!
 [Unreleased]: https://github.com/nvlabs/qts/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/nvlabs/qts/releases/tag/v1.2.0
 [1.0.0]: https://github.com/nvlabs/qts/releases/tag/v1.0.0
+
+
+
+
+
+
+

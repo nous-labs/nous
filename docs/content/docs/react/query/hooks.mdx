@@ -1,0 +1,40 @@
+---
+title: Core hooks
+description: High-level React Query hooks exposed by @nouslabs/react/query/hooks.
+---
+
+# Core hooks
+
+These hooks wrap the live, query, and archive clients from `@nouslabs/sdk`, giving you instant access to network data with TanStack Query.
+
+| Hook | Purpose |
+| --- | --- |
+| `useCurrentTick()` | Fetches the latest tick info and refreshes every second. |
+| `useTick(tickNumber)` | Retrieves historical tick data through the archive service. |
+| `useTransactionsForIdentity(identity)` | Streams paginated transactions for a specific identity. |
+| `useBalance(identity)` | Loads QUBIC balances along with the tick they were observed. |
+| `useComputorList(epoch?)` | Fetches computor lists for a given epoch. |
+| `useEntity(identity)` | Convenience query combining entity data and transactions. |
+| `useArchivedTick(tickNumber)` | Archived variant of `useTick()` pinned for historical analysis. |
+| `useBroadcastTransaction()` | Mutation wrapper for broadcasting pre-signed payloads. |
+| `useProcedureCall()` | Mutation helper for experimental procedure calls (requires wallet support). |
+| `useTickPoller(intervalMs?)` | Polls `useCurrentTick` on an interval. |
+| `useBalancePoller(identity, intervalMs?)` | Polls balances on a schedule for lightweight dashboards. |
+
+All hooks return the standard TanStack Query results (`status`, `data`, `error`, etc.), so you can plug them straight into Suspense, optimistic updates, or any cache patterns you already use.
+
+## Usage example
+
+```tsx
+import { useBalance } from "@nouslabs/react/query";
+
+function BalanceCard({ identity }: { identity: string }) {
+  const balanceQuery = useBalance(identity);
+
+  if (balanceQuery.isLoading) return <p>Loading…</p>;
+  if (balanceQuery.error) return <p>Unable to load balance</p>;
+
+  const amount = Number(balanceQuery.data?.balance ?? 0).toLocaleString();
+  return <span>{amount} QUBIC</span>;
+}
+```

@@ -1,0 +1,81 @@
+---
+title: Providers
+description: Compose QubicProvider and WalletConnectProvider to make SDK clients and wallet sessions available.
+---
+
+# Providers
+
+`@nouslabs/react` exposes providers that mirror wagmi’s composition style. Use them at the root of your app.
+
+## QubicProvider
+
+Wrap your app with `QubicProvider` to initialise the SDK clients once and re-use them everywhere.
+
+```tsx
+import { QubicProvider } from "@nouslabs/react";
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <QubicProvider
+      config={{
+        liveUrl: process.env.NEXT_PUBLIC_QUBIC_LIVE_URL,
+        queryUrl: "https://api.qubic.org",
+      }}
+    >
+      {children}
+    </QubicProvider>
+  );
+}
+```
+
+### Custom clients
+
+Pass specific client instances (for testing or Storybook):
+
+```tsx
+<QubicProvider
+  clients={{
+    live: mockLiveClient,
+    query: mockQueryClient,
+    archive: mockArchiveClient,
+  }}
+>
+  {children}
+</QubicProvider>
+```
+
+## WalletConnectProvider
+
+Wrap authentication-sensitive trees with `WalletConnectProvider` to manage sessions.
+
+```tsx
+import { WalletConnectProvider } from "@nouslabs/react";
+
+function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <QubicProvider>
+      <WalletConnectProvider
+        options={{
+          projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+          metadata: {
+            name: "QTS Playground",
+            description: "Build with Qubic",
+            url: "https://localhost:3000",
+            icons: ["https://localhost:3000/icon.png"],
+          },
+        }}
+      >
+        {children}
+      </WalletConnectProvider>
+    </QubicProvider>
+  );
+}
+```
+
+### Auto restore
+
+Set `autoRestoreSession={false}` to skip restoring a previous session when the component mounts.
+
+## Provider order
+
+Place `QubicProvider` outside of `WalletConnectProvider` so hooks have access to the clients when sessions resolve.

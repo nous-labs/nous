@@ -1,0 +1,57 @@
+---
+title: Utilities
+description: Encoding, validation, and smart contract helpers exported from the SDK.
+---
+
+# Utilities
+
+`@nouslabs/sdk/utils` exports helpers that mirror wagmi’s `format` utilities. They are tree-shakeable and can be imported individually.
+
+## Encoding helpers
+
+```ts
+import {
+  hexToBytes,
+  bytesToHex,
+  base64ToBytes,
+  bytesToBase64,
+} from "@nouslabs/sdk/utils";
+
+const bytes = hexToBytes("deadbeef");
+const base64 = bytesToBase64(bytes);
+```
+
+## Identity helpers
+
+```ts
+import { identityToBytes, isValidSeed } from "@nouslabs/sdk/utils";
+
+identityToBytes("BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA");
+isValidSeed("abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwx");
+```
+
+## Smart contract queries
+
+```ts
+import { createQuery, QUBIC_CONTRACTS } from "@nouslabs/sdk/utils";
+
+const query = createQuery(QUBIC_CONTRACTS.QX, 1);
+const response = await query.execute(qubic.live);
+```
+
+Prefer the higher-level helpers in `@nouslabs/sdk/utils/contracts-easy` when available. They unwrap common contract responses into ergonomic objects.
+
+## Procedures
+
+```ts
+import { callProcedure } from "@nouslabs/sdk/utils/procedures";
+
+await callProcedure({
+  client: qubic.live,
+  contract: QUBIC_CONTRACTS.QVAULT,
+  functionIndex: 3,
+  args: [/* ... */],
+});
+```
+
+Combine these utilities with the CLI or qubic-core-lite signing flow to mirror wagmi’s contract interaction APIs.

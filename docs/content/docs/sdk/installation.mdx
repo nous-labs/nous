@@ -1,0 +1,53 @@
+---
+title: Install @nouslabs/sdk
+description: Add the core SDK, peer dependencies, and environment configuration.
+---
+
+# Install
+
+The SDK is published as an ESM package that targets Node 18+, Bun, and modern browsers.
+
+## 1. Add the dependency
+
+```bash
+# npm
+npm install @nouslabs/sdk
+
+# pnpm
+pnpm add @nouslabs/sdk
+
+# bun
+bun add @nouslabs/sdk
+```
+
+For smart-contract helpers or WalletConnect flows, the SDK brings its own dependencies—no extra install is required.
+
+## 2. TypeScript configuration
+
+Set `moduleResolution` to `bundler` or `node16` and ensure `module` is an ESM target:
+
+```json
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "esModuleInterop": true
+  }
+}
+```
+
+## 3. Runtime polyfills
+
+Node 18+ already ships the required Web Crypto API. When running in older environments, make sure `crypto.subtle` is available before calling wallet helpers.
+
+## 4. Environment variables
+
+Set custom endpoints via environment variables when deploying:
+
+```bash
+export NOUS_LIVE_URL=https://rpc.qubic.org
+export NOUS_QUERY_URL=https://api.qubic.org
+```
+
+Pass them to `createQubicClient({ liveUrl: process.env.NOUS_LIVE_URL })` at runtime.

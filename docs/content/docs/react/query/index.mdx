@@ -1,0 +1,33 @@
+---
+title: React Query overview
+description: Wire @nouslabs/react providers into TanStack Query and consume live Qubic data.
+---
+
+# React Query overview
+
+`@nouslabs/react/query` exposes ready-made React Query hooks around every client in `@nouslabs/sdk`. Start by mounting `QubicProvider` and `QueryClientProvider`, then reach for the specialised hooks documented in this section.
+
+## Minimal setup
+
+```tsx
+import { QubicProvider } from "@nouslabs/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
+
+export function App({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <QubicProvider>{children}</QubicProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+Once the providers are mounted, any component can call the hooks listed under **Hooks** and **Contracts** to fetch live data or cached smart contract responses.
+
+## Next steps
+
+- Review the [core hooks](./hooks) for tick, balance, transaction, and mutation helpers.
+- Explore [contract-specific guides](./contracts) for deep integrations with each Qubic contract.
+- Need something custom? Reach for `useContractQuery` from `@nouslabs/react/query/contracts` or the SDK primitives directly.

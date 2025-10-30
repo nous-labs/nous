@@ -1,0 +1,51 @@
+---
+title: Install @nouslabs/react
+description: Add the React bindings, peer dependencies, and project configuration.
+---
+
+# Install
+
+`@nouslabs/react` layers a React-first API on top of `@nouslabs/sdk`. Follow the steps below to add it to a project.
+
+## 1. Install dependencies
+
+```bash
+# npm
+npm install @nouslabs/react @nouslabs/sdk @tanstack/react-query
+
+# pnpm
+pnpm add @nouslabs/react @nouslabs/sdk @tanstack/react-query
+
+# bun
+bun add @nouslabs/react @nouslabs/sdk @tanstack/react-query
+```
+
+### Peer dependencies
+
+- React 18+
+- TypeScript 5+
+- Optional: `@walletconnect/sign-client` if you plan to use WalletConnect bindings (already bundled via the SDK).
+
+## 2. Configure TypeScript
+
+Ensure `tsconfig.json` includes `jsx: "react-jsx"` and the `DOM` library:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["DOM", "ES2022"]
+  }
+}
+```
+
+## 3. Environment variables
+
+When using WalletConnect or custom endpoints, expose them as environment variables (for example in Next.js):
+
+```dotenv
+NEXT_PUBLIC_QUBIC_LIVE_URL=https://rpc.qubic.org
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
+```
+
+Next, wire up the providers as shown in the provider reference.

@@ -1,0 +1,66 @@
+---
+title: Account management
+description: Create, import, list, and secure identities with the CLI.
+---
+
+# Account management
+
+The CLI mirrors wagmi-style account helpers: generate seeds, import vaults, and switch identities from the terminal.
+
+## Create a seed
+
+```bash
+nous account create
+```
+
+- Prompts for a label.
+- Optionally stores the seed in the encrypted vault.
+- Offers to set the new account as current.
+
+Pass flags when scripting:
+
+```bash
+nous account create --label "Ops wallet" --no-store --no-select
+```
+
+## Import an existing account
+
+```bash
+nous account import
+```
+
+- Choose `seed` to type or paste a 55+ character seed.
+- Choose `vault` to register a vaulted identity and label.
+
+Seed imports prompt to encrypt the seed immediately. Vault imports keep the account metadata without storing the private material.
+
+## List & select
+
+```bash
+nous account list
+nous account select
+```
+
+`list` shows:
+
+- Label and identity (truncated).
+- Whether the encrypted seed exists.
+- Whether the seed is loaded in memory for the session.
+
+`select` presents an interactive picker to set `currentIdentity`.
+
+## Remove an account
+
+```bash
+nous account remove
+```
+
+If the account has an encrypted seed, the CLI asks for the vault password and deletes it from disk.
+
+## Session hygiene
+
+```bash
+nous auth logout
+```
+
+Removes the current identity from `.nouslabs-cli` config and clears any seeds cached in memory. Combine with `nous config reset` to wipe the entire CLI state for a workstation.

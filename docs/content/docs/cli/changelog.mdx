@@ -1,0 +1,27 @@
+---
+title: CLI changelog
+description: Notable updates to @nouslabs/cli and its command-line workflows.
+---
+
+# @nouslabs/cli changelog
+
+Stay up to date with the latest enhancements to the Nous Labs CLI experience.
+
+## 2025-10-29
+
+### Added
+
+- Interactive REPL mode (`nous` with no arguments) for staying inside the CLI until you exit.
+- Inline quick references at the prompt so you always know the most useful commands.
+
+### Improved
+
+- Transfer workflow now validates account balances before signing and keeps ticks ≥ latest+5 to avoid stale broadcasts.
+- Post-broadcast confirmation watcher waits for real network progress and offers safe rebroadcast options when the chain advances.
+- Monitoring dashboard switched to high-density HUD cards with ASCII sparklines and contract hotlists.
+
+### Fixed
+
+- Seed vault only prompts once per sensitive action, even when you perform multiple operations in sequence.
+- Confirmation watcher no longer floods the network with retries when the ledger is stalled.
+- REPL gracefully handles cancelled prompts and command errors without dropping back to the OS shell.

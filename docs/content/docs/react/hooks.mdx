@@ -1,0 +1,106 @@
+---
+title: Hooks
+description: Reference for useQubic, useQubicAuth, useQubicAccount, and useWalletConnect.
+---
+
+# Hooks
+
+`@nouslabs/react` offers hooks that mirror wagmi’s ergonomics: core “client” hooks plus specialised auth helpers.
+
+## useQubic
+
+Access SDK clients anywhere inside `QubicProvider`.
+
+```tsx
+import { useQubic } from "@nouslabs/react";
+
+export function NetworkTick() {
+  const { live } = useQubic();
+  const [tick, setTick] = useState<number>();
+
+  useEffect(() => {
+    live
+      .getTickInfo()
+      .then(({ tickInfo }) => setTick(tickInfo.tick))
+      .catch((err) => console.error("Failed to fetch tick", err));
+  }, [live]);
+
+  return <span>Current tick: {tick ?? "…"}</span>;
+}
+```
+
+## useQubicAuth
+
+Primary hook for authentication actions and status.
+
+```tsx
+import { useQubicAuth } from "@nouslabs/react";
+
+export function SeedLoginButton() {
+  const { authenticate, status, error } = useQubicAuth();
+
+  return (
+    <button
+      disabled={status === "connecting"}
+      onClick={() => authenticate("seed", { seed: prompt("Seed") ?? "" })}
+    >
+      {status === "connecting" ? "Connecting…" : "Login with seed"}
+    </button>
+  );
+}
+```
+
+### Return value
+
+- `account`: authenticated account (or `null`)
+- `status`: `"idle" | "connecting" | "connected" | "error"`
+- `authenticate(method, options)`: seed, vault, or walletconnect
+- `disconnect()`: clear session (and optionally WalletConnect)
+- `error`: last authentication error
+
+## useQubicAccount
+
+Convenience wrapper that returns the current account or `null`.
+
+```tsx
+import { useQubicAccount } from "@nouslabs/react";
+
+export function AccountBadge() {
+  const account = useQubicAccount();
+  return <span>{account ? account.label : "Not connected"}</span>;
+}
+```
+
+## useWalletConnect
+
+Access WalletConnect state and actions when `WalletConnectProvider` is present.
+
+```tsx
+import { useWalletConnect } from "@nouslabs/react";
+
+export function WalletConnectButton() {
+  const { connect, disconnect, accounts, isConnected } = useWalletConnect();
+
+  if (isConnected) {
+    return (
+      <button onClick={disconnect}>
+        Disconnect {accounts[0]?.label ?? "Wallet"}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={async () => {
+        const { uri, waitForApproval } = await connect();
+        // Show QR modal with uri, then wait for approval
+        await waitForApproval();
+      }}
+    >
+      Connect Wallet
+    </button>
+  );
+}
+```
+
+Use this hook for advanced flows (refreshing accounts, showing QR codes, etc.).

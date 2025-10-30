@@ -1,0 +1,65 @@
+---
+title: Security practices
+description: Guidelines for protecting seeds and enforcing password confirmations when using the CLI.
+---
+
+# Security practices
+
+The CLI is designed around the encrypted seed vault introduced in `@nouslabs/sdk`. Use the patterns below to keep your identities safe.
+
+## Vault-first mindset
+
+- Store every seed in the encrypted vault unless you are performing a one-off transfer.
+- Create a strong password (8+ characters, ideally with passphrase-style entropy). The CLI enforces minimum length but you should aim higher.
+- Set a memorable, non-sensitive password hint. The hint is stored in plain text to help jog your memory, not to expose the password.
+
+```bash
+nous account create
+# → prompts for password, confirmation, and optional hint
+```
+
+## Confirm every sensitive action
+
+- The CLI prompts for the vault password whenever you sign or broadcast.
+- If a session seed is only in memory, you must still confirm that you want to proceed without vault storage.
+- When using `nous send transfer`, review the summary before approving. Declining returns you to the terminal without broadcasting.
+
+## Session hygiene
+
+- `nous auth logout` clears the selected identity and any seeds cached for the session.
+- Running `nous config reset` removes all configuration files, password hints, and cached seeds. Use it when rotating machines.
+- For scripts, export `NOUS_CONFIG_DIR` to isolate configuration per environment.
+
+## Offline signing workflow
+
+For higher assurance, split signing and broadcasting across machines.
+
+1. On an air-gapped machine:
+
+   ```bash
+   nous transactions sign <to> <amount> --output signed.txt
+   ```
+
+2. Transfer `signed.txt` to an online machine.
+3. Broadcast from the online machine:
+
+   ```bash
+   nous send from-file signed.txt
+   ```
+
+The vault password is required during the signing step only, keeping your sensitive material off the networked host.
+
+## Rotating vault passwords
+
+To rotate, unlock the vault, export seeds, and re-encrypt:
+
+```bash
+nous auth login          # unlock with old password
+nous account list        # ensure identities are loaded
+nous account create --no-store  # optional, generates a temporary seed
+# Recreate the vault by calling reset + login
+nous config reset
+nous auth login          # create a fresh password when prompted
+```
+
+Store the updated password in a secure manager immediately. Without the password you cannot decrypt stored seeds.

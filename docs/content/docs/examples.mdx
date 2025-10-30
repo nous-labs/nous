@@ -14,6 +14,11 @@ Use these snippets as starting points when wiring the SDK into bots, dashboards,
   <code>examples/</code> directory in this repo to try things locally.
 </Callout>
 
+<Callout type="info" title="Scaffold a full app">
+  Follow the <a href="/docs/getting-started/nextjs-scaffold">Next.js scaffold</a> to combine the SDK, React hooks, and
+  <code>qubic-core-lite</code> for contract development.
+</Callout>
+
 ## Basic Examples
 
 ### Simple balance check
@@ -208,3 +213,15 @@ await client.broadcast(hexToBase64(signedTransaction));
 ```
 
 Need a different scenario? Duplicate one of these snippets and adjust the inputs -- they are all self-contained.
+
+### Tick monitor
+
+```bash
+nous monitor ticks --count 5
+```
+
+### Network status snapshot
+
+```bash
+nous monitor status --json
+```

@@ -1,0 +1,13 @@
+{
+  "title": "SDK",
+  "description": "TypeScript SDK usage by functionality.",
+  "pages": [
+    "index",
+    "installation",
+    "clients",
+    "wallet",
+    "transactions",
+    "utilities",
+    "changelog"
+  ]
+}

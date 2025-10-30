@@ -1,0 +1,43 @@
+---
+title: Scaffolding tools
+description: Generate preconfigured projects with nous scaffold web.
+---
+
+# Project scaffolding
+
+`nous scaffold web` bootstraps a Next.js application with Nous Labs defaults. It wraps `bun create next-app --ts --tailwind`, adds our dependencies, and copies the overlay that wires providers and example components.
+
+## Usage
+
+```bash
+nous scaffold web
+```
+
+### Options
+
+| Flag | Description |
+| --- | --- |
+| `--dir <name>` | Output directory (defaults to `qubic-next-app`). |
+| `--pm <manager>` | Package manager (`bun`, `pnpm`, `npm`, `yarn`). |
+| `--no-install` | Skip dependency installation. |
+| `--no-lint` | Skip the final `lint` run. |
+| `--force` | Overwrite an existing directory. |
+
+Any option left blank is prompted interactively. By default the command installs dependencies and runs lint to ensure the scaffold is healthy.
+
+## What you get
+
+- Next.js app with TypeScript and Tailwind CSS
+- `AppProviders` wiring React Query, Qubic clients, and WalletConnect
+- `ConnectButtons` and `WalletBalance` example components
+- `.env.example` ready for Qubic endpoints and WalletConnect project id
+
+After generation, run:
+
+```bash
+cd <your-app>
+cp env.example .env.local
+npm run dev  # or pnpm/bun/yarn
+```
+
+Replace the WalletConnect project id before connecting wallets.

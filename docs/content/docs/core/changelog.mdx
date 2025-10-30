@@ -1,0 +1,27 @@
+---
+title: Core changelog
+description: Updates to the low-level primitives that power Nous Labs tooling.
+---
+
+# @nouslabs/core changelog
+
+Track notable changes to the cryptography, validation, and identity helpers that sit underneath the SDK and CLI packages.
+
+## 2025-10-29
+
+### Improved
+
+- Expanded validation utilities to support richer identity parsing and tick safety checks used by the CLI.
+- Consolidated shared helpers (`promptOrCancel`, balance guards, and seeding utilities) so higher-level packages reuse the same resilient code paths.
+
+## 1.4.0 · 2025-01-26
+
+- Updated package branding from `@nvlabs/qts` to `@nouslabs/core` alongside the SDK rename.
+- Released a unified authentication surface for seed, vault, MetaMask Snap, and WalletConnect flows, powered by shared cryptographic primitives.
+
+## 1.2.x · 2025-10-25
+
+- Strengthened encoding/decoding helpers for smart-contract payloads and account management.
+- Added batch account creation helpers and stricter identity validation routines.
+
+When you need historical details prior to these entries, consult the repository-wide [CHANGELOG](../changelog).

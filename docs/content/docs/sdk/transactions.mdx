@@ -1,0 +1,60 @@
+---
+title: Transactions
+description: Fetch ticks, build payloads, sign with qubic-core-lite, and broadcast.
+---
+
+# Transactions
+
+The SDK focuses on broadcasting and querying. Use it together with signing utilities (CLI or [qubic-core-lite](https://github.com/hackerby888/qubic-core-lite)) to submit transfers and contract calls.
+
+## 1. Create a client
+
+```ts
+import { createQubicClient } from "@nouslabs/sdk";
+
+const qubic = createQubicClient({
+  liveUrl: process.env.NOUS_LIVE_URL,
+});
+```
+
+## 2. Determine a target tick
+
+```ts
+const { tickInfo } = await qubic.live.getTickInfo();
+const tick = tickInfo.tick + 5; // schedule a few ticks ahead
+```
+
+## 3. Build & sign the transaction
+
+Use one of the following approaches:
+
+- **CLI**: `nous transactions sign <to> <amount> --output signed.txt`
+- **qubic-core-lite**: invoke its key derivation and signing helpers inside your Next.js/Node workflow.
+
+qubic-core-lite exposes low-level primitives for KeyPair generation and transaction encoding. After compiling it (see Next.js scaffolding guide), call into the library to produce a base64 encoded payload.
+
+## 4. Broadcast
+
+```ts
+const encoded = readFileSync("signed.txt", "utf8").trim(); // or output from qubic-core-lite
+
+const result = await qubic.live.broadcast(encoded);
+
+console.log("Transaction ID:", result.transactionId);
+console.log("Peers broadcasted:", result.peersBroadcasted);
+```
+
+## Validation helpers
+
+Use the SDK’s utilities before sending payloads:
+
+```ts
+import { identityToBytes, base64ToBytes } from "@nouslabs/sdk/utils";
+
+identityToBytes(destinationIdentity); // throws if invalid
+base64ToBytes(encoded); // ensures payload is valid base64
+```
+
+## Contract interactions
+
+For smart contracts, qubic-core-lite can compile and deploy contracts while the SDK handles broadcasting and querying. Combine both to mirror wagmi’s `writeContract` + `waitForTransaction` pattern.

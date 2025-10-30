@@ -1,0 +1,65 @@
+---
+title: Transactions
+description: Prepare, sign, review, and broadcast transfers with CLI workflows.
+---
+
+# Transactions
+
+Think of the CLI transaction commands as wagmi’s actions adapted to the terminal. They enforce interactive reviews and password prompts by default.
+
+## Quick transfer
+
+```bash
+nous send transfer <destination> <amount>
+```
+
+Options:
+
+- `--from <identity>`: override the current account.
+- `--tick <number>` or `--tick-offset <number>`: control scheduling.
+- `--skip-review`: skip the preflight summary (still prompts for a password).
+
+## Sign without broadcasting
+
+```bash
+nous transactions sign <destination> <amount> --output signed.txt
+```
+
+- Unlocks the vault (or requests a seed) to sign the payload.
+- Writes the base64 encoded transaction to `signed.txt`.
+- Combine with `nous transactions broadcast --file signed.txt` on another machine for offline signing.
+
+## Broadcast an existing payload
+
+```bash
+nous transactions broadcast --file signed.txt
+```
+
+Reads a base64 file, validates that it is decodable, and pushes it to the live network.
+
+## Inspect transactions
+
+```bash
+nous tx --limit 10
+nous tx-hash <hash>
+```
+
+Fetch recent activity for the current identity or a provided address. Use `--json` to integrate with scripts.
+
+## Asset helpers
+
+```bash
+nous assets issued <identity>
+nous assets owned <identity>
+nous assets possessed <identity>
+```
+
+Map asset holdings directly from the command line when building portfolio tooling.
+
+## Password confirmations
+
+Every signing or broadcasting command prompts for the vault password unless the seed exists only in memory. Expect to see:
+
+- Password hint (if set).
+- 3 attempts before the operation aborts.
+- Option to keep seeds session-only when a vault is unavailable.

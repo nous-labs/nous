@@ -1,0 +1,40 @@
+---
+title: Identity utilities
+description: Convert between raw public keys, seeds, and checksum-safe identity strings.
+---
+
+# Identity utilities
+
+`@nouslabs/core/identity` handles the canonical 60-character Qubic identity format. These helpers underpin the CLI and SDK to ensure consistent encoding/decoding.
+
+## identityToBytes
+
+```ts
+import { identityToBytes } from "@nouslabs/core/identity";
+
+const bytes = identityToBytes(
+  "BZVMIJXDWZQJWTFVEBPCJVFZDHXICRCLUVDUPKQGIJAFLEZCMMLUQHTXEXWA",
+);
+```
+
+- Validates length (60 characters) and checksum.
+- Throws descriptive errors for malformed identities.
+- Returns a 32-byte `Uint8Array`.
+
+## identityBytesToString
+
+```ts
+import { identityBytesToString } from "@nouslabs/core/identity";
+
+const identity = identityBytesToString(bytes);
+```
+
+- Accepts a 32-byte public key.
+- Computes the checksum using KangarooTwelve (`k12`).
+- Produces an identity string suitable for display or storage.
+
+## Constants
+
+- `IDENTITY_LENGTH` — `60`
+
+Use these utilities throughout your app to mirror wagmi’s `getAddress` / `isAddress` helpers for EVM chains.

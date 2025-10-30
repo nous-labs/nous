@@ -1,0 +1,250 @@
+---
+title: Next.js scaffold
+description: Spin up a Next.js app with @nouslabs/react, CLI-inspired flows, and qubic-core-lite for contract work.
+---
+
+# Next.js scaffold
+
+This guide mirrors wagmi's project scaffolds: you can use the repo-provided generator or follow the manual steps to wire everything together. Both paths end with a Next.js app that already knows how to talk to Qubic and WalletConnect.
+
+## Quick start (nous CLI)
+
+The easiest way to scaffold a project is with the CLI:
+
+```
+nous scaffold web
+```
+
+Pick a directory name, package manager, and whether to run installs or lint when prompted. The generator runs `bun create next-app --ts --tailwind`, wires in Nous Labs dependencies, and copies the overlay from this repository.
+
+## Quick start (monorepo script)
+
+From the repository root run:
+
+```
+npm run scaffold:next my-qubic-app
+```
+
+The script wraps the same logic as `nous scaffold web`. Provide flags like `-- --install` to force installation, or `-- --pm=pnpm` to select a package manager (supports `npm`, `pnpm`, `bun`, or `yarn`). Example:
+
+```
+npm run scaffold:next dashboard -- --install --pm=pnpm
+```
+
+Next steps:
+
+```
+cd my-qubic-app
+cp env.example .env.local
+npm run dev
+```
+
+Update `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in `.env.local` before attempting to connect wallets. The generated project already includes:
+
+- `AppProviders` composing React Query, `QubicProvider`, and `WalletConnectProvider`
+- Example `ConnectButtons` and `WalletBalance` components
+- Tailwind-based styling via `globals.css`
+
+## Manual setup
+
+Prefer to roll your own? Start from scratch with the steps below.
+
+### 1. Create the project
+
+```
+npx create-next-app@latest qubic-app --ts --eslint --app --src-dir
+cd qubic-app
+```
+
+### 2. Install dependencies
+
+```
+pnpm add @nouslabs/sdk @nouslabs/react @tanstack/react-query
+```
+
+Optional extras:
+
+- `@walletconnect/sign-client` (already bundled via the SDK).
+- State managers such as `zustand` or `jotai`.
+
+### 3. Environment variables
+
+Create `.env.local`:
+
+```dotenv
+NEXT_PUBLIC_QUBIC_LIVE_URL=https://rpc.qubic.org
+NEXT_PUBLIC_QUBIC_QUERY_URL=https://api.qubic.org
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
+```
+
+### 4. Global providers
+
+`src/app/providers.tsx`:
+
+```tsx
+"use client";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  QubicProvider,
+  WalletConnectProvider,
+} from "@nouslabs/react";
+
+const queryClient = new QueryClient();
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <QubicProvider
+        config={{
+          liveUrl: process.env.NEXT_PUBLIC_QUBIC_LIVE_URL,
+          queryUrl: process.env.NEXT_PUBLIC_QUBIC_QUERY_URL,
+        }}
+      >
+        <WalletConnectProvider
+          options={{
+            projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+            metadata: {
+              name: "Qubic Next.js Scaffold",
+              description: "Build with Qubic",
+              url: "https://localhost:3000",
+              icons: ["https://localhost:3000/icon.png"],
+            },
+          }}
+        >
+          {children}
+        </WalletConnectProvider>
+      </QubicProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+Wrap your root layout:
+
+```tsx
+// src/app/layout.tsx
+import { AppProviders } from "./providers";
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>
+        <AppProviders>{children}</AppProviders>
+      </body>
+    </html>
+  );
+}
+```
+
+### 5. Authentication UI
+
+Mirror wagmi-style connector buttons with the React hooks:
+
+```tsx
+"use client";
+
+import { useQubicAuth, useWalletConnect } from "@nouslabs/react";
+
+export function ConnectButtons() {
+  const { authenticate, disconnect, account, status } = useQubicAuth();
+  const { connect: connectWC } = useWalletConnect();
+
+  async function connectWalletConnect() {
+    const { uri, waitForApproval } = await connectWC();
+    // TODO: open QR modal with `uri`
+    await waitForApproval();
+  }
+
+  if (account) {
+    return (
+      <button onClick={disconnect}>
+        Disconnect {account.label ?? account.publicId.slice(0, 10)}
+      </button>
+    );
+  }
+
+  return (
+    <div className="stack">
+      <button onClick={() => authenticate("seed")}>
+        {status === "connecting" ? "Connecting..." : "Connect seed"}
+      </button>
+      <button onClick={connectWalletConnect}>Connect WalletConnect</button>
+    </div>
+  );
+}
+```
+
+Pair this with the [React hooks reference](/docs/react/hooks) for query-driven UI.
+
+### 6. Add qubic-core-lite for contracts
+
+Bring [qubic-core-lite](https://github.com/hackerby888/qubic-core-lite) into the repo to compile contracts and run a local node:
+
+```
+mkdir -p contracts
+git submodule add https://github.com/hackerby888/qubic-core-lite.git contracts/qubic-core-lite
+```
+
+Expose helper scripts in `package.json`:
+
+```json
+{
+  "scripts": {
+    "contracts:build": "cmake -S contracts/qubic-core-lite -B contracts/qubic-core-lite/build && cmake --build contracts/qubic-core-lite/build",
+    "contracts:rpc": "contracts/qubic-core-lite/build/Qubic --rpc --security-tick 32"
+  }
+}
+```
+
+Call the native tooling from API routes when you need contract deployments:
+
+```ts
+// src/app/api/contract/route.ts
+import { NextResponse } from "next/server";
+import { spawn } from "node:child_process";
+
+export async function POST(request: Request) {
+  const body = await request.json();
+
+  const process = spawn("./contracts/qubic-core-lite/build/Qubic", [
+    "--deploy-contract",
+    body.contractPath,
+  ]);
+
+  const output = await new Promise<string>((resolve, reject) => {
+    let buf = "";
+    process.stdout.on("data", (chunk) => (buf += chunk.toString()));
+    process.on("exit", (code) =>
+      code === 0 ? resolve(buf) : reject(new Error(buf)),
+    );
+  });
+
+  return NextResponse.json({ output });
+}
+```
+
+Use the SDK to broadcast the resulting transaction payload.
+
+### 7. Recommended project structure
+
+```
+src/
+  app/
+    layout.tsx
+    page.tsx
+    providers.tsx
+    api/
+      contract/route.ts
+  components/
+    ConnectButtons.tsx
+    BalanceCard.tsx
+  lib/
+    qubic.ts            # createQubicClient wrapper
+    identities.ts       # identity helpers
+contracts/
+  qubic-core-lite/      # git submodule for contract tooling
+```
+
+This scaffold sets up a Next.js project with clear separation between UI, data hooks, and contract tooling�mirroring wagmi's core + react + cli split.
+

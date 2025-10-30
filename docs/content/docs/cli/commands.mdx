@@ -1,0 +1,75 @@
+﻿---
+title: Command reference
+description: Summary of high-value @nouslabs/cli commands grouped by workflow.
+---
+
+# CLI command reference
+
+The CLI surfaces Qubic workflows as focused commands with shared options. The list below highlights the commands you will use most often.
+
+## Network & accounts
+
+| Command | Description |
+| --- | --- |
+| `nous info` | Fetch the current tick, epoch, and network duration. |
+| `nous balance [identity]` | Display the balance for the provided identity or the currently selected account. |
+| `nous tx [identity] --limit <n>` | List recent transactions for an identity. |
+| `nous account list` | Show all stored identities, including whether their seeds are loaded in memory. |
+| `nous account create` | Generate a new seed, optionally store it in the encrypted vault, and set it as the active account. |
+| `nous account import` | Import an existing identity (seed or vault). |
+| `nous account remove` | Remove an identity from the local configuration and delete any stored seed (requires password). |
+
+## Authentication shortcuts
+
+| Command | Description |
+| --- | --- |
+| `nous auth status` | Show authentication state, including vault status and current identity. |
+| `nous auth login` | Authenticate with a seed and optionally persist the encrypted seed. |
+| `nous auth logout` | Clear the selected identity and flush session-stored seeds. |
+
+## Transactions
+
+| Command | Description |
+| --- | --- |
+| `nous send transfer <to> <amount>` | Build, sign, and broadcast a transfer transaction with password confirmation and interactive review. |
+| `nous send from-file <file>` | Broadcast a pre-signed base64 transaction (useful for offline signing workflows). |
+| `nous transactions sign <to> <amount>` | Produce a signed transfer without broadcasting. Supports writing to disk for manual review. |
+| `nous transactions broadcast --file <path>` | Broadcast an encoded transaction directly from a file. |
+| `nous tx-hash <hash>` | Fetch a transaction by hash for verification purposes. |
+
+## Monitoring
+
+| Command | Description |
+| --- | --- |
+| `nous monitor status` | Snapshot of current tick, epoch, and computor counts. |
+| `nous monitor ticks` | Stream live tick updates at a configurable interval. |
+| `nous monitor computors` | Inspect computor lists for a given epoch. |
+
+## Configuration
+
+| Command | Description |
+| --- | --- |
+| `nous config show` | Inspect the config file location, RPC endpoint, and vault hint. |
+| `nous config set <key> <value>` | Update supported keys (`rpcEndpoint`, `defaultNetwork`). |
+| `nous config reset` | Clear the configuration and remove cached seeds (asks for confirmation). |
+
+## Scaffolding
+
+| Command | Description |
+| --- | --- |
+| `nous scaffold web` | Generate a Next.js + Tailwind project preloaded with Nous Labs providers. |
+
+## Options used across commands
+
+- `--json`: Output structured JSON for machine-readable workflows.
+- `--tick <number>`: Manually set the target tick for signing commands.
+- `--tick-offset <number>`: Define how far in the future to schedule the transfer when omitting `--tick`.
+- `-f, --from <identity>`: Override the default sender identity for commands that support it.
+
+## Tips for safe usage
+
+- Always verify the destination identity during the interactive review shown before broadcasting.
+- The CLI never prints seeds unless you opt out of vault storage. Copy the seed immediately if you choose in-memory only mode.
+- If you forget your vault password, re-import the seed and recreate the vault — there is no recovery mechanism.
+
+

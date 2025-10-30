@@ -1,0 +1,61 @@
+---
+title: Install & configure
+description: Step-by-step guide for installing @nouslabs/cli, linking identities, and preparing a secure workspace.
+---
+
+# Getting started with the CLI
+
+The CLI layers on top of the shared SDK and core packages. Before issuing commands, make sure you have the right runtime, package manager, and a safe configuration directory.
+
+## Prerequisites
+
+- Node.js 20 or Bun 1.1+ (the repo uses Bun for local development, but the published package works with `npm` or `pnpm`).
+- A Qubic identity or seed you can import.
+- Optional: a password hint for your encrypted vault.
+
+## Install globally
+
+```bash
+npm install -g @nouslabs/cli
+# or
+bun add -g @nouslabs/cli
+```
+
+After installation, confirm the binary is available:
+
+```bash
+nous --version
+```
+
+If you prefer not to install globally, use `npx @nouslabs/cli <command>` instead.
+
+## Link during local development
+
+```bash
+git clone https://github.com/nous-labs/sdk.git
+cd sdk/packages/cli
+bun install
+bun run build
+npm link
+```
+
+The `npm link` step exposes the built CLI as a global binary referencing your local checkout.
+
+## First-time configuration
+
+1. Run `nous auth login` and provide your seed or encrypted vault credentials.
+2. Store the seed in the encrypted vault when prompted. Every signing action will require the password.
+3. Select a default identity:
+
+```bash
+nous account list
+nous account select
+```
+
+4. Optionally set a custom RPC endpoint:
+
+```bash
+nous config set rpcEndpoint https://rpc.qubic.org
+```
+
+With these steps complete you can start querying network data, preparing transactions, or broadcasting transfers from the same shell session. Each secure action will require your vault password to confirm intent.
